@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>編輯後台 — GAP 3D 知識庫</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #152535;
+  --navy-light: #1e3347;
+  --gap-blue: #1a3fa6;
+  --official: #3b82f6;
+  --internal: #f59e0b;
+  --warning: #ef4444;
+  --text: #e2e8f0;
+  --text-dim: #8899aa;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--navy); color:var(--text); min-height:100vh; }
+
+header {
+  height:56px; background:var(--navy-mid); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 24px; gap:14px;
+  position:sticky; top:0; z-index:50;
+}
+.logo { font-family:'DM Mono',monospace; font-size:12px; background:var(--gap-blue); color:#fff; padding:4px 10px; border-radius:4px; letter-spacing:0.12em; }
+header h1 { font-size:14px; font-weight:500; }
+.header-right { margin-left:auto; }
+
+.btn { padding:8px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; }
+.btn-primary { background:var(--gap-blue); color:#fff; }
+.btn-primary:hover { background:#1e4fc7; }
+.btn-danger { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background:rgba(239,68,68,0.25); }
+.btn-ghost { background:var(--card); color:var(--text-dim); border:1px solid var(--border); text-decoration:none; display:inline-flex; align-items:center; }
+.btn-ghost:hover { color:var(--text); }
+
+.field { margin-bottom:14px; }
+.field label { font-size:12px; color:var(--text-dim); display:block; margin-bottom:5px; }
+.field input, .field textarea, .field select {
+  width:100%; background:var(--navy-light); border:1px solid var(--border);
+  border-radius:7px; padding:8px 12px; font-size:13px; color:var(--text);
+  font-family:inherit; outline:none; transition:border-color 0.15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color:rgba(59,130,246,0.5); }
+.field textarea { resize:vertical; min-height:90px; line-height:1.6; }
+.field select option { background:var(--navy-mid); }
+
+#adminWrap { padding:28px 36px; max-width:1100px; margin:0 auto; }
+
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.admin-title { font-size:18px; font-weight:700; }
+
+.section-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+.sec-tab { padding:6px 14px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; }
+.sec-tab:hover { color:var(--text); }
+.sec-tab.active { background:var(--gap-blue); color:#fff; border-color:transparent; }
+
+.entries-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.entries-title { font-size:15px; font-weight:600; }
+
+.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:14px; }
+.entry-info { flex:1; }
+.entry-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:4px; }
+.entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:10px; flex-wrap:wrap; }
+.entry-preview { font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
+.entry-actions { display:flex; gap:6px; flex-shrink:0; }
+
+.badge-sm { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; }
+.bs-official { background:rgba(59,130,246,0.2); color:#93c5fd; }
+.bs-internal  { background:rgba(245,158,11,0.2); color:#fcd34d; }
+.bs-warning   { background:rgba(239,68,68,0.2);  color:#fca5a5; }
+
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
+
+.modal { background:var(--navy-mid); border:1px solid var(--border); border-radius:12px; padding:28px 32px; width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+.modal h3 { font-size:16px; font-weight:700; margin-bottom:20px; }
+.modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+
+.path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+.path-item { display:flex; gap:6px; }
+.path-item input { flex:1; font-family:'DM Mono',monospace; font-size:12px; }
+.add-path-btn { font-size:12px; padding:5px 10px; border-radius:5px; border:1px dashed var(--border); background:none; color:var(--text-dim); cursor:pointer; font-family:inherit; }
+.add-path-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.15); }
+
+.toast { position:fixed; bottom:24px; right:24px; background:var(--navy-mid); border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:13px; color:var(--text); z-index:300; transform:translateY(10px); opacity:0; transition:all 0.2s; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.success { border-color:rgba(16,185,129,0.3); color:#6ee7b7; }
+.toast.error   { border-color:rgba(239,68,68,0.3);  color:#fca5a5; }
+
+.loading { display:flex; align-items:center; justify-content:center; padding:40px; color:var(--text-dim); gap:10px; }
+.spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--official); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.devtype-group { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.devtype-group label { display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GAP</div>
+  <h1>編輯後台</h1>
+  <div class="header-right">
+    <a href="index.html" class="btn btn-ghost">← 回知識庫</a>
+  </div>
+</header>
+
+<div id="adminWrap">
+  <div class="admin-header">
+    <div class="admin-title">內容管理</div>
+    <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
+  </div>
+
+  <div class="section-tabs" id="sectionTabs">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <div class="entries-header">
+    <div class="entries-title" id="currentSectionName"></div>
+  </div>
+  <div id="entriesList">
+    <div class="loading"><div class="spinner"></div>載入中…</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">新增條目</h3>
+    <div class="field">
+      <label>所屬分類</label>
+      <select id="fSection"></select>
+    </div>
+    <div class="field">
+      <label>標題</label>
+      <input id="fTitle" placeholder="例如：粒子/碰撞設定">
+    </div>
+    <div class="field">
+      <label>內容（支援換行）</label>
+      <textarea id="fContent" rows="6" placeholder="詳細說明…"></textarea>
+    </div>
+    <div class="field">
+      <label>路徑（可多個）</label>
+      <div class="path-list" id="pathList"></div>
+      <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
+    </div>
+    <div class="field">
+      <label>來源標籤</label>
+      <select id="fSource">
+        <option value="internal">🟡 內部SOP</option>
+        <option value="official">🔵 官方規範</option>
+        <option value="warning">🔴 重要注意</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>適用開發類型</label>
+      <div class="devtype-group" id="devTypeGroup">
+        <label><input type="checkbox" value="all" checked style="accent-color:var(--official)"> 全部</label>
+        <label><input type="checkbox" value="collab" style="accent-color:var(--official)"> 聯名Collab</label>
+        <label><input type="checkbox" value="proto" style="accent-color:var(--official)"> Proto</label>
+        <label><input type="checkbox" value="la" style="accent-color:var(--official)"> LA</label>
+        <label><input type="checkbox" value="fitla" style="accent-color:var(--official)"> Fit-LA</label>
+        <label><input type="checkbox" value="color" style="accent-color:var(--official)"> 各色樣</label>
+        <label><input type="checkbox" value="fit" style="accent-color:var(--official)"> Fit(非正單)</label>
+      </div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="fIsChecklist" style="accent-color:var(--official)">
+      <label for="fIsChecklist" style="font-size:13px;cursor:pointer">這是 Checklist 項目</label>
+    </div>
+    <div class="field">
+      <label>排序（數字越小越前面）</label>
+      <input id="fOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteBtn" onclick="deleteEntry()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://popnhqizqkhitguopapf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tNgioaXmZhzppbg9tg6Ong_WYTGdZAo';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allSections = [], allEntries = [];
+let currentSectionId = null, editingEntryId = null;
+
+async function init() {
+  await loadData();
+  renderSectionTabs();
+  if (allSections.length) selectSection(allSections[0].id);
+}
+
+async function loadData() {
+  const [{ data: s }, { data: e }] = await Promise.all([
+    sb.from('sections').select('*').order('sort_order'),
+    sb.from('entries').select('*').order('sort_order'),
+  ]);
+  allSections = s || [];
+  allEntries  = e || [];
+}
+
+function renderSectionTabs() {
+  document.getElementById('sectionTabs').innerHTML = allSections.map(s =>
+    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')">${s.icon||''} ${s.name}</button>`
+  ).join('');
+  document.getElementById('fSection').innerHTML = allSections.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+}
+
+function selectSection(id) {
+  currentSectionId = id;
+  document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');
+  document.getElementById('currentSectionName').textContent = allSections.find(s=>s.id===id)?.name || '';
+  renderEntries();
+}
+
+function renderEntries() {
+  const entries = allEntries.filter(e => e.section_id === currentSectionId);
+  const el = document.getElementById('entriesList');
+  if (!entries.length) {
+    el.innerHTML = '<div class="loading" style="padding:30px">此分類尚無條目，點擊右上角「新增條目」開始</div>';
+    return;
+  }
+  const bm = { official:'bs-official', internal:'bs-internal', warning:'bs-warning' };
+  const sl = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
+  el.innerHTML = entries.map(e => `
+    <div class="entry-row">
+      <div class="entry-info">
+        <div class="entry-title">${esc(e.title)}</div>
+        <div class="entry-meta">
+          <span class="badge-sm ${bm[e.source]}">${sl[e.source]}</span>
+          <span>${(e.dev_type||['all']).join(', ')}</span>
+          ${e.is_checklist?'<span style="color:#6ee7b7">✓ Checklist</span>':''}
+        </div>
+        ${e.content?`<div class="entry-preview">${esc(e.content).substring(0,100)}…</div>`:''}
+        ${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}
+      </div>
+      <div class="entry-actions">
+        <button class="btn btn-ghost" onclick="openEditEntry('${e.id}')">✏️ 編輯</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openNewEntry() {
+  editingEntryId = null;
+  document.getElementById('modalTitle').textContent = '新增條目';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fContent').value = '';
+  document.getElementById('fSource').value = 'internal';
+  document.getElementById('fOrder').value = 0;
+  document.getElementById('fIsChecklist').checked = false;
+  document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
+  document.getElementById('pathList').innerHTML = '';
+  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEditEntry(id) {
+  editingEntryId = id;
+  const e = allEntries.find(x=>x.id===id);
+  if (!e) return;
+  document.getElementById('modalTitle').textContent = '編輯條目';
+  document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('fTitle').value = e.title||'';
+  document.getElementById('fContent').value = e.content||'';
+  document.getElementById('fSource').value = e.source||'internal';
+  document.getElementById('fOrder').value = e.sort_order||0;
+  document.getElementById('fIsChecklist').checked = !!e.is_checklist;
+  document.getElementById('fSection').value = e.section_id;
+  document.getElementById('pathList').innerHTML = '';
+  (e.paths||[]).forEach(p => addPathField(p));
+  const types = e.dev_type||['all'];
+  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function addPathField(val='') {
+  const div = document.createElement('div');
+  div.className = 'path-item';
+  div.innerHTML = `<input type="text" placeholder="\\\\192.168.1.220\\3ddb\\..." value="${esc(val)}"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px">✕</button>`;
+  document.getElementById('pathList').appendChild(div);
+}
+
+async function saveEntry() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { showToast('請填寫標題','error'); return; }
+  const payload = {
+    section_id:   document.getElementById('fSection').value,
+    title,
+    content:      document.getElementById('fContent').value.trim(),
+    source:       document.getElementById('fSource').value,
+    sort_order:   parseInt(document.getElementById('fOrder').value)||0,
+    is_checklist: document.getElementById('fIsChecklist').checked,
+    paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
+    dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
+  };
+  if (!payload.dev_type.length) payload.dev_type = ['all'];
+
+  const { error } = editingEntryId
+    ? await sb.from('entries').update(payload).eq('id', editingEntryId)
+    : await sb.from('entries').insert(payload);
+
+  if (error) { showToast('儲存失敗：'+error.message,'error'); }
+  else { showToast('儲存成功 ✓','success'); closeModal(); await loadData(); selectSection(payload.section_id); }
+}
+
+async function deleteEntry() {
+  if (!editingEntryId || !confirm('確定要刪除這個條目嗎？')) return;
+  const { error } = await sb.from('entries').delete().eq('id', editingEntryId);
+  if (error) { showToast('刪除失敗','error'); }
+  else { showToast('已刪除','success'); closeModal(); await loadData(); selectSection(currentSectionId); }
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
+
+init();
+</script>
+</body>
+</html>

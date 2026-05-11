@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAP 3D 作業知識庫</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #152535;
+  --navy-light: #1e3347;
+  --gap-blue: #1a3fa6;
+  --official: #3b82f6;
+  --internal: #f59e0b;
+  --warning: #ef4444;
+  --text: #e2e8f0;
+  --text-dim: #8899aa;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+  --sidebar-w: 230px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  height: 56px;
+  background: var(--navy-mid);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #fff;
+  background: var(--gap-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+header h1 { font-size: 15px; font-weight: 500; }
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.legend-item { display:flex; align-items:center; gap:5px; }
+.legend-dot { width:8px; height:8px; border-radius:2px; }
+
+.btn-admin {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-dim);
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-admin:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+aside {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--navy-mid);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px 0 20px;
+  flex-shrink: 0;
+}
+
+aside::-webkit-scrollbar { width: 4px; }
+aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.search-sidebar {
+  padding: 10px 12px 8px;
+}
+
+.search-sidebar input {
+  width: 100%;
+  background: var(--navy-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px 7px 30px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+.search-sidebar input::placeholder { color: var(--text-dim); }
+.search-sidebar input:focus { border-color: rgba(59,130,246,0.5); }
+.search-wrap-inner { position: relative; }
+.search-wrap-inner::before {
+  content: '🔍';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+}
+
+.section-group { margin-bottom: 4px; }
+
+.group-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  padding: 10px 14px 4px;
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active {
+  color: #fff;
+  background: rgba(59,130,246,0.1);
+  border-left-color: var(--official);
+}
+.nav-icon { font-size: 13px; }
+
+/* ── MAIN ── */
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 36px;
+}
+main::-webkit-scrollbar { width: 5px; }
+main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.page-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.card-title { font-size: 13px; font-weight: 700; color: #fff; }
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.badge-official { background:rgba(59,130,246,0.18); color:#93c5fd; border:1px solid rgba(59,130,246,0.25); }
+.badge-internal  { background:rgba(245,158,11,0.18); color:#fcd34d; border:1px solid rgba(245,158,11,0.25); }
+.badge-warning   { background:rgba(239,68,68,0.18);  color:#fca5a5; border:1px solid rgba(239,68,68,0.25);  }
+
+.card-content { font-size: 13px; color: var(--text); line-height: 1.75; white-space: pre-wrap; }
+
+.path-block {
+  font-family: 'DM Mono', monospace;
+  font-size: 11.5px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 5px;
+  padding: 6px 10px;
+  color: #7dd3fc;
+  word-break: break-all;
+  margin: 6px 0;
+  display: block;
+}
+
+.highlight-box {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #fca5a5;
+  margin-top: 8px;
+}
+
+.tip-box {
+  background: rgba(245,158,11,0.1);
+  border-left: 3px solid var(--internal);
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #fde68a;
+  margin-top: 8px;
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── TYPE TABS ── */
+.type-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: var(--navy-mid);
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+.type-tab {
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.type-tab:hover { color: var(--text); }
+.type-tab.active { background: var(--gap-blue); color: #fff; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── CHECKLIST ── */
+.checklist { display: flex; flex-direction: column; gap: 5px; }
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.check-item:hover { border-color: rgba(255,255,255,0.12); }
+.check-item input[type=checkbox] { margin-top: 2px; accent-color: var(--official); flex-shrink:0; }
+.check-item.done { opacity: 0.45; text-decoration: line-through; }
+.reset-btn {
+  margin-top: 10px;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.reset-btn:hover { color: var(--text); }
+
+/* ── COL GRID ── */
+.col-grid { display: grid; gap: 10px; margin-bottom: 12px; }
+.cols-2 { grid-template-columns: repeat(2,1fr); }
+.cols-4 { grid-template-columns: repeat(4,1fr); }
+
+.col-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.col-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.tag-collab { background:rgba(168,85,247,0.2); color:#d8b4fe; }
+.tag-proto  { background:rgba(59,130,246,0.2); color:#93c5fd; }
+.tag-la     { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+.tag-fitla  { background:rgba(234,179,8,0.2);  color:#fde68a; }
+.tag-color  { background:rgba(251,146,60,0.2); color:#fed7aa; }
+.tag-fit    { background:rgba(244,114,182,0.2);color:#fbcfe8; }
+
+.col-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
+.col-list li {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  padding-left: 12px;
+  position: relative;
+}
+.col-list li::before { content:'✓'; position:absolute; left:0; color:var(--text-dim); font-size:10px; }
+
+/* ── STAGE FLOW ── */
+.stage-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stage-box {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+}
+.stage-num { font-size: 9px; color: var(--text-dim); margin-bottom: 2px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
+.stage-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.stage-arrow { color: var(--text-dim); font-size: 16px; }
+
+/* ── SEARCH RESULTS ── */
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.result-section { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+.result-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+.result-body { font-size: 12.5px; color: var(--text); line-height: 1.65; }
+mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; padding:0 2px; }
+
+/* ── LOADING ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--text-dim);
+  font-size: 13px;
+  gap: 10px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--official);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── QC GRID ── */
+.qc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 12px; }
+.qc-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.qc-fail { font-size: 12px; font-weight: 700; color: #fca5a5; margin-bottom: 8px; }
+.qc-body { font-size: 12.5px; color: var(--text); line-height: 1.65; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GAP</div>
+  <h1>3D DPC 作業知識庫</h1>
+  <div class="header-right">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>重要注意</div>
+    </div>
+    <a href="admin.html" class="btn-admin">✏️ 編輯</a>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="search-sidebar">
+      <div class="search-wrap-inner">
+        <input id="searchInput" placeholder="搜尋…" oninput="handleSearch(this.value)">
+      </div>
+    </div>
+    <div id="navMenu">
+      <div class="loading"><div class="spinner"></div>載入中…</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- 搜尋結果頁 -->
+    <div class="page" id="page-search">
+      <div class="page-header">
+        <div class="page-title">搜尋結果</div>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- 動態內容頁 -->
+    <div class="page active" id="page-content">
+      <div class="loading"><div class="spinner"></div>載入中…</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Supabase 連線 ──────────────────────────────
+const SUPABASE_URL = 'https://popnhqizqkhitguopapf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tNgioaXmZhzppbg9tg6Ong_WYTGdZAo';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State ──────────────────────────────────────
+let allSections = [];
+let allEntries  = [];
+let currentSlug = null;
+
+// ── Init ───────────────────────────────────────
+async function init() {
+  await loadData();
+  renderNav();
+  // 預設顯示第一個 section
+  if (allSections.length) showSection(allSections[0].slug);
+}
+
+async function loadData() {
+  const [{ data: sections }, { data: entries }] = await Promise.all([
+    sb.from('sections').select('*').order('sort_order'),
+    sb.from('entries').select('*, checklist_items(*)').order('sort_order'),
+  ]);
+  allSections = sections || [];
+  allEntries  = entries  || [];
+}
+
+// ── Sidebar Nav ────────────────────────────────
+function renderNav() {
+  const menu = document.getElementById('navMenu');
+  // 依 group_name 分組
+  const groups = {};
+  allSections.forEach(s => {
+    if (!groups[s.group_name]) groups[s.group_name] = [];
+    groups[s.group_name].push(s);
+  });
+
+  menu.innerHTML = Object.entries(groups).map(([group, secs]) => `
+    <div class="section-group">
+      <div class="group-label">${group}</div>
+      ${secs.map(s => `
+        <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
+          <span class="nav-icon">${s.icon || ''}</span>${s.name}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ── Show Section ───────────────────────────────
+function showSection(slug) {
+  currentSlug = slug;
+
+  // search mode off
+  document.getElementById('searchInput').value = '';
+  document.getElementById('page-search').classList.remove('active');
+  document.getElementById('page-content').classList.add('active');
+
+  // nav highlight
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + slug);
+  if (navEl) navEl.classList.add('active');
+
+  const section = allSections.find(s => s.slug === slug);
+  const entries = allEntries.filter(e => e.section_id === section?.id);
+
+  renderSection(section, entries);
+}
+
+// ── Render Section ─────────────────────────────
+function renderSection(section, entries) {
+  const main = document.getElementById('page-content');
+
+  if (!section) {
+    main.innerHTML = '<div class="loading">找不到此分類</div>';
+    return;
+  }
+
+  // 特殊 slug 有固定版型
+  const specialPages = {
+    stages:       renderStagesPage,
+    checklist:    renderChecklistPage,
+    informal:     renderInformalPage,
+    qc:           renderQCPage,
+  };
+
+  if (specialPages[section.slug]) {
+    main.innerHTML = specialPages[section.slug](section, entries);
+    bindChecklistEvents();
+    return;
+  }
+
+  // 一般版型
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">${section.icon || ''} ${section.name}</div>
+    </div>
+    ${entries.length
+      ? entries.map(e => renderCard(e)).join('')
+      : '<div class="loading" style="padding:40px 0">此分類尚無內容，請至後台新增</div>'
+    }
+  `;
+}
+
+// ── Card Renderer ──────────────────────────────
+function renderCard(e) {
+  const badgeMap = {
+    official: '官方規範',
+    internal: '內部SOP',
+    warning:  '⚠️ 重要',
+  };
+  const badgeClass = { official:'badge-official', internal:'badge-internal', warning:'badge-warning' };
+
+  const paths = (e.paths || []).map(p =>
+    `<span class="path-block">${escHtml(p)}</span>`
+  ).join('');
+
+  const content = e.content
+    ? `<div class="card-content">${escHtml(e.content)}</div>`
+    : '';
+
+  return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">${escHtml(e.title)}</div>
+        <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
+      </div>
+      ${content}
+      ${paths}
+    </div>
+  `;
+}
+
+// ── Special Pages ──────────────────────────────
+function renderStagesPage(section, entries) {
+  return `
+    <div class="page-header">
+      <div class="page-title">📋 ${section.name}</div>
+      <div class="page-desc">GAP正規開發流程，所有階段都需要上傳CLO-SET</div>
+    </div>
+    <div class="stage-flow">
+      ${['3D Block','3D Proto','3D LA','3D Fit','3D Size Set','3D Reference'].map((s,i)=>`
+        <div class="stage-box">
+          <div class="stage-num">STAGE ${i+1}</div>
+          <div class="stage-name">${s}</div>
+        </div>
+        ${i<5?'<span class="stage-arrow">→</span>':''}
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">各階段對應的四種開發類型</div>
+        <span class="badge badge-official">官方規範</span>
+      </div>
+      <div class="col-grid cols-4">
+        <div class="col-card">
+          <div class="col-tag tag-collab">聯名 Collab</div>
+          <ul class="col-list">
+            <li>兩個POSE</li>
+            <li>灰色 + 各色（含AW）</li>
+            <li>Starting Pose 另存新檔</li>
+          </ul>
+        </div>
+        <div class="col-card">
+          <div class="col-tag tag-proto">3D Proto</div>
+          <ul class="col-list">
+            <li>兩個POSE + 灰色</li>
+            <li>上衣/洋裝需 Starting Pose</li>
+            <li>褲裝只需 Regular Pose</li>
+          </ul>
+        </div>
+        <div class="col-card">
+          <div class="col-tag tag-la">3D LA</div>
+          <ul class="col-list">
+            <li>無人台，Regular Pose</li>
+            <li>顏色依 Final BOM</li>
+            <li>各色</li>
+          </ul>
+        </div>
+        <div class="col-card">
+          <div class="col-tag tag-fitla">3D Fit-LA</div>
+          <ul class="col-list">
+            <li>Regular Pose + 灰色</li>
+            <li>（尚未遇過）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">所有 Proto 款式都要進行 3D LA！</div>
+        <span class="badge badge-warning">⚠️ 重要</span>
+      </div>
+      <div class="card-content">・除非業務有問客人設計師（通常從Miro問），客人說不要才不用
+・如客人說不要 → 請業務同步讓客人取消 SPR 上的 3D LA Request
+・2nd-Proto：客評會寫 Request
+・下一輪LA：Straight to LA</div>
+    </div>
+    ${entries.map(e => renderCard(e)).join('')}
+  `;
+}
+
+function renderChecklistPage(section, entries) {
+  const proto = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('all'));
+  const la    = entries.filter(e => e.dev_type?.includes('la'));
+
+  const makeChecklist = (items, id) => `
+    <div class="checklist" id="${id}">
+      ${items.flatMap(e => {
+        if (e.is_checklist && e.checklist_items?.length) {
+          return e.checklist_items.map(ci => `
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(this.parentElement)">
+              <span>${escHtml(ci.text)}${ci.path ? `<span class="path-block">${escHtml(ci.path)}</span>` : ''}</span>
+            </div>
+          `);
+        }
+        return [`
+          <div class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(this.parentElement)">
+            <span>${escHtml(e.title)}${(e.paths||[]).map(p=>`<span class="path-block">${escHtml(p)}</span>`).join('')}</span>
+          </div>
+        `];
+      }).join('')}
+    </div>
+    <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
+  `;
+
+  return `
+    <div class="page-header">
+      <div class="page-title">✅ ${section.name}</div>
+      <div class="page-desc">提交前必須確認的所有項目，點擊可勾選</div>
+    </div>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="switchTab(this,'cl','proto')">Proto / 聯名</button>
+      <button class="type-tab" onclick="switchTab(this,'cl','la')">LA</button>
+    </div>
+    <div class="tab-panel active" id="cl-proto">
+      ${proto.length ? makeChecklist(proto,'checklist-proto') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+    <div class="tab-panel" id="cl-la">
+      ${la.length ? makeChecklist(la,'checklist-la') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+  `;
+}
+
+function renderInformalPage(section, entries) {
+  return `
+    <div class="page-header">
+      <div class="page-title">📸 ${section.name}</div>
+      <div class="page-desc">只需 Snapshot + 系統結單，不需要上傳 CLO-SET</div>
+    </div>
+    <div class="col-grid cols-2">
+      <div class="col-card">
+        <div class="col-tag tag-color">各色樣 + 定位/對條格</div>
+        <ul class="col-list">
+          <li>目前遇到的情境：</li>
+          <li>看定位、核定位</li>
+          <li>實樣來不及，先提供 3D 各色</li>
+          <li>2D 參考定位</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <div class="col-tag tag-fit">Fit</div>
+        <ul class="col-list">
+          <li>目前遇到的情境：</li>
+          <li>開會樣：實樣來不及，先提供 3D for reference</li>
+          <li>客人內部會議 for 高層客製化樣衣</li>
+          <li>客人 TD 要求要先看</li>
+          <li>通常是單碼，若有全碼要先確認人台</li>
+        </ul>
+      </div>
+    </div>
+    ${entries.map(e => renderCard(e)).join('')}
+  `;
+}
+
+function renderQCPage(section, entries) {
+  const qcItems = entries.filter(e => e.source === 'warning');
+  const others  = entries.filter(e => e.source !== 'warning');
+  return `
+    <div class="page-header">
+      <div class="page-title">⚠️ ${section.name}</div>
+      <div class="page-desc">CLO-SET 上傳後常見的 QC Failed 原因與處理方式</div>
+    </div>
+    ${qcItems.length ? `
+      <div class="qc-grid">
+        ${qcItems.map(e => `
+          <div class="qc-item">
+            <div class="qc-fail">❌ ${escHtml(e.title)}</div>
+            <div class="qc-body">${escHtml(e.content || '')}</div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+    ${others.map(e => renderCard(e)).join('')}
+  `;
+}
+
+// ── Search ─────────────────────────────────────
+function handleSearch(q) {
+  if (!q.trim()) {
+    document.getElementById('page-search').classList.remove('active');
+    document.getElementById('page-content').classList.add('active');
+    if (currentSlug) showSection(currentSlug);
+    return;
+  }
+
+  document.getElementById('page-content').classList.remove('active');
+  document.getElementById('page-search').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  const kws = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const results = allEntries.filter(e => {
+    const text = [e.title, e.content, ...(e.paths||[])].join(' ').toLowerCase();
+    return kws.some(k => text.includes(k));
+  });
+
+  const container = document.getElementById('searchResults');
+  if (!results.length) {
+    container.innerHTML = '<div class="loading" style="padding:40px 0">找不到相關結果，試試其他關鍵字</div>';
+    return;
+  }
+
+  container.innerHTML = results.map(e => {
+    const section = allSections.find(s => s.id === e.section_id);
+    let content = escHtml(e.content || '');
+    kws.forEach(k => {
+      content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
+    });
+    return `
+      <div class="result-card" onclick="showSection('${section?.slug}')">
+        <div class="result-section">📂 ${section?.name || ''}</div>
+        <div class="result-title">${escHtml(e.title)}</div>
+        <div class="result-body">${content}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── UI helpers ─────────────────────────────────
+function switchTab(btn, group, id) {
+  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id}`)?.classList.add('active');
+}
+
+function toggleCheck(el) {
+  if (el.tagName === 'INPUT') el = el.parentElement;
+  const cb = el.querySelector('input[type=checkbox]');
+  cb.checked = !cb.checked;
+  el.classList.toggle('done', cb.checked);
+}
+
+function bindChecklistEvents() {
+  document.querySelectorAll('.check-item').forEach(item => {
+    item.addEventListener('click', () => toggleCheck(item));
+  });
+}
+
+function resetChecklist(id) {
+  document.getElementById(id)?.querySelectorAll('.check-item').forEach(item => {
+    item.classList.remove('done');
+    const cb = item.querySelector('input');
+    if (cb) cb.checked = false;
+  });
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Start ──────────────────────────────────────
+init();
+</script>
+</body>
+</html>
