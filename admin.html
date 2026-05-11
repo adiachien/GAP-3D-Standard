@@ -177,6 +177,16 @@ header h1 { font-size:14px; font-weight:500; }
       <input type="checkbox" id="fIsChecklist" style="accent-color:var(--official)">
       <label for="fIsChecklist" style="font-size:13px;cursor:pointer">這是 Checklist 項目</label>
     </div>
+    <div class="field" id="stageField" style="display:none">
+      <label>所屬 Stage（僅階段總覽分類使用）</label>
+      <select id="fStage">
+        <option value="">— 不屬於任何 Stage —</option>
+        <option value="proto">STAGE 2 — 3D Proto</option>
+        <option value="la">STAGE 3 — 3D LA</option>
+        <option value="fit">STAGE 4 — 3D Fit</option>
+        <option value="reference">STAGE 6 — 3D Reference</option>
+      </select>
+    </div>
     <div class="field">
       <label>排序（數字越小越前面）</label>
       <input id="fOrder" type="number" value="0">
@@ -269,9 +279,11 @@ function openNewEntry() {
   document.getElementById('fSource').value = 'internal';
   document.getElementById('fOrder').value = 0;
   document.getElementById('fIsChecklist').checked = false;
+  document.getElementById('fStage').value = '';
   document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
   document.getElementById('pathList').innerHTML = '';
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
+  toggleStageField(currentSectionId);
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -287,12 +299,25 @@ function openEditEntry(id) {
   document.getElementById('fOrder').value = e.sort_order||0;
   document.getElementById('fIsChecklist').checked = !!e.is_checklist;
   document.getElementById('fSection').value = e.section_id;
+  document.getElementById('fStage').value = e.stage||'';
   document.getElementById('pathList').innerHTML = '';
   (e.paths||[]).forEach(p => addPathField(p));
   const types = e.dev_type||['all'];
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
+  toggleStageField(e.section_id);
   document.getElementById('modalOverlay').classList.add('open');
 }
+
+function toggleStageField(sectionId) {
+  const stagesSection = allSections.find(s=>s.slug==='stages');
+  const show = stagesSection && sectionId === stagesSection.id;
+  document.getElementById('stageField').style.display = show ? 'block' : 'none';
+}
+
+// 當分類改變時，動態顯示/隱藏 Stage 欄位
+document.getElementById('fSection').addEventListener('change', function() {
+  toggleStageField(this.value);
+});
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 
@@ -306,8 +331,10 @@ function addPathField(val='') {
 async function saveEntry() {
   const title = document.getElementById('fTitle').value.trim();
   if (!title) { showToast('請填寫標題','error'); return; }
+  const section_id = document.getElementById('fSection').value;
+  const stagesSection = allSections.find(s=>s.slug==='stages');
   const payload = {
-    section_id:   document.getElementById('fSection').value,
+    section_id,
     title,
     content:      document.getElementById('fContent').value.trim(),
     source:       document.getElementById('fSource').value,
@@ -315,6 +342,7 @@ async function saveEntry() {
     is_checklist: document.getElementById('fIsChecklist').checked,
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
     dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
+    stage:        (stagesSection && section_id === stagesSection.id) ? (document.getElementById('fStage').value || null) : null,
   };
   if (!payload.dev_type.length) payload.dev_type = ['all'];
 

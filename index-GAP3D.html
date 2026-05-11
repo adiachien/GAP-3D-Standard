@@ -597,62 +597,62 @@ function renderCard(e) {
 
 // ── Special Pages ──────────────────────────────
 function renderStagesPage(section, entries) {
+  const stages = [
+    { key: 'proto',     num: 2, name: '3D Proto' },
+    { key: 'la',        num: 3, name: '3D LA' },
+    { key: 'fit',       num: 4, name: '3D Fit' },
+    { key: 'reference', num: 6, name: '3D Reference' },
+  ];
+
+  // 沒有 stage 的 entries 是一般卡片
+  const generalEntries = entries.filter(e => !e.stage);
+
   return `
     <div class="page-header">
       <div class="page-title">📋 ${section.name}</div>
-      <div class="page-desc">GAP正規開發流程，所有階段都需要上傳CLO-SET</div>
+      <div class="page-desc">點選 Stage 查看對應規範，所有正規開發都需要上傳 CLO-SET</div>
     </div>
+
     <div class="stage-flow">
-      ${['3D Block','3D Proto','3D LA','3D Fit','3D Size Set','3D Reference'].map((s,i)=>`
-        <div class="stage-box">
-          <div class="stage-num">STAGE ${i+1}</div>
-          <div class="stage-name">${s}</div>
+      ${stages.map((s, i) => `
+        <div class="stage-box" id="stagebox-${s.key}" onclick="selectStage('${s.key}')" style="cursor:pointer">
+          <div class="stage-num">STAGE ${s.num}</div>
+          <div class="stage-name">${s.name}</div>
         </div>
-        ${i<5?'<span class="stage-arrow">→</span>':''}
+        ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
       `).join('')}
     </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">各階段對應的四種開發類型</div>
-        <span class="badge badge-official">官方規範</span>
-      </div>
-      <div class="col-grid cols-4">
-        <div class="col-card">
-          <div class="col-tag tag-collab">聯名 Collab</div>
-          <ul class="col-list">
-            <li>兩個POSE</li>
-            <li>灰色 + 各色（含AW）</li>
-            <li>Starting Pose 另存新檔</li>
-          </ul>
-        </div>
-        <div class="col-card">
-          <div class="col-tag tag-proto">3D Proto</div>
-          <ul class="col-list">
-            <li>兩個POSE + 灰色</li>
-            <li>上衣/洋裝需 Starting Pose</li>
-            <li>褲裝只需 Regular Pose</li>
-          </ul>
-        </div>
-        <div class="col-card">
-          <div class="col-tag tag-la">3D LA</div>
-          <ul class="col-list">
-            <li>無人台，Regular Pose</li>
-            <li>顏色依 Final BOM</li>
-            <li>各色</li>
-          </ul>
-        </div>
-        <div class="col-card">
-          <div class="col-tag tag-fitla">3D Fit-LA</div>
-          <ul class="col-list">
-            <li>Regular Pose + 灰色</li>
-            <li>（尚未遇過）</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    ${entries.map(e => renderCard(e)).join('')}
+
+    <div id="stageContent" style="margin-bottom:16px"></div>
+
+    ${generalEntries.map(e => renderCard(e)).join('')}
   `;
 }
+
+function selectStage(key) {
+  // highlight
+  document.querySelectorAll('.stage-box').forEach(b => {
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
+  const box = document.getElementById('stagebox-' + key);
+  if (box) {
+    box.style.borderColor = 'var(--official)';
+    box.style.background = 'rgba(59,130,246,0.1)';
+  }
+
+  // filter entries for this stage
+  const stageEntries = allEntries.filter(e => e.stage === key);
+  const container = document.getElementById('stageContent');
+
+  if (!stageEntries.length) {
+    container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
+    return;
+  }
+
+  container.innerHTML = stageEntries.map(e => renderCard(e)).join('');
+}
+
 
 function renderAvatarPage(section, entries) {
   const cats  = entries.filter(e => e.sort_order <= 5);
