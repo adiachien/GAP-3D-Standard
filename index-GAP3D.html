@@ -541,6 +541,8 @@ function renderSection(section, entries) {
   // 特殊 slug 有固定版型
   const specialPages = {
     stages:       renderStagesPage,
+    avatar:       renderAvatarPage,
+    prefit:       renderPrefitPage,
     checklist:    renderChecklistPage,
     informal:     renderInformalPage,
     qc:           renderQCPage,
@@ -659,6 +661,70 @@ function renderStagesPage(section, entries) {
 ・下一輪LA：Straight to LA</div>
     </div>
     ${entries.map(e => renderCard(e)).join('')}
+  `;
+}
+
+function renderAvatarPage(section, entries) {
+  const cats  = entries.filter(e => e.sort_order <= 5);
+  const notes = entries.filter(e => e.sort_order > 5);
+  return `
+    <div class="page-header">
+      <div class="page-title">👤 ${section.name}</div>
+      <div class="page-desc">點選 Category 查看人台路徑與尺碼資訊</div>
+    </div>
+    <div class="type-tabs">
+      ${cats.map((e,i) => `
+        <button class="type-tab ${i===0?'active':''}" onclick="switchAvatarTab(this,'avp-${i}')">
+          ${escHtml(e.title)}
+        </button>
+      `).join('')}
+    </div>
+    ${cats.map((e,i) => `
+      <div id="avp-${i}" class="tab-panel ${i===0?'active':''}">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${escHtml(e.title)}</div>
+            <span class="badge badge-official">官方規範</span>
+          </div>
+          <div class="card-content">${escHtml(e.content||'')}</div>
+          ${(e.paths||[]).map(p=>`<span class="path-block">${escHtml(p)}</span>`).join('')}
+        </div>
+      </div>
+    `).join('')}
+    ${notes.map(e => renderCard(e)).join('')}
+  `;
+}
+
+function switchAvatarTab(btn, panelId) {
+  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="avp-"]').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId)?.classList.add('active');
+}
+
+function renderPrefitPage(section, entries) {
+  const proto  = entries.filter(e => e.dev_type?.includes('proto'));
+  const collab = entries.filter(e => e.dev_type?.includes('collab'));
+  const la     = entries.filter(e => e.dev_type?.includes('la'));
+  return `
+    <div class="page-header">
+      <div class="page-title">👗 ${section.name}</div>
+      <div class="page-desc">依開發類型查看對應的 Prefit 規則</div>
+    </div>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="switchTab(this,'pf','proto')">一般 Proto</button>
+      <button class="type-tab" onclick="switchTab(this,'pf','collab')">聯名款 Collab</button>
+      <button class="type-tab" onclick="switchTab(this,'pf','la')">LA</button>
+    </div>
+    <div class="tab-panel active" id="pf-proto">
+      ${proto.length ? proto.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+    <div class="tab-panel" id="pf-collab">
+      ${collab.length ? collab.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+    <div class="tab-panel" id="pf-la">
+      ${la.length ? la.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
   `;
 }
 
