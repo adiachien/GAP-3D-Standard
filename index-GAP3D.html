@@ -665,7 +665,7 @@ function renderStagesPage(section, entries) {
           style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
           <div class="stage-num">STAGE ${s.num}</div>
           <div class="stage-name">${s.name}</div>
-          ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收到需求</div>' : ''}
+          ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
         </div>
         ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
       `).join('')}
@@ -679,11 +679,45 @@ function renderStagesPage(section, entries) {
 
 function selectStage(key) {
   const stages = {
-    block:     { num:1, name:'3D Block',     subtitle:'Foundational Asset',            tagColor:'#222',    pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale',                            mc:true  },
-    proto:     { num:2, name:'3D Proto',     subtitle:'Initial Design & Fit Review',   tagColor:'#888',    pose:'Brand Dependent（見 Brand 3D Proto 頁面）',         colorways:'Brand Dependent（見 Brand 3D Proto 頁面）', mc:true  },
-    la:        { num:3, name:'3D LA',        subtitle:'Line Adoption',                 tagColor:'#f0e000', pose:'Regular Pose + Avatar Hidden',                     colorways:'Greyscale + All CCS per Final BOM',    mc:false },
-    fit:       { num:4, name:'3D Fit',       subtitle:'Fit Validation',                tagColor:'#22c55e', pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale',                            mc:true  },
-    reference: { num:6, name:'3D Reference', subtitle:'Future Development',            tagColor:'#16a34a', pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale + All CCS per Final BOM',    mc:false },
+    proto: {
+      num: 2, name: '3D Proto', subtitle: 'Initial Design & Fit Review',
+      tagColor: '#888', hasTabs: true,
+      tabs: [
+        {
+          label: '一般 Proto',
+          mc: true,
+          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
+          colorways: '灰色',
+        },
+        {
+          label: '聯名款（GAP X & Collab）',
+          mc: true,
+          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
+          colorways: '灰色 + 各色',
+        },
+      ],
+    },
+    la: {
+      num: 3, name: '3D LA', subtitle: 'Line Adoption / Adoption Validation',
+      tagColor: '#f0e000', hasTabs: false,
+      mc: false,
+      pose: 'Regular Pose，隱藏人台',
+      colorways: '灰色 + 各色',
+    },
+    fit: {
+      num: 4, name: '3D Fit', subtitle: 'Fit Validation',
+      tagColor: '#22c55e', hasTabs: false,
+      mc: true,
+      pose: 'Regular Pose，顯示人台',
+      colorways: '灰色',
+    },
+    reference: {
+      num: 6, name: '3D RS', subtitle: 'Future Development',
+      tagColor: '#16a34a', hasTabs: false,
+      mc: false,
+      pose: 'Regular Pose，顯示人台',
+      colorways: '灰色 + 各色',
+    },
   };
 
   const s = stages[key];
@@ -700,47 +734,82 @@ function selectStage(key) {
     box.style.background = 'rgba(59,130,246,0.12)';
   }
 
-  // stage entries from supabase
+  const mcNote = `<div style="font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.5">請 TD 提供 MC Link<br>若無 MC Link（如 CO 款）可用尺寸表截圖替代</div>`;
+
+  const renderInfoCard = (tab) => `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px">
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">WORKFLOW</div>
+        <div style="width:40px;height:16px;background:${s.tagColor};border-radius:3px;border:1px solid rgba(255,255,255,0.1)"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">尺寸表</div>
+        <div style="font-size:13px">${tab.mc ? '✅' : '🚫'}</div>
+        ${tab.mc ? mcNote : ''}
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">AVATAR POSE</div>
+        <div style="font-size:12.5px;color:var(--text);white-space:pre-line">${tab.pose}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">各色</div>
+        <div style="font-size:12.5px;color:var(--text)">${tab.colorways}</div>
+      </div>
+    </div>
+  `;
+
   const stageEntries = allEntries.filter(e => e.stage === key);
 
   const container = document.getElementById('stageContent');
-  container.innerHTML = `
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-header">
-        <div class="card-title">STAGE ${s.num} — ${s.name}</div>
-        <span style="font-size:11px;color:var(--text-dim)">${s.subtitle}</span>
-        <span class="badge badge-official" style="margin-left:auto">官方規範</span>
+
+  if (s.hasTabs) {
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div class="card-title">STAGE ${s.num} — ${s.name}</div>
+          <span style="font-size:11px;color:var(--text-dim)">${s.subtitle}</span>
+          <span class="badge badge-official" style="margin-left:auto">官方規範</span>
+        </div>
+        <div class="type-tabs" style="margin-top:8px">
+          ${s.tabs.map((t,i) => `
+            <button class="type-tab ${i===0?'active':''}" onclick="switchStageTab(this,'stab-${i}')">${t.label}</button>
+          `).join('')}
+        </div>
+        ${s.tabs.map((t,i) => `
+          <div id="stab-${i}" class="tab-panel ${i===0?'active':''}">
+            ${renderInfoCard(t)}
+          </div>
+        `).join('')}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px">
-        <div>
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">WORKFLOW TAG</div>
-          <div style="width:40px;height:16px;background:${s.tagColor};border-radius:3px"></div>
+      ${stageEntries.length
+        ? stageEntries.map(e => renderCard(e)).join('')
+        : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
+      }
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div class="card-title">STAGE ${s.num} — ${s.name}</div>
+          <span style="font-size:11px;color:var(--text-dim)">${s.subtitle}</span>
+          <span class="badge badge-official" style="margin-left:auto">官方規範</span>
         </div>
-        <div>
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">MC REQUIRED</div>
-          <div style="font-size:13px">${s.mc ? '✅' : '🚫'}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">AVATAR POSE</div>
-          <div style="font-size:12.5px;color:var(--text)">${s.pose}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">COLORWAYS</div>
-          <div style="font-size:12.5px;color:var(--text)">${s.colorways}</div>
-        </div>
-        <div style="grid-column:1/-1">
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">FABRIC</div>
-          <div style="font-size:12.5px;color:var(--text)">Actual Fabric or Best Substitute</div>
-        </div>
+        ${renderInfoCard(s)}
       </div>
-    </div>
-    ${stageEntries.length
-      ? stageEntries.map(e => renderCard(e)).join('')
-      : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
-    }
-  `;
+      ${stageEntries.length
+        ? stageEntries.map(e => renderCard(e)).join('')
+        : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
+      }
+    `;
+  }
 }
 
+function switchStageTab(btn, panelId) {
+  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="stab-"]').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId)?.classList.add('active');
+}
 
 function renderAvatarPage(section, entries) {
   const cats  = entries.filter(e => e.sort_order <= 5);
