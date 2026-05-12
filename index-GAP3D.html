@@ -598,13 +598,57 @@ function renderCard(e) {
 // ── Special Pages ──────────────────────────────
 function renderStagesPage(section, entries) {
   const stages = [
-    { key: 'proto',     num: 2, name: '3D Proto' },
-    { key: 'la',        num: 3, name: '3D LA' },
-    { key: 'fit',       num: 4, name: '3D Fit' },
-    { key: 'reference', num: 6, name: '3D Reference' },
+    {
+      key: 'block', num: 1, name: '3D Block', subtitle: 'Foundational Asset',
+      tagColor: '#222', active: false,
+      pose: 'Regular Pose + Avatar Visible',
+      colorways: 'Greyscale',
+      mc: true, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'proto', num: 2, name: '3D Proto', subtitle: 'Initial Design & Fit Review',
+      tagColor: '#888', active: true,
+      pose: 'Brand Dependent（見 Brand 3D Proto 頁面）',
+      colorways: 'Brand Dependent（見 Brand 3D Proto 頁面）',
+      mc: true, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'la', num: 3, name: '3D LA', subtitle: 'Line Adoption / Adoption Validation',
+      tagColor: '#f0e000', active: true,
+      pose: 'Regular Pose + Avatar Hidden',
+      colorways: 'Greyscale + All CCS per Final BOM',
+      mc: false, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'fit', num: 4, name: '3D Fit', subtitle: 'Fit Validation',
+      tagColor: '#22c55e', active: true,
+      pose: 'Regular Pose + Avatar Visible',
+      colorways: 'Greyscale',
+      mc: true, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'sizeset', num: 5, name: '3D Size Set', subtitle: 'Size Validation',
+      tagColor: '#a855f7', active: false,
+      pose: 'Regular Pose + Avatar Visible',
+      colorways: 'Greyscale',
+      mc: false, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'reference', num: 6, name: '3D Reference', subtitle: 'Future Development',
+      tagColor: '#16a34a', active: true,
+      pose: 'Regular Pose + Avatar Visible',
+      colorways: 'Greyscale + All CCS per Final BOM',
+      mc: false, fabric: 'Actual Fabric or Best Substitute',
+    },
+    {
+      key: 'graphics', num: 7, name: '3D Graphics', subtitle: 'Artwork Size Validation',
+      tagColor: '#22d3ee', active: false,
+      pose: 'Regular Pose + Avatar Visible',
+      colorways: 'Graphic/Artwork CCS per Final BOM',
+      mc: false, fabric: 'Actual Fabric or Best Substitute',
+    },
   ];
 
-  // 沒有 stage 的 entries 是一般卡片
   const generalEntries = entries.filter(e => !e.stage);
 
   return `
@@ -615,42 +659,86 @@ function renderStagesPage(section, entries) {
 
     <div class="stage-flow">
       ${stages.map((s, i) => `
-        <div class="stage-box" id="stagebox-${s.key}" onclick="selectStage('${s.key}')" style="cursor:pointer">
+        <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
+          id="stagebox-${s.key}"
+          ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
+          style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
           <div class="stage-num">STAGE ${s.num}</div>
           <div class="stage-name">${s.name}</div>
+          ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收到需求</div>' : ''}
         </div>
         ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
       `).join('')}
     </div>
 
-    <div id="stageContent" style="margin-bottom:16px"></div>
+    <div id="stageContent"></div>
 
     ${generalEntries.map(e => renderCard(e)).join('')}
   `;
 }
 
 function selectStage(key) {
-  // highlight
-  document.querySelectorAll('.stage-box').forEach(b => {
+  const stages = {
+    block:     { num:1, name:'3D Block',     subtitle:'Foundational Asset',            tagColor:'#222',    pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale',                            mc:true  },
+    proto:     { num:2, name:'3D Proto',     subtitle:'Initial Design & Fit Review',   tagColor:'#888',    pose:'Brand Dependent（見 Brand 3D Proto 頁面）',         colorways:'Brand Dependent（見 Brand 3D Proto 頁面）', mc:true  },
+    la:        { num:3, name:'3D LA',        subtitle:'Line Adoption',                 tagColor:'#f0e000', pose:'Regular Pose + Avatar Hidden',                     colorways:'Greyscale + All CCS per Final BOM',    mc:false },
+    fit:       { num:4, name:'3D Fit',       subtitle:'Fit Validation',                tagColor:'#22c55e', pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale',                            mc:true  },
+    reference: { num:6, name:'3D Reference', subtitle:'Future Development',            tagColor:'#16a34a', pose:'Regular Pose + Avatar Visible',                    colorways:'Greyscale + All CCS per Final BOM',    mc:false },
+  };
+
+  const s = stages[key];
+  if (!s) return;
+
+  // highlight selected
+  document.querySelectorAll('.stage-box.stage-active').forEach(b => {
     b.style.borderColor = '';
     b.style.background = '';
   });
   const box = document.getElementById('stagebox-' + key);
   if (box) {
     box.style.borderColor = 'var(--official)';
-    box.style.background = 'rgba(59,130,246,0.1)';
+    box.style.background = 'rgba(59,130,246,0.12)';
   }
 
-  // filter entries for this stage
+  // stage entries from supabase
   const stageEntries = allEntries.filter(e => e.stage === key);
+
   const container = document.getElementById('stageContent');
-
-  if (!stageEntries.length) {
-    container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
-    return;
-  }
-
-  container.innerHTML = stageEntries.map(e => renderCard(e)).join('');
+  container.innerHTML = `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header">
+        <div class="card-title">STAGE ${s.num} — ${s.name}</div>
+        <span style="font-size:11px;color:var(--text-dim)">${s.subtitle}</span>
+        <span class="badge badge-official" style="margin-left:auto">官方規範</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px">
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">WORKFLOW TAG</div>
+          <div style="width:40px;height:16px;background:${s.tagColor};border-radius:3px"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">MC REQUIRED</div>
+          <div style="font-size:13px">${s.mc ? '✅' : '🚫'}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">AVATAR POSE</div>
+          <div style="font-size:12.5px;color:var(--text)">${s.pose}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">COLORWAYS</div>
+          <div style="font-size:12.5px;color:var(--text)">${s.colorways}</div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">FABRIC</div>
+          <div style="font-size:12.5px;color:var(--text)">Actual Fabric or Best Substitute</div>
+        </div>
+      </div>
+    </div>
+    ${stageEntries.length
+      ? stageEntries.map(e => renderCard(e)).join('')
+      : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
+    }
+  `;
 }
 
 
