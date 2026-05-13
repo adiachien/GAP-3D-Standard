@@ -840,7 +840,11 @@ function selectStage(key) {
     </button>
   `).join('');
 
-  const stageEntries = allEntries.filter(e => e.stage === key);
+  // 只抓「樣品種類」section 的 stage 資料
+  const stagesSection = allSections.find(s => s.slug === 'stages');
+  const stageEntries = stagesSection
+    ? allEntries.filter(e => e.section_id === stagesSection.id && e.stage === key)
+    : [];
 
   const relatedSection = `
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07)">
@@ -1042,6 +1046,32 @@ function selectStageTab(pageKey, stageKey) {
     ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey)
     : [];
   const container = document.getElementById(`${pageKey}stageContent`);
+
+  // Stage 2 Proto 特別處理：加 Proto / 聯名款 sub-tab
+  if (stageKey === 'proto' && pageKey !== 'cl') {
+    const protoEntries  = stageEntries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('all'));
+    const collabEntries = stageEntries.filter(e => e.dev_type?.includes('collab'));
+    container.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="${pageKey}-subtab-proto" onclick="switchProtoSubTab('${pageKey}','proto')"
+          style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gap-blue);color:#fff;border:2px solid var(--gap-blue)">
+          Proto
+        </button>
+        <button id="${pageKey}-subtab-collab" onclick="switchProtoSubTab('${pageKey}','collab')"
+          style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text-dim);border:2px solid var(--border)">
+          聯名款（GAP X & Collab）
+        </button>
+      </div>
+      <div id="${pageKey}-proto-panel">
+        ${protoEntries.length ? protoEntries.map(e => renderCard(e)).join('') : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">尚無內容，請至後台新增</div>'}
+      </div>
+      <div id="${pageKey}-collab-panel" style="display:none">
+        ${collabEntries.length ? collabEntries.map(e => renderCard(e)).join('') : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">尚無內容，請至後台新增</div>'}
+      </div>
+    `;
+    return;
+  }
+
   if (pageKey === 'cl') {
     if (!stageEntries.length) {
       container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無 Checklist，請至後台新增</div>';
@@ -1068,6 +1098,22 @@ function selectStageTab(pageKey, stageKey) {
     container.innerHTML = stageEntries.length
       ? stageEntries.map(e => renderCard(e)).join('')
       : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
+  }
+}
+
+function switchProtoSubTab(pageKey, tab) {
+  const protoBtn  = document.getElementById(`${pageKey}-subtab-proto`);
+  const collabBtn = document.getElementById(`${pageKey}-subtab-collab`);
+  const protoPanel  = document.getElementById(`${pageKey}-proto-panel`);
+  const collabPanel = document.getElementById(`${pageKey}-collab-panel`);
+  if (tab === 'proto') {
+    protoBtn.style.background = 'var(--gap-blue)'; protoBtn.style.color = '#fff'; protoBtn.style.borderColor = 'var(--gap-blue)';
+    collabBtn.style.background = 'var(--card)'; collabBtn.style.color = 'var(--text-dim)'; collabBtn.style.borderColor = 'var(--border)';
+    protoPanel.style.display = 'block'; collabPanel.style.display = 'none';
+  } else {
+    collabBtn.style.background = 'var(--gap-blue)'; collabBtn.style.color = '#fff'; collabBtn.style.borderColor = 'var(--gap-blue)';
+    protoBtn.style.background = 'var(--card)'; protoBtn.style.color = 'var(--text-dim)'; protoBtn.style.borderColor = 'var(--border)';
+    collabPanel.style.display = 'block'; protoPanel.style.display = 'none';
   }
 }
 
