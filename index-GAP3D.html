@@ -502,18 +502,7 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
       </div>
 
       <!-- 篩選 Tab -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
-        <button class="fb-filter active" onclick="filterFeedback(this,'all')"
-          style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(59,130,246,0.15);color:#93c5fd">
-          全部
-        </button>
-        ${['開發處內部','業務','DPC','客人','其他'].map(cat => `
-          <button class="fb-filter" onclick="filterFeedback(this,'${cat}')"
-            style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--card);color:var(--text-dim)">
-            ${fbCatIcon(cat)} ${cat}
-          </button>
-        `).join('')}
-      </div>
+      <div id="fbFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
 
       <!-- 留言列表 -->
       <div id="fbList">
@@ -1165,6 +1154,23 @@ function showFeedback() {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-feedback').classList.add('active');
   document.getElementById('nav-feedback').classList.add('active');
+
+  // 渲染篩選按鈕
+  const filtersEl = document.getElementById('fbFilters');
+  const cats = ['開發處內部','業務','DPC','客人','其他'];
+  filtersEl.innerHTML = `
+    <button class="fb-filter" id="fbf-all" onclick="filterFeedback(this,'all')"
+      style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(59,130,246,0.15);color:#93c5fd">
+      全部
+    </button>
+    ${cats.map(cat => `
+      <button class="fb-filter" id="fbf-${cat}" onclick="filterFeedback(this,'${cat}')"
+        style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--card);color:var(--text-dim)">
+        ${fbCatIcon(cat)} ${cat}
+      </button>
+    `).join('')}
+  `;
+
   loadFeedback();
 }
 
@@ -1200,7 +1206,7 @@ function renderFeedbackList(data) {
     return `
       <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <div style="width:28px;height:28px;border-radius:50%;background:var(--gap-blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">
               ${escHtml((f.author||'匿')[0].toUpperCase())}
             </div>
@@ -1212,20 +1218,37 @@ function renderFeedbackList(data) {
               ${fbCatIcon(cat)} ${cat}
             </span>
           </div>
-          <button onclick="deleteFeedback('${f.id}')"
-            style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px"
-            onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
+          <div style="display:flex;gap:4px">
+            <button onclick="editFeedback('${f.id}')"
+              style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px"
+              onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
+            <button onclick="deleteFeedback('${f.id}')"
+              style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px"
+              onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
+          </div>
         </div>
-        <div style="display:flex;gap:14px;align-items:flex-start">
-          ${f.image_url ? `
-            <div style="flex-shrink:0">
-              <img src="${f.image_url}" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"
-                onclick="window.open('${f.image_url}','_blank')">
-            </div>
-          ` : ''}
-          ${f.content ? `
-            <div style="flex:1;font-size:13px;color:var(--text);line-height:1.75;white-space:pre-wrap">${escHtml(f.content)}</div>
-          ` : ''}
+        <div id="fb-view-${f.id}">
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            ${f.image_url ? `
+              <div style="flex-shrink:0">
+                <img src="${f.image_url}" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"
+                  onclick="window.open('${f.image_url}','_blank')">
+              </div>
+            ` : ''}
+            ${f.content ? `
+              <div style="flex:1;font-size:13px;color:var(--text);line-height:1.75;white-space:pre-wrap">${escHtml(f.content)}</div>
+            ` : ''}
+          </div>
+        </div>
+        <div id="fb-edit-${f.id}" style="display:none">
+          <textarea id="fb-edit-text-${f.id}"
+            style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6">${escHtml(f.content||'')}</textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+            <button onclick="cancelEdit('${f.id}')"
+              style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="saveEdit('${f.id}')"
+              style="background:var(--gap-blue);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">儲存</button>
+          </div>
         </div>
       </div>
     `;
@@ -1351,6 +1374,26 @@ function clearFbImage() {
   document.getElementById('fbImagePreview').style.display = 'none';
   document.getElementById('fbDropZone').style.display = 'block';
   document.getElementById('fbFileInput').value = '';
+}
+
+function editFeedback(id) {
+  document.getElementById('fb-view-' + id).style.display = 'none';
+  document.getElementById('fb-edit-' + id).style.display = 'block';
+}
+
+function cancelEdit(id) {
+  document.getElementById('fb-view-' + id).style.display = 'block';
+  document.getElementById('fb-edit-' + id).style.display = 'none';
+}
+
+async function saveEdit(id) {
+  const content = document.getElementById('fb-edit-text-' + id).value.trim();
+  const { error } = await sb.from('feedback').update({ content }).eq('id', id);
+  if (error) { alert('儲存失敗：' + error.message); return; }
+  // update local data
+  const item = allFeedbackData.find(f => f.id === id);
+  if (item) item.content = content;
+  renderFeedbackList(allFeedbackData);
 }
 
 function formatDate(iso) {
