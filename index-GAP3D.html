@@ -421,7 +421,7 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
       <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
       <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>重要注意</div>
     </div>
-    <a href="admin.html" class="btn-admin">✏️ 編輯</a>
+    <a id="editBtn" href="admin.html" class="btn-admin">✏️ 編輯</a>
   </div>
 </header>
 
@@ -579,6 +579,9 @@ function showSection(slug) {
   document.getElementById('page-feedback').classList.remove('active');
   document.getElementById('page-content').classList.add('active');
 
+  // update edit button link
+  document.getElementById('editBtn').href = `admin.html?section=${slug}`;
+
   // nav highlight
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const navEl = document.getElementById('nav-' + slug);
@@ -637,9 +640,15 @@ function renderCard(e) {
   };
   const badgeClass = { official:'badge-official', internal:'badge-internal', warning:'badge-warning' };
 
-  const paths = (e.paths || []).map(p =>
-    `<span class="path-block">${escHtml(p)}</span>`
-  ).join('');
+  const paths = (e.paths || []).map(p => `
+    <div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+      <button onclick="copyPath('${escHtml(p)}')"
+        style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap">
+        📋 copy
+      </button>
+      <span class="path-block" style="margin:0;flex:1">${escHtml(p)}</span>
+    </div>
+  `).join('');
 
   const content = e.content
     ? `<div class="card-content">${escHtml(e.content)}</div>`
@@ -975,9 +984,9 @@ function renderPrefitPage(section, entries) {
   const la     = entries.filter(e => e.dev_type?.includes('la'));
 
   const tabs = [
-    { key: 'proto',  label: '一般 Proto' },
-    { key: 'collab', label: '聯名款 Collab' },
-    { key: 'la',     label: 'LA' },
+    { key: 'proto',  label: '一般 Proto',       data: proto  },
+    { key: 'collab', label: '聯名款 Collab',     data: collab },
+    { key: 'la',     label: 'LA',               data: la     },
   ];
 
   return `
@@ -986,38 +995,34 @@ function renderPrefitPage(section, entries) {
       <div class="page-desc">點選開發類型查看對應的 Prefit 規則</div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:0;margin-bottom:20px;flex-wrap:wrap;gap:6px">
-      ${tabs.map((t,i) => `
+    <div class="stage-flow" style="margin-bottom:20px">
+      ${tabs.map((t, i) => `
         <div id="pfbox-${t.key}"
           onclick="selectPrefitTab('${t.key}')"
-          style="background:var(--navy-mid);border:1px solid ${i===0?'var(--official)':'var(--border)'};border-radius:8px;padding:10px 20px;text-align:center;cursor:pointer;transition:all 0.15s;${i===0?'background:rgba(59,130,246,0.12)':''}">
-          <div style="font-size:13px;font-weight:600;color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
+          class="stage-box stage-active"
+          style="cursor:pointer;${i===0 ? 'border-color:var(--official);background:rgba(59,130,246,0.12)' : ''}">
+          <div class="stage-name" style="color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
         </div>
-        ${i < tabs.length-1 ? '<span style="color:var(--text-dim);font-size:16px">→</span>' : ''}
+        ${i < tabs.length-1 ? '<span class="stage-arrow">→</span>' : ''}
       `).join('')}
     </div>
 
-    <div id="pf-proto" class="pf-panel">
-      ${proto.length ? proto.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-    </div>
-    <div id="pf-collab" class="pf-panel" style="display:none">
-      ${collab.length ? collab.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-    </div>
-    <div id="pf-la" class="pf-panel" style="display:none">
-      ${la.length ? la.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-    </div>
+    ${tabs.map((t, i) => `
+      <div id="pf-${t.key}" class="pf-panel" ${i!==0 ? 'style="display:none"' : ''}>
+        ${t.data.length ? t.data.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+      </div>
+    `).join('')}
   `;
 }
 
 function selectPrefitTab(key) {
-  const tabs = ['proto','collab','la'];
-  tabs.forEach(t => {
-    const box = document.getElementById('pfbox-' + t);
+  ['proto','collab','la'].forEach(t => {
+    const box   = document.getElementById('pfbox-' + t);
     const panel = document.getElementById('pf-' + t);
     if (box) {
-      box.style.borderColor = t === key ? 'var(--official)' : 'var(--border)';
-      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : 'var(--navy-mid)';
-      box.querySelector('div').style.color = t === key ? '#fff' : 'var(--text-dim)';
+      box.style.borderColor = t === key ? 'var(--official)' : '';
+      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : '';
+      box.querySelector('.stage-name').style.color = t === key ? '#fff' : 'var(--text-dim)';
     }
     if (panel) panel.style.display = t === key ? 'block' : 'none';
   });

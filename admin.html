@@ -213,7 +213,13 @@ let currentSectionId = null, editingEntryId = null;
 async function init() {
   await loadData();
   renderSectionTabs();
-  if (allSections.length) selectSection(allSections[0].id);
+  // 讀取 URL 參數，自動選到對應分類
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('section');
+  const targetSection = slug
+    ? allSections.find(s => s.slug === slug)
+    : allSections[0];
+  if (targetSection) selectSection(targetSection.id);
 }
 
 async function loadData() {
