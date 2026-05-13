@@ -598,84 +598,72 @@ function renderCard(e) {
 // ── Special Pages ──────────────────────────────
 function renderStagesPage(section, entries) {
   const stages = [
-    {
-      key: 'block', num: 1, name: '3D Block', subtitle: 'Foundational Asset',
-      tagColor: '#222', active: false,
-      pose: 'Regular Pose + Avatar Visible',
-      colorways: 'Greyscale',
-      mc: true, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'proto', num: 2, name: '3D Proto', subtitle: 'Initial Design & Fit Review',
-      tagColor: '#888', active: true,
-      pose: 'Brand Dependent（見 Brand 3D Proto 頁面）',
-      colorways: 'Brand Dependent（見 Brand 3D Proto 頁面）',
-      mc: true, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'la', num: 3, name: '3D LA', subtitle: 'Line Adoption / Adoption Validation',
-      tagColor: '#f0e000', active: true,
-      pose: 'Regular Pose + Avatar Hidden',
-      colorways: 'Greyscale + All CCS per Final BOM',
-      mc: false, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'fit', num: 4, name: '3D Fit', subtitle: 'Fit Validation',
-      tagColor: '#22c55e', active: true,
-      pose: 'Regular Pose + Avatar Visible',
-      colorways: 'Greyscale',
-      mc: true, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'sizeset', num: 5, name: '3D Size Set', subtitle: 'Size Validation',
-      tagColor: '#a855f7', active: false,
-      pose: 'Regular Pose + Avatar Visible',
-      colorways: 'Greyscale',
-      mc: false, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'reference', num: 6, name: '3D Reference', subtitle: 'Future Development',
-      tagColor: '#16a34a', active: true,
-      pose: 'Regular Pose + Avatar Visible',
-      colorways: 'Greyscale + All CCS per Final BOM',
-      mc: false, fabric: 'Actual Fabric or Best Substitute',
-    },
-    {
-      key: 'graphics', num: 7, name: '3D Graphics', subtitle: 'Artwork Size Validation',
-      tagColor: '#22d3ee', active: false,
-      pose: 'Regular Pose + Avatar Visible',
-      colorways: 'Graphic/Artwork CCS per Final BOM',
-      mc: false, fabric: 'Actual Fabric or Best Substitute',
-    },
+    { key: 'block',     num: 1, name: '3D Block',    subtitle: 'Foundational Asset',          tagColor: '#222',    active: false },
+    { key: 'proto',     num: 2, name: '3D Proto',    subtitle: 'Initial Design & Fit Review', tagColor: '#888',    active: true  },
+    { key: 'la',        num: 3, name: '3D LA',       subtitle: 'Line Adoption',               tagColor: '#f0e000', active: true  },
+    { key: 'fit',       num: 4, name: '3D Fit',      subtitle: 'Fit Validation',              tagColor: '#22c55e', active: true  },
+    { key: 'sizeset',   num: 5, name: '3D Size Set', subtitle: 'Size Validation',             tagColor: '#a855f7', active: false },
+    { key: 'reference', num: 6, name: '3D RS',       subtitle: 'Future Development',          tagColor: '#16a34a', active: true  },
+    { key: 'graphics',  num: 7, name: '3D Graphics', subtitle: 'Artwork Size Validation',     tagColor: '#22d3ee', active: false },
   ];
 
   const generalEntries = entries.filter(e => !e.stage);
+  const informalSection = allSections.find(s => s.slug === 'informal');
+  const informalEntries = informalSection
+    ? allEntries.filter(e => e.section_id === informalSection.id)
+    : [];
 
   return `
     <div class="page-header">
       <div class="page-title">📋 ${section.name}</div>
-      <div class="page-desc">點選 Stage 查看對應規範，所有正規開發都需要上傳 CLO-SET</div>
     </div>
 
-    <div class="stage-flow">
-      ${stages.map((s, i) => `
-        <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
-          id="stagebox-${s.key}"
-          ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
-          style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
-          <div class="stage-num">STAGE ${s.num}</div>
-          <div class="stage-name">${s.name}</div>
-          ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
-        </div>
-        ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
-      `).join('')}
+    <div class="card" style="margin-bottom:20px;border-color:rgba(59,130,246,0.25);background:rgba(59,130,246,0.06)">
+      <div style="font-size:13px;font-weight:700;color:#93c5fd;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.8">
+        請業務確認 Centric 是否有下 SPR（Sample Request）<br>
+        ・有 SPR → <strong style="color:#6ee7b7">正單</strong>，需上傳 CLO-SET<br>
+        ・沒有 SPR → <strong style="color:#fcd34d">非正單</strong>，只需提供 3D 照片
+      </div>
+      <div style="font-size:11.5px;color:var(--text-dim);margin-top:8px">我們自己也可以去 Centric 看，但通常請業務確認 😄</div>
     </div>
 
-    <div id="stageContent"></div>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="switchTab(this,'main','formal')" style="padding:8px 20px;font-size:13px">✅ 正單（上傳 CLO-SET）</button>
+      <button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:13px">📸 非正單（不上傳 CLO-SET）</button>
+    </div>
 
-    ${generalEntries.map(e => renderCard(e)).join('')}
+    <div class="tab-panel active" id="main-formal">
+      <div style="font-size:12.5px;color:var(--text-dim);margin:12px 0 16px">客人有在 Centric 下 SPR，點選 Stage 查看對應規範</div>
+      <div class="stage-flow">
+        ${stages.map((s, i) => `
+          <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
+            id="stagebox-${s.key}"
+            ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
+            style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
+            <div class="stage-num">STAGE ${s.num}</div>
+            <div class="stage-name">${s.name}</div>
+            ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
+          </div>
+          ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
+        `).join('')}
+      </div>
+      <div id="stageContent" style="margin-top:16px"></div>
+      ${generalEntries.map(e => renderCard(e)).join('')}
+    </div>
+
+    <div class="tab-panel" id="main-informal">
+      <div style="font-size:12.5px;color:var(--text-dim);margin:12px 0 16px">客人沒有在 Centric 下 SPR，只需提供 3D 照片，不需上傳 CLO-SET</div>
+      ${informalEntries.length
+        ? informalEntries.map(e => renderCard(e)).join('')
+        : `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:13px">
+            詳細內容請至左側「📸 非正單流程」查看
+           </div>`
+      }
+    </div>
   `;
 }
+
 
 function selectStage(key) {
   const stages = {
