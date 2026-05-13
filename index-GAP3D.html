@@ -758,9 +758,11 @@ function selectStage(key) {
           <span style="font-size:11px;color:var(--text-dim)">${s.subtitle}</span>
           <span class="badge badge-official" style="margin-left:auto">官方規範</span>
         </div>
-        <div class="type-tabs" style="margin-top:8px">
+        <div style="display:flex;gap:8px;margin-top:12px;margin-bottom:4px">
           ${s.tabs.map((t,i) => `
-            <button class="type-tab ${i===0?'active':''}" onclick="switchStageTab(this,'stab-${i}')">${t.label}</button>
+            <button onclick="switchStageTab(this,'stab-${i}')"
+              style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;${i===0 ? 'background:var(--gap-blue);color:#fff;border:2px solid var(--gap-blue)' : 'background:var(--card);color:var(--text-dim);border:2px solid var(--border)'}"
+              class="stage-proto-tab ${i===0?'stab-active':''}">${t.label}</button>
           `).join('')}
         </div>
         ${s.tabs.map((t,i) => `
@@ -793,8 +795,16 @@ function selectStage(key) {
 }
 
 function switchStageTab(btn, panelId) {
-  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  btn.closest('div').querySelectorAll('.stage-proto-tab').forEach(b => {
+    b.style.background = 'var(--card)';
+    b.style.color = 'var(--text-dim)';
+    b.style.borderColor = 'var(--border)';
+    b.classList.remove('stab-active');
+  });
+  btn.style.background = 'var(--gap-blue)';
+  btn.style.color = '#fff';
+  btn.style.borderColor = 'var(--gap-blue)';
+  btn.classList.add('stab-active');
   document.querySelectorAll('[id^="stab-"]').forEach(p => p.classList.remove('active'));
   document.getElementById(panelId)?.classList.add('active');
 }
@@ -822,7 +832,12 @@ function renderAvatarPage(section, entries) {
             <span class="badge badge-official">官方規範</span>
           </div>
           <div class="card-content">${escHtml(e.content||'')}</div>
-          ${(e.paths||[]).map(p=>`<span class="path-block">${escHtml(p)}</span>`).join('')}
+          ${(e.paths||[]).map(p=>`
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+              <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
+              <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
+            </div>
+          `).join('')}
         </div>
       </div>
     `).join('')}
@@ -835,6 +850,29 @@ function switchAvatarTab(btn, panelId) {
   btn.classList.add('active');
   document.querySelectorAll('[id^="avp-"]').forEach(p => p.classList.remove('active'));
   document.getElementById(panelId)?.classList.add('active');
+}
+
+function copyPath(path) {
+  navigator.clipboard.writeText(path).then(() => {
+    showCopyToast();
+  }).catch(() => {
+    // fallback
+    const el = document.createElement('textarea');
+    el.value = path;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showCopyToast();
+  });
+}
+
+function showCopyToast() {
+  const toast = document.createElement('div');
+  toast.textContent = '✓ 已複製路徑';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e3347;border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;padding:8px 16px;border-radius:8px;font-size:13px;z-index:999;transition:opacity 0.3s';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
 }
 
 function renderPrefitPage(section, entries) {
