@@ -455,6 +455,53 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
       <div class="loading"><div class="spinner"></div>載入中…</div>
     </div>
 
+    <!-- 留言板頁 -->
+    <div class="page" id="page-feedback">
+      <div class="page-header">
+        <div class="page-title">💬 留言板</div>
+        <div class="page-desc">遇到問題或有想法都可以留言，支援貼上截圖（Ctrl+V）或拖曳圖片</div>
+      </div>
+
+      <!-- 新增留言 -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center">
+          <input id="fbAuthor" placeholder="名字（可不填）"
+            style="width:160px;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12.5px;color:var(--text);font-family:inherit;outline:none">
+          <span style="font-size:12px;color:var(--text-dim)">留言以匿名發布</span>
+        </div>
+        <textarea id="fbContent" placeholder="輸入留言內容…（也可以直接貼上截圖 Ctrl+V）"
+          style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6"
+          onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)"></textarea>
+
+        <!-- 圖片預覽 -->
+        <div id="fbImagePreview" style="display:none;margin-top:8px;position:relative;width:fit-content">
+          <img id="fbPreviewImg" style="max-height:160px;max-width:100%;border-radius:6px;border:1px solid var(--border)">
+          <button onclick="clearFbImage()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:13px;cursor:pointer;line-height:1">✕</button>
+        </div>
+
+        <!-- 拖曳提示 -->
+        <div id="fbDropZone"
+          style="margin-top:8px;border:1.5px dashed var(--border);border-radius:7px;padding:12px;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer"
+          onclick="document.getElementById('fbFileInput').click()"
+          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          📎 點擊或拖曳圖片到這裡上傳
+        </div>
+        <input type="file" id="fbFileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button onclick="submitFeedback()"
+            style="background:var(--gap-blue);color:#fff;border:none;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+            發布留言
+          </button>
+        </div>
+      </div>
+
+      <!-- 留言列表 -->
+      <div id="fbList">
+        <div class="loading"><div class="spinner"></div>載入中…</div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -490,7 +537,6 @@ async function loadData() {
 // ── Sidebar Nav ────────────────────────────────
 function renderNav() {
   const menu = document.getElementById('navMenu');
-  // 依 group_name 分組
   const groups = {};
   allSections.forEach(s => {
     if (!groups[s.group_name]) groups[s.group_name] = [];
@@ -506,7 +552,13 @@ function renderNav() {
         </div>
       `).join('')}
     </div>
-  `).join('');
+  `).join('') + `
+    <div class="section-group" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+      <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
+        <span class="nav-icon">💬</span>留言板（即時回饋）
+      </div>
+    </div>
+  `;
 }
 
 // ── Show Section ───────────────────────────────
@@ -1070,6 +1122,157 @@ function resetChecklist(id) {
 
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Feedback / 留言板 ───────────────────────────
+let fbImageFile = null;
+let fbImageDataUrl = null;
+
+function showFeedback() {
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-feedback').classList.add('active');
+  document.getElementById('nav-feedback').classList.add('active');
+  loadFeedback();
+}
+
+async function loadFeedback() {
+  const { data, error } = await sb
+    .from('feedback')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const list = document.getElementById('fbList');
+  if (error || !data?.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px">還沒有留言，來第一個留言吧！</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(f => `
+    <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--gap-blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">
+            ${escHtml((f.author||'匿')[0].toUpperCase())}
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#fff">${escHtml(f.author||'匿名')}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${formatDate(f.created_at)}</div>
+          </div>
+        </div>
+        <button onclick="deleteFeedback('${f.id}')"
+          style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px"
+          onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
+      </div>
+      ${f.content ? `<div style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">${escHtml(f.content)}</div>` : ''}
+      ${f.image_url ? `<img src="${f.image_url}" style="max-width:100%;max-height:400px;border-radius:8px;margin-top:10px;border:1px solid var(--border)" onclick="window.open('${f.image_url}','_blank')">` : ''}
+    </div>
+  `).join('');
+}
+
+async function submitFeedback() {
+  const author  = document.getElementById('fbAuthor').value.trim() || '匿名';
+  const content = document.getElementById('fbContent').value.trim();
+
+  if (!content && !fbImageFile) {
+    alert('請輸入留言內容或上傳圖片');
+    return;
+  }
+
+  let image_url = null;
+
+  if (fbImageFile) {
+    const ext = fbImageFile.name.split('.').pop() || 'png';
+    const filename = `${Date.now()}.${ext}`;
+    const { data, error } = await sb.storage
+      .from('feedback-images')
+      .upload(filename, fbImageFile, { contentType: fbImageFile.type });
+
+    if (error) { alert('圖片上傳失敗：' + error.message); return; }
+
+    const { data: urlData } = sb.storage
+      .from('feedback-images')
+      .getPublicUrl(filename);
+    image_url = urlData.publicUrl;
+  }
+
+  const { error } = await sb.from('feedback').insert({ author, content, image_url });
+  if (error) { alert('發布失敗：' + error.message); return; }
+
+  // reset
+  document.getElementById('fbContent').value = '';
+  document.getElementById('fbAuthor').value = '';
+  clearFbImage();
+  loadFeedback();
+}
+
+async function deleteFeedback(id) {
+  if (!confirm('確定要刪除這則留言嗎？')) return;
+  await sb.from('feedback').delete().eq('id', id);
+  document.getElementById('fb-' + id)?.remove();
+}
+
+// 圖片處理
+function handlePaste(e) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      setFbImage(file);
+      e.preventDefault();
+      break;
+    }
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  handleDragLeave(e);
+  const file = e.dataTransfer?.files?.[0];
+  if (file?.type.startsWith('image/')) setFbImage(file);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('fbDropZone').style.borderColor = 'var(--official)';
+  document.getElementById('fbDropZone').style.background = 'rgba(59,130,246,0.05)';
+}
+
+function handleDragLeave(e) {
+  document.getElementById('fbDropZone').style.borderColor = 'var(--border)';
+  document.getElementById('fbDropZone').style.background = '';
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (file) setFbImage(file);
+}
+
+function setFbImage(file) {
+  fbImageFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    fbImageDataUrl = e.target.result;
+    document.getElementById('fbPreviewImg').src = fbImageDataUrl;
+    document.getElementById('fbImagePreview').style.display = 'block';
+    document.getElementById('fbDropZone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFbImage() {
+  fbImageFile = null;
+  fbImageDataUrl = null;
+  document.getElementById('fbImagePreview').style.display = 'none';
+  document.getElementById('fbDropZone').style.display = 'block';
+  document.getElementById('fbFileInput').value = '';
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
 // ── Start ──────────────────────────────────────
