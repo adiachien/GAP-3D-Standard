@@ -973,53 +973,103 @@ function renderPrefitPage(section, entries) {
   const proto  = entries.filter(e => e.dev_type?.includes('proto'));
   const collab = entries.filter(e => e.dev_type?.includes('collab'));
   const la     = entries.filter(e => e.dev_type?.includes('la'));
+
+  const tabs = [
+    { key: 'proto',  label: '一般 Proto' },
+    { key: 'collab', label: '聯名款 Collab' },
+    { key: 'la',     label: 'LA' },
+  ];
+
   return `
     <div class="page-header">
       <div class="page-title">👗 ${section.name}</div>
-      <div class="page-desc">依開發類型查看對應的 Prefit 規則</div>
+      <div class="page-desc">點選開發類型查看對應的 Prefit 規則</div>
     </div>
-    <div class="type-tabs">
-      <button class="type-tab active" onclick="switchTab(this,'pf','proto')">一般 Proto</button>
-      <button class="type-tab" onclick="switchTab(this,'pf','collab')">聯名款 Collab</button>
-      <button class="type-tab" onclick="switchTab(this,'pf','la')">LA</button>
+
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:20px;flex-wrap:wrap;gap:6px">
+      ${tabs.map((t,i) => `
+        <div id="pfbox-${t.key}"
+          onclick="selectPrefitTab('${t.key}')"
+          style="background:var(--navy-mid);border:1px solid ${i===0?'var(--official)':'var(--border)'};border-radius:8px;padding:10px 20px;text-align:center;cursor:pointer;transition:all 0.15s;${i===0?'background:rgba(59,130,246,0.12)':''}">
+          <div style="font-size:13px;font-weight:600;color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
+        </div>
+        ${i < tabs.length-1 ? '<span style="color:var(--text-dim);font-size:16px">→</span>' : ''}
+      `).join('')}
     </div>
-    <div class="tab-panel active" id="pf-proto">
+
+    <div id="pf-proto" class="pf-panel">
       ${proto.length ? proto.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
     </div>
-    <div class="tab-panel" id="pf-collab">
+    <div id="pf-collab" class="pf-panel" style="display:none">
       ${collab.length ? collab.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
     </div>
-    <div class="tab-panel" id="pf-la">
+    <div id="pf-la" class="pf-panel" style="display:none">
       ${la.length ? la.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
     </div>
   `;
 }
 
+function selectPrefitTab(key) {
+  const tabs = ['proto','collab','la'];
+  tabs.forEach(t => {
+    const box = document.getElementById('pfbox-' + t);
+    const panel = document.getElementById('pf-' + t);
+    if (box) {
+      box.style.borderColor = t === key ? 'var(--official)' : 'var(--border)';
+      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : 'var(--navy-mid)';
+      box.querySelector('div').style.color = t === key ? '#fff' : 'var(--text-dim)';
+    }
+    if (panel) panel.style.display = t === key ? 'block' : 'none';
+  });
+}
+
 function renderDetailsPage(section, entries) {
-  const proto  = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('collab'));
-  const la     = entries.filter(e => e.dev_type?.includes('la'));
-  const all    = entries.filter(e => e.dev_type?.includes('all'));
+  const proto = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('collab'));
+  const la    = entries.filter(e => e.dev_type?.includes('la'));
+  const all   = entries.filter(e => e.dev_type?.includes('all'));
+
+  const tabs = [
+    { key: 'proto', label: 'Proto / 聯名' },
+    { key: 'la',    label: 'LA' },
+  ];
 
   return `
     <div class="page-header">
       <div class="page-title">✏️ ${section.name}</div>
-      <div class="page-desc">各開發類型的注意事項說明</div>
+      <div class="page-desc">點選開發類型查看對應的細節注意事項</div>
     </div>
-    <div class="type-tabs">
-      <button class="type-tab active" onclick="switchTab(this,'dt','proto')">Proto / 聯名</button>
-      <button class="type-tab" onclick="switchTab(this,'dt','la')">LA</button>
+
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap">
+      ${tabs.map((t,i) => `
+        <div id="dtbox-${t.key}"
+          onclick="selectDetailsTab('${t.key}')"
+          style="background:var(--navy-mid);border:1px solid ${i===0?'var(--official)':'var(--border)'};border-radius:8px;padding:10px 20px;text-align:center;cursor:pointer;transition:all 0.15s;${i===0?'background:rgba(59,130,246,0.12)':''}">
+          <div style="font-size:13px;font-weight:600;color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
+        </div>
+        ${i < tabs.length-1 ? '<span style="color:var(--text-dim);font-size:16px">→</span>' : ''}
+      `).join('')}
     </div>
-    <div class="tab-panel active" id="dt-proto">
-      ${[...all, ...proto].length
-        ? [...all, ...proto].map(e => renderCard(e)).join('')
-        : '<div class="loading" style="padding:20px">尚無資料</div>'}
+
+    <div id="dt-proto" class="dt-panel">
+      ${[...all,...proto].length ? [...all,...proto].map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
     </div>
-    <div class="tab-panel" id="dt-la">
-      ${[...all, ...la].length
-        ? [...all, ...la].map(e => renderCard(e)).join('')
-        : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    <div id="dt-la" class="dt-panel" style="display:none">
+      ${[...all,...la].length ? [...all,...la].map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
     </div>
   `;
+}
+
+function selectDetailsTab(key) {
+  ['proto','la'].forEach(t => {
+    const box   = document.getElementById('dtbox-' + t);
+    const panel = document.getElementById('dt-' + t);
+    if (box) {
+      box.style.borderColor = t === key ? 'var(--official)' : 'var(--border)';
+      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : 'var(--navy-mid)';
+      box.querySelector('div').style.color = t === key ? '#fff' : 'var(--text-dim)';
+    }
+    if (panel) panel.style.display = t === key ? 'block' : 'none';
+  });
 }
 
 function renderChecklistPage(section, entries) {
