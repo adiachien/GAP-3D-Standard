@@ -315,8 +315,10 @@ function openEditEntry(id) {
 }
 
 function toggleStageField(sectionId) {
-  const stagesSection = allSections.find(s=>s.slug==='stages');
-  const show = stagesSection && sectionId === stagesSection.id;
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist'].includes(s.slug)
+  );
+  const show = stageSections.some(s => s.id === sectionId);
   document.getElementById('stageField').style.display = show ? 'block' : 'none';
 }
 

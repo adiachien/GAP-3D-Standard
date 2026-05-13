@@ -743,7 +743,7 @@ function selectStage(key) {
       tagColor: '#888', hasTabs: true,
       tabs: [
         {
-          label: '一般 Proto',
+          label: 'Proto',
           mc: true,
           pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
           colorways: '灰色',
@@ -978,147 +978,107 @@ function showCopyToast() {
   setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
 }
 
-function renderPrefitPage(section, entries) {
-  const proto  = entries.filter(e => e.dev_type?.includes('proto'));
-  const collab = entries.filter(e => e.dev_type?.includes('collab'));
-  const la     = entries.filter(e => e.dev_type?.includes('la'));
-
-  const tabs = [
-    { key: 'proto',  label: '一般 Proto',       data: proto  },
-    { key: 'collab', label: '聯名款 Collab',     data: collab },
-    { key: 'la',     label: 'LA',               data: la     },
+// ── 共用 Stage 流程介面 ────────────────────────
+function renderStageBasedPage(section, entries, pageKey, title, desc) {
+  const stageList = [
+    { key: 'block',     num: 1, name: '3D Block',    active: false },
+    { key: 'proto',     num: 2, name: '3D Proto',    active: true  },
+    { key: 'la',        num: 3, name: '3D LA',       active: true  },
+    { key: 'fit',       num: 4, name: '3D Fit',      active: true  },
+    { key: 'sizeset',   num: 5, name: '3D Size Set', active: false },
+    { key: 'reference', num: 6, name: '3D RS',       active: true  },
+    { key: 'graphics',  num: 7, name: '3D Graphics', active: false },
   ];
-
+  const informalSection = allSections.find(s => s.slug === 'informal');
+  const informalEntries = informalSection
+    ? allEntries.filter(e => e.section_id === informalSection.id)
+    : [];
   return `
     <div class="page-header">
-      <div class="page-title">👗 ${section.name}</div>
-      <div class="page-desc">點選開發類型查看對應的 Prefit 規則</div>
-    </div>
-
-    <div class="stage-flow" style="margin-bottom:20px">
-      ${tabs.map((t, i) => `
-        <div id="pfbox-${t.key}"
-          onclick="selectPrefitTab('${t.key}')"
-          class="stage-box stage-active"
-          style="cursor:pointer;${i===0 ? 'border-color:var(--official);background:rgba(59,130,246,0.12)' : ''}">
-          <div class="stage-name" style="color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
-        </div>
-        ${i < tabs.length-1 ? '<span class="stage-arrow">→</span>' : ''}
-      `).join('')}
-    </div>
-
-    ${tabs.map((t, i) => `
-      <div id="pf-${t.key}" class="pf-panel" ${i!==0 ? 'style="display:none"' : ''}>
-        ${t.data.length ? t.data.map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-      </div>
-    `).join('')}
-  `;
-}
-
-function selectPrefitTab(key) {
-  ['proto','collab','la'].forEach(t => {
-    const box   = document.getElementById('pfbox-' + t);
-    const panel = document.getElementById('pf-' + t);
-    if (box) {
-      box.style.borderColor = t === key ? 'var(--official)' : '';
-      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : '';
-      box.querySelector('.stage-name').style.color = t === key ? '#fff' : 'var(--text-dim)';
-    }
-    if (panel) panel.style.display = t === key ? 'block' : 'none';
-  });
-}
-
-function renderDetailsPage(section, entries) {
-  const proto = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('collab'));
-  const la    = entries.filter(e => e.dev_type?.includes('la'));
-  const all   = entries.filter(e => e.dev_type?.includes('all'));
-
-  const tabs = [
-    { key: 'proto', label: 'Proto / 聯名' },
-    { key: 'la',    label: 'LA' },
-  ];
-
-  return `
-    <div class="page-header">
-      <div class="page-title">✏️ ${section.name}</div>
-      <div class="page-desc">點選開發類型查看對應的細節注意事項</div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap">
-      ${tabs.map((t,i) => `
-        <div id="dtbox-${t.key}"
-          onclick="selectDetailsTab('${t.key}')"
-          style="background:var(--navy-mid);border:1px solid ${i===0?'var(--official)':'var(--border)'};border-radius:8px;padding:10px 20px;text-align:center;cursor:pointer;transition:all 0.15s;${i===0?'background:rgba(59,130,246,0.12)':''}">
-          <div style="font-size:13px;font-weight:600;color:${i===0?'#fff':'var(--text-dim)'}">${t.label}</div>
-        </div>
-        ${i < tabs.length-1 ? '<span style="color:var(--text-dim);font-size:16px">→</span>' : ''}
-      `).join('')}
-    </div>
-
-    <div id="dt-proto" class="dt-panel">
-      ${[...all,...proto].length ? [...all,...proto].map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-    </div>
-    <div id="dt-la" class="dt-panel" style="display:none">
-      ${[...all,...la].length ? [...all,...la].map(e => renderCard(e)).join('') : '<div class="loading" style="padding:20px">尚無資料</div>'}
-    </div>
-  `;
-}
-
-function selectDetailsTab(key) {
-  ['proto','la'].forEach(t => {
-    const box   = document.getElementById('dtbox-' + t);
-    const panel = document.getElementById('dt-' + t);
-    if (box) {
-      box.style.borderColor = t === key ? 'var(--official)' : 'var(--border)';
-      box.style.background  = t === key ? 'rgba(59,130,246,0.12)' : 'var(--navy-mid)';
-      box.querySelector('div').style.color = t === key ? '#fff' : 'var(--text-dim)';
-    }
-    if (panel) panel.style.display = t === key ? 'block' : 'none';
-  });
-}
-
-function renderChecklistPage(section, entries) {
-  const proto = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('all'));
-  const la    = entries.filter(e => e.dev_type?.includes('la'));
-
-  const makeChecklist = (items, id) => `
-    <div class="checklist" id="${id}">
-      ${items.flatMap(e => {
-        if (e.is_checklist && e.checklist_items?.length) {
-          return e.checklist_items.map(ci => `
-            <div class="check-item" onclick="toggleCheck(this)">
-              <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(this.parentElement)">
-              <span>${escHtml(ci.text)}${ci.path ? `<span class="path-block">${escHtml(ci.path)}</span>` : ''}</span>
-            </div>
-          `);
-        }
-        return [`
-          <div class="check-item" onclick="toggleCheck(this)">
-            <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(this.parentElement)">
-            <span>${escHtml(e.title)}${(e.paths||[]).map(p=>`<span class="path-block">${escHtml(p)}</span>`).join('')}</span>
-          </div>
-        `];
-      }).join('')}
-    </div>
-    <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
-  `;
-
-  return `
-    <div class="page-header">
-      <div class="page-title">✅ ${section.name}</div>
-      <div class="page-desc">提交前必須確認的所有項目，點擊可勾選</div>
+      <div class="page-title">${title}</div>
+      <div class="page-desc">${desc}</div>
     </div>
     <div class="type-tabs">
-      <button class="type-tab active" onclick="switchTab(this,'cl','proto')">Proto / 聯名</button>
-      <button class="type-tab" onclick="switchTab(this,'cl','la')">LA</button>
+      <button class="type-tab active" onclick="switchTab(this,'${pageKey}main','formal')" style="padding:8px 20px;font-size:13px">✅ 正單（上傳 CLO-SET）</button>
+      <button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:13px">📸 非正單（不上傳 CLO-SET）</button>
     </div>
-    <div class="tab-panel active" id="cl-proto">
-      ${proto.length ? makeChecklist(proto,'checklist-proto') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    <div class="tab-panel active" id="${pageKey}main-formal">
+      <div style="font-size:12.5px;color:var(--text-dim);margin:12px 0 16px">點選 Stage 查看對應內容</div>
+      <div class="stage-flow">
+        ${stageList.map((s, i) => `
+          <div id="${pageKey}box-${s.key}"
+            ${s.active ? `onclick="selectStageTab('${pageKey}','${s.key}')"` : ''}
+            class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
+            style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
+            <div class="stage-num">STAGE ${s.num}</div>
+            <div class="stage-name">${s.name}</div>
+            ${!s.active ? '<div style="font-size:9px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
+          </div>
+          ${i < stageList.length-1 ? '<span class="stage-arrow">→</span>' : ''}
+        `).join('')}
+      </div>
+      <div id="${pageKey}stageContent" style="margin-top:16px"></div>
     </div>
-    <div class="tab-panel" id="cl-la">
-      ${la.length ? makeChecklist(la,'checklist-la') : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    <div class="tab-panel" id="${pageKey}main-informal">
+      <div style="font-size:12.5px;color:var(--text-dim);margin:12px 0 16px">客人沒有在 Centric 下 SPR，不需上傳 CLO-SET</div>
+      ${informalEntries.length
+        ? informalEntries.map(e => renderCard(e)).join('')
+        : '<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:13px">詳細內容請至左側「📸 非正單流程」查看</div>'}
     </div>
   `;
+}
+
+function selectStageTab(pageKey, stageKey) {
+  ['proto','la','fit','reference'].forEach(k => {
+    const box = document.getElementById(`${pageKey}box-${k}`);
+    if (box) {
+      box.style.borderColor = k === stageKey ? 'var(--official)' : '';
+      box.style.background  = k === stageKey ? 'rgba(59,130,246,0.12)' : '';
+    }
+  });
+  const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
+  const sec = allSections.find(s => s.slug === slugMap[pageKey]);
+  const stageEntries = sec
+    ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey)
+    : [];
+  const container = document.getElementById(`${pageKey}stageContent`);
+  if (pageKey === 'cl') {
+    if (!stageEntries.length) {
+      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無 Checklist，請至後台新增</div>';
+      return;
+    }
+    const id = `cl-${stageKey}`;
+    container.innerHTML = `
+      <div class="checklist" id="${id}">
+        ${stageEntries.map(e => `
+          <div class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" onclick="event.stopPropagation();toggleCheck(this.parentElement)">
+            <span>${escHtml(e.title)}${(e.paths||[]).map(p=>`
+              <div style="display:flex;align-items:center;gap:8px;margin:4px 0">
+                <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">📋 copy</button>
+                <span class="path-block" style="margin:0;flex:1">${escHtml(p)}</span>
+              </div>`).join('')}</span>
+          </div>
+        `).join('')}
+      </div>
+      <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
+    `;
+    bindChecklistEvents();
+  } else {
+    container.innerHTML = stageEntries.length
+      ? stageEntries.map(e => renderCard(e)).join('')
+      : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
+  }
+}
+
+function renderPrefitPage(section, entries) {
+  return renderStageBasedPage(section, entries, 'pf', '👗 Prefit', '點選 Stage 查看對應的 Prefit 規則');
+}
+function renderDetailsPage(section, entries) {
+  return renderStageBasedPage(section, entries, 'dt', '✏️ 細節', '點選 Stage 查看對應的細節注意事項');
+}
+function renderChecklistPage(section, entries) {
+  return renderStageBasedPage(section, entries, 'cl', '✅ Checklist', '點選 Stage 查看對應的提交前確認清單');
 }
 
 function renderInformalPage(section, entries) {
