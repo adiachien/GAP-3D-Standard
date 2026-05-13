@@ -573,9 +573,10 @@ function renderNav() {
 function showSection(slug) {
   currentSlug = slug;
 
-  // search mode off
+  // hide all pages, show content
   document.getElementById('searchInput').value = '';
   document.getElementById('page-search').classList.remove('active');
+  document.getElementById('page-feedback').classList.remove('active');
   document.getElementById('page-content').classList.add('active');
 
   // nav highlight
@@ -603,6 +604,7 @@ function renderSection(section, entries) {
     stages:       renderStagesPage,
     avatar:       renderAvatarPage,
     prefit:       renderPrefitPage,
+    details:      renderDetailsPage,
     checklist:    renderChecklistPage,
     informal:     renderInformalPage,
     qc:           renderQCPage,
@@ -806,7 +808,37 @@ function selectStage(key) {
     </div>
   `;
 
+  const relatedLinks = {
+    proto:     ['prefit','details','checklist','closet'],
+    la:        ['prefit','details','checklist','closet'],
+    fit:       ['prefit','details','checklist','closet'],
+    reference: ['details','checklist','closet'],
+  };
+
+  const linkLabels = {
+    prefit:    '👗 Prefit',
+    details:   '✏️ 細節',
+    checklist: '✅ Checklist',
+    closet:    '☁️ CLO-SET上傳',
+    naming:    '🏷️ 檔案命名',
+  };
+
+  const relatedHtml = (relatedLinks[key] || []).map(slug => `
+    <button onclick="showSection('${slug}')"
+      style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;transition:all 0.15s"
+      onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
+      ${linkLabels[slug]}
+    </button>
+  `).join('');
+
   const stageEntries = allEntries.filter(e => e.stage === key);
+
+  const relatedSection = `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07)">
+      <div style="font-size:10px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:8px">相關流程</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${relatedHtml}</div>
+    </div>
+  `;
 
   const container = document.getElementById('stageContent');
 
@@ -830,6 +862,7 @@ function selectStage(key) {
             ${renderInfoCard(t)}
           </div>
         `).join('')}
+        ${relatedSection}
       </div>
       ${stageEntries.length
         ? stageEntries.map(e => renderCard(e)).join('')
@@ -845,6 +878,7 @@ function selectStage(key) {
           <span class="badge badge-official" style="margin-left:auto">官方規範</span>
         </div>
         ${renderInfoCard(s)}
+        ${relatedSection}
       </div>
       ${stageEntries.length
         ? stageEntries.map(e => renderCard(e)).join('')
@@ -961,6 +995,33 @@ function renderPrefitPage(section, entries) {
   `;
 }
 
+function renderDetailsPage(section, entries) {
+  const proto  = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('collab'));
+  const la     = entries.filter(e => e.dev_type?.includes('la'));
+  const all    = entries.filter(e => e.dev_type?.includes('all'));
+
+  return `
+    <div class="page-header">
+      <div class="page-title">✏️ ${section.name}</div>
+      <div class="page-desc">各開發類型的注意事項說明</div>
+    </div>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="switchTab(this,'dt','proto')">Proto / 聯名</button>
+      <button class="type-tab" onclick="switchTab(this,'dt','la')">LA</button>
+    </div>
+    <div class="tab-panel active" id="dt-proto">
+      ${[...all, ...proto].length
+        ? [...all, ...proto].map(e => renderCard(e)).join('')
+        : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+    <div class="tab-panel" id="dt-la">
+      ${[...all, ...la].length
+        ? [...all, ...la].map(e => renderCard(e)).join('')
+        : '<div class="loading" style="padding:20px">尚無資料</div>'}
+    </div>
+  `;
+}
+
 function renderChecklistPage(section, entries) {
   const proto = entries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('all'));
   const la    = entries.filter(e => e.dev_type?.includes('la'));
@@ -1068,6 +1129,7 @@ function handleSearch(q) {
   }
 
   document.getElementById('page-content').classList.remove('active');
+  document.getElementById('page-feedback').classList.remove('active');
   document.getElementById('page-search').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
