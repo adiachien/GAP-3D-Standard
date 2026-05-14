@@ -571,19 +571,10 @@ function renderNav() {
 
 function showSectionWithStage(slug, stageKey) {
   showSection(slug);
-  // 等 DOM 渲染完再自動點擊對應 Stage
   setTimeout(() => {
     const pageKeyMap = { prefit:'pf', details:'dt', checklist:'cl' };
     const pageKey = pageKeyMap[slug];
-    if (pageKey) {
-      selectStageTab(pageKey, stageKey);
-      // 高亮對應的 stage-box
-      const box = document.getElementById(`${pageKey}box-${stageKey}`);
-      if (box) {
-        box.style.borderColor = 'var(--official)';
-        box.style.background  = 'rgba(59,130,246,0.12)';
-      }
-    }
+    if (pageKey) selectStageTab(pageKey, stageKey);
   }, 100);
 }
 
@@ -1087,28 +1078,11 @@ function selectStageTab(pageKey, stageKey) {
     : [];
   const container = document.getElementById(`${pageKey}stageContent`);
 
-  // Stage 2 Proto 特別處理：加 Proto / 聯名款 sub-tab
+  // Stage 2 Proto：直接顯示所有內容，不切 tab
   if (stageKey === 'proto' && pageKey !== 'cl') {
-    const protoEntries  = stageEntries.filter(e => e.dev_type?.includes('proto') || e.dev_type?.includes('all'));
-    const collabEntries = stageEntries.filter(e => e.dev_type?.includes('collab'));
-    container.innerHTML = `
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button id="${pageKey}-subtab-proto" onclick="switchProtoSubTab('${pageKey}','proto')"
-          style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gap-blue);color:#fff;border:2px solid var(--gap-blue)">
-          Proto
-        </button>
-        <button id="${pageKey}-subtab-collab" onclick="switchProtoSubTab('${pageKey}','collab')"
-          style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text-dim);border:2px solid var(--border)">
-          聯名款（GAP X & Collab）
-        </button>
-      </div>
-      <div id="${pageKey}-proto-panel">
-        ${protoEntries.length ? protoEntries.map(e => renderCard(e)).join('') : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">尚無內容，請至後台新增</div>'}
-      </div>
-      <div id="${pageKey}-collab-panel" style="display:none">
-        ${collabEntries.length ? collabEntries.map(e => renderCard(e)).join('') : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">尚無內容，請至後台新增</div>'}
-      </div>
-    `;
+    container.innerHTML = stageEntries.length
+      ? stageEntries.map(e => renderCard(e)).join('')
+      : '<div class="card" style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
     return;
   }
 
