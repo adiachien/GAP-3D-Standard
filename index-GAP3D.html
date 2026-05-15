@@ -529,8 +529,24 @@ let currentSlug = null;
 async function init() {
   await loadData();
   renderNav();
-  // 預設顯示第一個 section
-  if (allSections.length) showSection(allSections[0].slug);
+  // 讀取 URL hash 決定顯示哪個分類
+  const hash = window.location.hash.replace('#', '');
+  const stageSlugs = ['prefit','details','checklist'];
+  if (hash === 'feedback') {
+    showFeedback();
+  } else if (hash && allSections.find(s => s.slug === hash)) {
+    if (stageSlugs.includes(hash)) {
+      showSection(hash);
+      setTimeout(() => selectStageTab(
+        hash === 'prefit' ? 'pf' : hash === 'details' ? 'dt' : 'cl',
+        'proto'
+      ), 100);
+    } else {
+      showSection(hash);
+    }
+  } else if (allSections.length) {
+    showSection(allSections[0].slug);
+  }
 }
 
 async function loadData() {
@@ -582,6 +598,9 @@ function showSectionWithStage(slug, stageKey) {
 function showSection(slug) {
   currentSlug = slug;
 
+  // 儲存 hash
+  window.location.hash = slug;
+
   // hide all pages, show content
   document.getElementById('searchInput').value = '';
   document.getElementById('page-search').classList.remove('active');
@@ -598,6 +617,18 @@ function showSection(slug) {
 
   const section = allSections.find(s => s.slug === slug);
   const entries = allEntries.filter(e => e.section_id === section?.id);
+
+  renderSection(section, entries);
+
+  // 自動選正單 + Stage 2（prefit / details / checklist）
+  const stageSlugs = ['prefit','details','checklist'];
+  if (stageSlugs.includes(slug)) {
+    setTimeout(() => {
+      const pkMap = { prefit:'pf', details:'dt', checklist:'cl' };
+      selectStageTab(pkMap[slug], 'proto');
+    }, 50);
+  }
+}
 
   renderSection(section, entries);
 }
@@ -1118,7 +1149,7 @@ function selectStageTab(pageKey, stageKey) {
               <input type="checkbox" onclick="event.stopPropagation();toggleCheck(this.parentElement)">
               <div style="flex:1">
                 <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
-                ${e.content ? `<div style="font-size:15px;color:var(--text-dim);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(escHtml(e.content))}</div>` : ''}
+                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(escHtml(e.content))}</div>` : ''}
                 ${pathsHtml}
               </div>
             </div>`;
@@ -1263,16 +1294,34 @@ function switchTab(btn, group, id) {
   document.getElementById(`${group}-${id}`)?.classList.add('active');
 }
 
-function toggleCheck(el) {
-  if (el.tagName === 'INPUT') el = el.parentElement;
+function toggleCheck(el, event) {
+  if (event) event.stopPropagation();
+  // 找到最近的 check-item
+  if (!el.classList.contains('check-item')) {
+    el = el.closest('.check-item');
+  }
+  if (!el) return;
   const cb = el.querySelector('input[type=checkbox]');
+  if (!cb) return;
   cb.checked = !cb.checked;
   el.classList.toggle('done', cb.checked);
 }
 
 function bindChecklistEvents() {
   document.querySelectorAll('.check-item').forEach(item => {
-    item.addEventListener('click', () => toggleCheck(item));
+    // 移除舊的 listener 避免重複
+    item.replaceWith(item.cloneNode(true));
+  });
+  document.querySelectorAll('.check-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+      toggleCheck(item, e);
+    });
+    const cb = item.querySelector('input[type=checkbox]');
+    if (cb) cb.addEventListener('click', (e) => {
+      e.stopPropagation();
+      item.classList.toggle('done', cb.checked);
+    });
   });
 }
 
