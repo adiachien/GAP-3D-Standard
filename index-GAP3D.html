@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GAP 3D 作業知識庫</title>
+<title>編輯後台 — GAP 3D 知識庫</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
@@ -20,1590 +20,371 @@
   --text-dim: #8899aa;
   --border: rgba(255,255,255,0.07);
   --card: rgba(255,255,255,0.04);
-  --sidebar-w: 230px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; overflow:hidden; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--navy); color:var(--text); min-height:100vh; }
 
-body {
-  font-family: 'Noto Sans TC', sans-serif;
-  background: var(--navy);
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── HEADER ── */
 header {
-  height: 56px;
-  background: var(--navy-mid);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 14px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 50;
+  height:56px; background:var(--navy-mid); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 24px; gap:14px;
+  position:sticky; top:0; z-index:50;
 }
+.logo { font-family:'DM Mono',monospace; font-size:12px; background:var(--gap-blue); color:#fff; padding:4px 10px; border-radius:4px; letter-spacing:0.12em; }
+header h1 { font-size:14px; font-weight:500; }
+.header-right { margin-left:auto; }
 
-.logo {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  color: #fff;
-  background: var(--gap-blue);
-  padding: 4px 10px;
-  border-radius: 4px;
+.btn { padding:8px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; }
+.btn-primary { background:var(--gap-blue); color:#fff; }
+.btn-primary:hover { background:#1e4fc7; }
+.btn-danger { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background:rgba(239,68,68,0.25); }
+.btn-ghost { background:var(--card); color:var(--text-dim); border:1px solid var(--border); text-decoration:none; display:inline-flex; align-items:center; }
+.btn-ghost:hover { color:var(--text); }
+
+.field { margin-bottom:14px; }
+.field label { font-size:12px; color:var(--text-dim); display:block; margin-bottom:5px; }
+.field input, .field textarea, .field select {
+  width:100%; background:var(--navy-light); border:1px solid var(--border);
+  border-radius:7px; padding:8px 12px; font-size:13px; color:var(--text);
+  font-family:inherit; outline:none; transition:border-color 0.15s;
 }
+.field input:focus, .field textarea:focus, .field select:focus { border-color:rgba(59,130,246,0.5); }
+.field textarea { resize:vertical; min-height:90px; line-height:1.6; }
+.field select option { background:var(--navy-mid); }
 
-header h1 { font-size: 18px; font-weight: 500; }
+#adminWrap { padding:28px 36px; max-width:1100px; margin:0 auto; }
 
-.header-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.admin-title { font-size:18px; font-weight:700; }
 
-.legend {
-  display: flex;
-  gap: 14px;
-  font-size: 13px;
-  color: var(--text-dim);
-}
-.legend-item { display:flex; align-items:center; gap:5px; }
-.legend-dot { width:8px; height:8px; border-radius:2px; }
+.section-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+.sec-tab { padding:6px 14px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; }
+.sec-tab:hover { color:var(--text); }
+.sec-tab.active { background:var(--gap-blue); color:#fff; border-color:transparent; }
 
-.btn-admin {
-  font-size: 12px;
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text-dim);
-  cursor: pointer;
-  text-decoration: none;
-  font-family: inherit;
-  transition: all 0.15s;
-}
-.btn-admin:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.entries-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.entries-title { font-size:15px; font-weight:600; }
 
-/* ── LAYOUT ── */
-.layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
+.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:14px; }
+.entry-info { flex:1; }
+.entry-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:4px; }
+.entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:10px; flex-wrap:wrap; }
+.entry-preview { font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
+.entry-actions { display:flex; gap:6px; flex-shrink:0; }
 
-/* ── SIDEBAR ── */
-aside {
-  width: var(--sidebar-w);
-  min-width: var(--sidebar-w);
-  background: var(--navy-mid);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 12px 0 20px;
-  flex-shrink: 0;
-}
+.badge-sm { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; }
+.bs-official { background:rgba(59,130,246,0.2); color:#93c5fd; }
+.bs-internal  { background:rgba(245,158,11,0.2); color:#fcd34d; }
+.bs-warning   { background:rgba(239,68,68,0.2);  color:#fca5a5; }
 
-aside::-webkit-scrollbar { width: 4px; }
-aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
 
-.search-sidebar {
-  padding: 10px 12px 8px;
-}
+.modal { background:var(--navy-mid); border:1px solid var(--border); border-radius:12px; padding:28px 32px; width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+.modal h3 { font-size:16px; font-weight:700; margin-bottom:20px; }
+.modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
-.search-sidebar input {
-  width: 100%;
-  background: var(--navy-light);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 10px 7px 30px;
-  font-size: 12px;
-  color: var(--text);
-  font-family: inherit;
-  outline: none;
-}
-.search-sidebar input::placeholder { color: var(--text-dim); }
-.search-sidebar input:focus { border-color: rgba(59,130,246,0.5); }
-.search-wrap-inner { position: relative; }
-.search-wrap-inner::before {
-  content: '🔍';
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 13px;
-}
+.path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+.path-item { display:flex; gap:6px; }
+.path-item input { flex:1; font-family:'DM Mono',monospace; font-size:12px; }
+.add-path-btn { font-size:12px; padding:5px 10px; border-radius:5px; border:1px dashed var(--border); background:none; color:var(--text-dim); cursor:pointer; font-family:inherit; }
+.add-path-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.15); }
 
-.section-group { margin-bottom: 4px; }
+.toast { position:fixed; bottom:24px; right:24px; background:var(--navy-mid); border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:13px; color:var(--text); z-index:300; transform:translateY(10px); opacity:0; transition:all 0.2s; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.success { border-color:rgba(16,185,129,0.3); color:#6ee7b7; }
+.toast.error   { border-color:rgba(239,68,68,0.3);  color:#fca5a5; }
 
-.group-label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-  padding: 10px 14px 4px;
-  text-transform: uppercase;
-}
+.loading { display:flex; align-items:center; justify-content:center; padding:40px; color:var(--text-dim); gap:10px; }
+.spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--official); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  font-size: 18px;
-  color: var(--text-dim);
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: all 0.12s;
-  user-select: none;
-}
-.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-.nav-item.active {
-  color: #fff;
-  background: rgba(59,130,246,0.1);
-  border-left-color: var(--official);
-}
-.nav-icon { font-size: 16px; }
-
-/* ── MAIN ── */
-main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 28px 36px;
-}
-main::-webkit-scrollbar { width: 5px; }
-main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
-
-.page { display: none; }
-.page.active { display: block; }
-
-.page-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-.page-title { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-.page-desc { font-size: 16px; color: var(--text-dim); line-height: 1.6; }
-
-/* ── CARDS ── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin-bottom: 12px;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.card-title { font-size: 18px; font-weight: 700; color: #fff; }
-
-.badge {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 4px;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
-}
-.badge-official { background:rgba(59,130,246,0.18); color:#93c5fd; border:1px solid rgba(59,130,246,0.25); }
-.badge-internal  { background:rgba(245,158,11,0.18); color:#fcd34d; border:1px solid rgba(245,158,11,0.25); }
-.badge-warning   { background:rgba(239,68,68,0.18);  color:#fca5a5; border:1px solid rgba(239,68,68,0.25);  }
-
-.card-content { font-size: 16px; color: var(--text); line-height: 1.75; white-space: pre-wrap; }
-
-.path-block {
-  font-family: 'DM Mono', monospace;
-  font-size: 17px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 5px;
-  padding: 6px 10px;
-  color: #7dd3fc;
-  word-break: break-all;
-  margin: 6px 0;
-  display: block;
-}
-
-.highlight-box {
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.22);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 18px;
-  color: #fca5a5;
-  margin-top: 8px;
-}
-
-.tip-box {
-  background: rgba(245,158,11,0.1);
-  border-left: 3px solid var(--internal);
-  padding: 8px 12px;
-  font-size: 18px;
-  color: #fde68a;
-  margin-top: 8px;
-  border-radius: 0 4px 4px 0;
-}
-
-/* ── TYPE TABS ── */
-.type-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 16px;
-  background: var(--navy-mid);
-  padding: 4px;
-  border-radius: 8px;
-  width: fit-content;
-}
-.type-tab {
-  padding: 5px 13px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-dim);
-  border: none;
-  background: none;
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.type-tab:hover { color: var(--text); }
-.type-tab.active { background: var(--gap-blue); color: #fff; }
-
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* ── CHECKLIST ── */
-.checklist { display: flex; flex-direction: column; gap: 5px; }
-.check-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 18px;
-  color: var(--text);
-  line-height: 1.5;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-.check-item:hover { border-color: rgba(255,255,255,0.12); }
-.check-item input[type=checkbox] { margin-top: 2px; accent-color: var(--official); flex-shrink:0; }
-.check-item.done { opacity: 0.45; text-decoration: line-through; }
-.reset-btn {
-  margin-top: 10px;
-  background: var(--navy-mid);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 5px 13px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: inherit;
-}
-.reset-btn:hover { color: var(--text); }
-
-/* ── COL GRID ── */
-.col-grid { display: grid; gap: 10px; margin-bottom: 12px; }
-.cols-2 { grid-template-columns: repeat(2,1fr); }
-.cols-4 { grid-template-columns: repeat(4,1fr); }
-
-.col-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-}
-.col-tag {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-bottom: 8px;
-}
-.tag-collab { background:rgba(168,85,247,0.2); color:#d8b4fe; }
-.tag-proto  { background:rgba(59,130,246,0.2); color:#93c5fd; }
-.tag-la     { background:rgba(16,185,129,0.2); color:#6ee7b7; }
-.tag-fitla  { background:rgba(234,179,8,0.2);  color:#fde68a; }
-.tag-color  { background:rgba(251,146,60,0.2); color:#fed7aa; }
-.tag-fit    { background:rgba(244,114,182,0.2);color:#fbcfe8; }
-
-.col-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
-.col-list li {
-  font-size: 12px;
-  color: var(--text);
-  line-height: 1.5;
-  padding-left: 12px;
-  position: relative;
-}
-.col-list li::before { content:'✓'; position:absolute; left:0; color:var(--text-dim); font-size:13px; }
-
-/* ── STAGE FLOW ── */
-.stage-flow {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.stage-box {
-  background: var(--navy-mid);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 16px;
-  text-align: center;
-}
-.stage-num { font-size: 12px; color: var(--text-dim); margin-bottom: 2px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
-.stage-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.stage-arrow { color: var(--text-dim); font-size: 16px; }
-
-/* ── SEARCH RESULTS ── */
-.result-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 8px;
-}
-.result-section { font-size: 13px; color: var(--text-dim); margin-bottom: 4px; }
-.result-title { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 6px; }
-.result-body { font-size: 18px; color: var(--text); line-height: 1.65; }
-mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; padding:0 2px; }
-
-/* ── LOADING ── */
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 0;
-  color: var(--text-dim);
-  font-size: 16px;
-  gap: 10px;
-}
-.spinner {
-  width: 18px; height: 18px;
-  border: 2px solid var(--border);
-  border-top-color: var(--official);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── QC GRID ── */
-.qc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 12px; }
-.qc-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-.qc-fail { font-size: 12px; font-weight: 700; color: #fca5a5; margin-bottom: 8px; }
-.qc-body { font-size: 18px; color: var(--text); line-height: 1.65; }
+.devtype-group { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.devtype-group label { display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">GAP</div>
-  <h1>3D DPC 作業知識庫</h1>
+  <h1>編輯後台</h1>
   <div class="header-right">
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>重要注意</div>
-    </div>
-    <a id="editBtn" href="admin.html" class="btn-admin">✏️ 編輯</a>
+    <a href="index-GAP3D.html" class="btn btn-ghost">← 回知識庫</a>
   </div>
 </header>
 
-<div class="layout">
+<div id="adminWrap">
+  <div class="admin-header">
+    <div class="admin-title">內容管理</div>
+    <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
+  </div>
 
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <div class="search-sidebar">
-      <div class="search-wrap-inner">
-        <input id="searchInput" placeholder="搜尋…" oninput="handleSearch(this.value)">
-      </div>
-    </div>
-    <div id="navMenu">
-      <div class="loading"><div class="spinner"></div>載入中…</div>
-    </div>
-  </aside>
+  <div class="section-tabs" id="sectionTabs">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
 
-  <!-- MAIN -->
-  <main id="main">
-
-    <!-- 搜尋結果頁 -->
-    <div class="page" id="page-search">
-      <div class="page-header">
-        <div class="page-title">搜尋結果</div>
-      </div>
-      <div id="searchResults"></div>
-    </div>
-
-    <!-- 動態內容頁 -->
-    <div class="page active" id="page-content">
-      <div class="loading"><div class="spinner"></div>載入中…</div>
-    </div>
-
-    <!-- 留言板頁 -->
-    <div class="page" id="page-feedback">
-      <div class="page-header">
-        <div class="page-title">💬 留言板</div>
-        <div class="page-desc">遇到問題或有想法都可以留言，支援貼上截圖（Ctrl+V）或拖曳圖片</div>
-      </div>
-
-      <!-- 新增留言 -->
-      <div class="card" style="margin-bottom:20px">
-        <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
-          <input id="fbAuthor" placeholder="名字（可不填）"
-            style="width:150px;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:18px;color:var(--text);font-family:inherit;outline:none">
-          <select id="fbCategory"
-            style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:18px;color:var(--text);font-family:inherit;outline:none;cursor:pointer">
-            <option value="開發處內部">🏢 開發處內部</option>
-            <option value="業務">📋 業務</option>
-            <option value="DPC">🖥️ DPC</option>
-            <option value="客人">👤 客人</option>
-            <option value="其他">💡 其他</option>
-          </select>
-        </div>
-        <textarea id="fbContent" placeholder="輸入留言內容…（也可以直接貼上截圖 Ctrl+V）"
-          style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6"
-          onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)"></textarea>
-
-        <div id="fbImagePreview" style="display:none;margin-top:8px;position:relative;width:fit-content">
-          <img id="fbPreviewImg" style="max-height:160px;max-width:100%;border-radius:6px;border:1px solid var(--border)">
-          <button onclick="clearFbImage()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1">✕</button>
-        </div>
-
-        <div id="fbDropZone"
-          style="margin-top:8px;border:1.5px dashed var(--border);border-radius:7px;padding:12px;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer"
-          onclick="document.getElementById('fbFileInput').click()"
-          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-          📎 點擊或拖曳圖片到這裡上傳
-        </div>
-        <input type="file" id="fbFileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
-
-        <div style="display:flex;justify-content:flex-end;margin-top:10px">
-          <button onclick="submitFeedback()"
-            style="background:var(--gap-blue);color:#fff;border:none;padding:8px 20px;border-radius:7px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit">
-            發布留言
-          </button>
-        </div>
-      </div>
-
-      <!-- 篩選 Tab -->
-      <div id="fbFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
-
-      <!-- 留言列表 -->
-      <div id="fbList">
-        <div class="loading"><div class="spinner"></div>載入中…</div>
-      </div>
-    </div>
-
-  </main>
+  <div class="entries-header">
+    <div class="entries-title" id="currentSectionName"></div>
+  </div>
+  <div id="entriesList">
+    <div class="loading"><div class="spinner"></div>載入中…</div>
+  </div>
 </div>
 
+<!-- Modal -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">新增條目</h3>
+    <div class="field">
+      <label>所屬分類</label>
+      <select id="fSection"></select>
+    </div>
+    <div class="field">
+      <label>標題</label>
+      <input id="fTitle" placeholder="例如：粒子/碰撞設定">
+    </div>
+    <div class="field">
+      <label>內容（支援換行）</label>
+      <textarea id="fContent" rows="6" placeholder="詳細說明…"></textarea>
+    </div>
+    <div class="field">
+      <label>路徑（可多個）</label>
+      <div class="path-list" id="pathList"></div>
+      <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
+    </div>
+    <div class="field">
+      <label>來源標籤</label>
+      <select id="fSource">
+        <option value="internal">🟡 內部SOP</option>
+        <option value="official">🔵 官方規範</option>
+        <option value="warning">🔴 重要注意</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>適用開發類型</label>
+      <div class="devtype-group" id="devTypeGroup">
+        <label><input type="checkbox" value="all" checked style="accent-color:var(--official)"> 全部</label>
+        <label><input type="checkbox" value="collab" style="accent-color:var(--official)"> 聯名Collab</label>
+        <label><input type="checkbox" value="proto" style="accent-color:var(--official)"> Proto</label>
+        <label><input type="checkbox" value="la" style="accent-color:var(--official)"> LA</label>
+        <label><input type="checkbox" value="fitla" style="accent-color:var(--official)"> Fit-LA</label>
+        <label><input type="checkbox" value="color" style="accent-color:var(--official)"> 各色樣</label>
+        <label><input type="checkbox" value="fit" style="accent-color:var(--official)"> Fit(非正單)</label>
+      </div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="fIsChecklist" style="accent-color:var(--official)">
+      <label for="fIsChecklist" style="font-size:13px;cursor:pointer">這是 Checklist 項目</label>
+    </div>
+    <div class="field" id="stageField" style="display:none">
+      <label>所屬 Stage（僅階段總覽分類使用）</label>
+      <select id="fStage">
+        <option value="">— 不屬於任何 Stage —</option>
+        <option value="proto">STAGE 2 — 3D Proto</option>
+        <option value="la">STAGE 3 — 3D LA</option>
+        <option value="fit">STAGE 4 — 3D Fit</option>
+        <option value="reference">STAGE 6 — 3D Reference</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>排序（數字越小越前面）</label>
+      <input id="fOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteBtn" onclick="deleteEntry()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-// ── Supabase 連線 ──────────────────────────────
 const SUPABASE_URL = 'https://popnhqizqkhitguopapf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tNgioaXmZhzppbg9tg6Ong_WYTGdZAo';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── State ──────────────────────────────────────
-let allSections = [];
-let allEntries  = [];
-let currentSlug = null;
+let allSections = [], allEntries = [];
+let currentSectionId = null, editingEntryId = null;
 
-// ── Init ───────────────────────────────────────
 async function init() {
   await loadData();
-  renderNav();
-  // 讀取 URL hash 決定顯示哪個分類
-  const hash = window.location.hash.replace('#', '');
-  const stageSlugs = ['prefit','details','checklist'];
-  if (hash === 'feedback') {
-    showFeedback();
-  } else if (hash && allSections.find(s => s.slug === hash)) {
-    if (stageSlugs.includes(hash)) {
-      showSection(hash);
-      setTimeout(() => selectStageTab(
-        hash === 'prefit' ? 'pf' : hash === 'details' ? 'dt' : 'cl',
-        'proto'
-      ), 100);
-    } else {
-      showSection(hash);
-    }
-  } else if (allSections.length) {
-    showSection(allSections[0].slug);
-  }
+  renderSectionTabs();
+  // 讀取 URL 參數，自動選到對應分類
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('section');
+  const targetSection = slug
+    ? allSections.find(s => s.slug === slug)
+    : allSections[0];
+  if (targetSection) selectSection(targetSection.id);
 }
 
 async function loadData() {
-  const [{ data: sections }, { data: entries }] = await Promise.all([
+  const [{ data: s }, { data: e }] = await Promise.all([
     sb.from('sections').select('*').order('sort_order'),
-    sb.from('entries').select('*, checklist_items(*)').order('sort_order'),
+    sb.from('entries').select('*').order('sort_order'),
   ]);
-  allSections = sections || [];
-  allEntries  = entries  || [];
+  allSections = s || [];
+  allEntries  = e || [];
 }
 
-// ── Sidebar Nav ────────────────────────────────
-function renderNav() {
-  const menu = document.getElementById('navMenu');
-  const groups = {};
-  allSections.forEach(s => {
-    if (!groups[s.group_name]) groups[s.group_name] = [];
-    groups[s.group_name].push(s);
-  });
+function renderSectionTabs() {
+  document.getElementById('sectionTabs').innerHTML = allSections.map(s =>
+    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')">${s.icon||''} ${s.name}</button>`
+  ).join('');
+  document.getElementById('fSection').innerHTML = allSections.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+}
 
-  menu.innerHTML = Object.entries(groups).map(([group, secs]) => `
-    <div class="section-group">
-      <div class="group-label">${group}</div>
-      ${secs.map(s => `
-        <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
-          <span class="nav-icon">${s.icon || ''}</span>${s.name}
+function selectSection(id) {
+  currentSectionId = id;
+  document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');
+  document.getElementById('currentSectionName').textContent = allSections.find(s=>s.id===id)?.name || '';
+  renderEntries();
+}
+
+function renderEntries() {
+  const entries = allEntries.filter(e => e.section_id === currentSectionId);
+  const el = document.getElementById('entriesList');
+  if (!entries.length) {
+    el.innerHTML = '<div class="loading" style="padding:30px">此分類尚無條目，點擊右上角「新增條目」開始</div>';
+    return;
+  }
+  const bm = { official:'bs-official', internal:'bs-internal', warning:'bs-warning' };
+  const sl = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
+  el.innerHTML = entries.map(e => `
+    <div class="entry-row">
+      <div class="entry-info">
+        <div class="entry-title">${esc(e.title)}</div>
+        <div class="entry-meta">
+          <span class="badge-sm ${bm[e.source]}">${sl[e.source]}</span>
+          <span>${(e.dev_type||['all']).join(', ')}</span>
+          ${e.is_checklist?'<span style="color:#6ee7b7">✓ Checklist</span>':''}
         </div>
-      `).join('')}
-    </div>
-  `).join('') + `
-    <div class="section-group" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-      <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
-        <span class="nav-icon">💬</span>留言板（即時回饋）
+        ${e.content?`<div class="entry-preview">${esc(e.content).substring(0,100)}…</div>`:''}
+        ${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}
+      </div>
+      <div class="entry-actions">
+        <button class="btn btn-ghost" onclick="openEditEntry('${e.id}')">✏️ 編輯</button>
       </div>
     </div>
-  `;
-}
-
-function showSectionWithStage(slug, stageKey) {
-  showSection(slug);
-  setTimeout(() => {
-    const pageKeyMap = { prefit:'pf', details:'dt', checklist:'cl' };
-    const pageKey = pageKeyMap[slug];
-    if (pageKey) selectStageTab(pageKey, stageKey);
-  }, 100);
-}
-
-// ── Show Section ───────────────────────────────
-function showSection(slug) {
-  currentSlug = slug;
-
-  // 儲存 hash
-  window.location.hash = slug;
-
-  // hide all pages, show content
-  document.getElementById('searchInput').value = '';
-  document.getElementById('page-search').classList.remove('active');
-  document.getElementById('page-feedback').classList.remove('active');
-  document.getElementById('page-content').classList.add('active');
-
-  // update edit button link
-  document.getElementById('editBtn').href = `admin.html?section=${slug}`;
-
-  // nav highlight
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const navEl = document.getElementById('nav-' + slug);
-  if (navEl) navEl.classList.add('active');
-
-  const section = allSections.find(s => s.slug === slug);
-  const entries = allEntries.filter(e => e.section_id === section?.id);
-
-  renderSection(section, entries);
-
-  // 自動選正單 + Stage 2（prefit / details / checklist）
-  const stageSlugs = ['prefit','details','checklist'];
-  if (stageSlugs.includes(slug)) {
-    setTimeout(() => {
-      const pkMap = { prefit:'pf', details:'dt', checklist:'cl' };
-      selectStageTab(pkMap[slug], 'proto');
-    }, 50);
-  }
-}
-
-// ── Render Section ─────────────────────────────
-function renderSection(section, entries) {
-  const main = document.getElementById('page-content');
-
-  if (!section) {
-    main.innerHTML = '<div class="loading">找不到此分類</div>';
-    return;
-  }
-
-  // 特殊 slug 有固定版型
-  const specialPages = {
-    stages:       renderStagesPage,
-    avatar:       renderAvatarPage,
-    prefit:       renderPrefitPage,
-    details:      renderDetailsPage,
-    checklist:    renderChecklistPage,
-    informal:     renderInformalPage,
-    qc:           renderQCPage,
-  };
-
-  if (specialPages[section.slug]) {
-    main.innerHTML = specialPages[section.slug](section, entries);
-    bindChecklistEvents();
-    return;
-  }
-
-  // 一般版型
-  main.innerHTML = `
-    <div class="page-header">
-      <div class="page-title">${section.icon || ''} ${section.name}</div>
-    </div>
-    ${entries.length
-      ? entries.map(e => renderCard(e)).join('')
-      : '<div class="loading" style="padding:40px 0">此分類尚無內容，請至後台新增</div>'
-    }
-  `;
-}
-
-// ── Card Renderer ──────────────────────────────
-function renderCard(e) {
-  const badgeMap = {
-    official: '官方規範',
-    internal: '內部SOP',
-    warning:  '⚠️ 重要',
-  };
-  const badgeClass = { official:'badge-official', internal:'badge-internal', warning:'badge-warning' };
-
-  const paths = (e.paths || []).map(p => {
-    const hasSep = p.includes('｜');
-    const label  = hasSep ? p.split('｜')[0].trim() : '';
-    const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
-    const isUrl  = value.startsWith('http');
-
-    return `
-      <div style="display:flex;align-items:center;gap:8px;margin:5px 0">
-        ${label ? `<span style="font-size:12px;color:var(--text-dim);white-space:nowrap;min-width:100px">${escHtml(label)}</span>` : ''}
-        ${isUrl ? `
-          <a href="${escHtml(value)}" target="_blank"
-            style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;white-space:nowrap;text-decoration:none">
-            🔗 開啟
-          </a>
-          <span style="font-size:17px;color:var(--text-dim);word-break:break-all">${escHtml(value)}</span>
-        ` : `
-          <button onclick="copyPath('${escHtml(value)}')"
-            style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">
-            📋 copy
-          </button>
-          <span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>
-        `}
-      </div>
-    `;
-  }).join('');
-
-  const content = e.content
-    ? `<div class="card-content">${linkify(escHtml(e.content))}</div>`
-    : '';
-
-  return `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">${escHtml(e.title)}</div>
-        <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
-      </div>
-      ${content}
-      ${paths}
-    </div>
-  `;
-}
-
-function linkify(text) {
-  return text.replace(/(https?:\/\/[^\s<]+)/g, url =>
-    `<a href="${url}" target="_blank" style="color:#7dd3fc;text-decoration:underline;text-underline-offset:2px">${url}</a>`
-  );
-}
-
-// ── Special Pages ──────────────────────────────
-function renderStagesPage(section, entries) {
-  const stages = [
-    { key: 'block',     num: 1, name: '3D Block',    subtitle: 'Foundational Asset',          tagColor: '#222',    active: false },
-    { key: 'proto',     num: 2, name: '3D Proto',    subtitle: 'Initial Design & Fit Review', tagColor: '#888',    active: true  },
-    { key: 'la',        num: 3, name: '3D LA',       subtitle: 'Line Adoption',               tagColor: '#f0e000', active: true  },
-    { key: 'fit',       num: 4, name: '3D Fit',      subtitle: 'Fit Validation',              tagColor: '#22c55e', active: true  },
-    { key: 'sizeset',   num: 5, name: '3D Size Set', subtitle: 'Size Validation',             tagColor: '#a855f7', active: false },
-    { key: 'reference', num: 6, name: '3D RS',       subtitle: 'Future Development',          tagColor: '#16a34a', active: true  },
-    { key: 'graphics',  num: 7, name: '3D Graphics', subtitle: 'Artwork Size Validation',     tagColor: '#22d3ee', active: false },
-  ];
-
-  const generalEntries = entries.filter(e => !e.stage);
-  const informalSection = allSections.find(s => s.slug === 'informal');
-  const informalEntries = informalSection
-    ? allEntries.filter(e => e.section_id === informalSection.id)
-    : [];
-
-  return `
-    <div class="page-header">
-      <div class="page-title">📋 ${section.name}</div>
-    </div>
-
-    <div class="card" style="margin-bottom:20px;border-color:rgba(59,130,246,0.25);background:rgba(59,130,246,0.06)">
-      <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
-      <div style="font-size:16px;color:var(--text);line-height:1.8">
-        請業務確認 Centric 是否有下 SPR（Sample Request）<br>
-        ・有 SPR → <strong style="color:#6ee7b7">正單</strong>，需上傳 CLO-SET<br>
-        ・沒有 SPR → <strong style="color:#fcd34d">非正單</strong>，只需提供 3D 照片
-      </div>
-      <div style="font-size:17px;color:var(--text-dim);margin-top:8px">我們自己也可以去 Centric 看，但通常請業務確認 😄</div>
-    </div>
-
-    <div class="type-tabs">
-      <button class="type-tab active" onclick="switchTab(this,'main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      <button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
-    </div>
-
-    <div class="tab-panel active" id="main-formal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">客人有在 Centric 下 SPR，點選 Stage 查看對應規範</div>
-      <div class="stage-flow">
-        ${stages.map((s, i) => `
-          <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
-            id="stagebox-${s.key}"
-            ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
-            style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
-            <div class="stage-num">STAGE ${s.num}</div>
-            <div class="stage-name">${s.name}</div>
-            ${!s.active ? '<div style="font-size:12px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
-          </div>
-          ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
-        `).join('')}
-      </div>
-      <div id="stageContent" style="margin-top:16px"></div>
-      ${generalEntries.map(e => renderCard(e)).join('')}
-    </div>
-
-    <div class="tab-panel" id="main-informal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">客人沒有在 Centric 下 SPR，只需提供 3D 照片，不需上傳 CLO-SET</div>
-      ${informalEntries.length
-        ? informalEntries.map(e => renderCard(e)).join('')
-        : `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:16px">
-            詳細內容請至左側「📸 非正單流程」查看
-           </div>`
-      }
-    </div>
-  `;
-}
-
-
-function selectStage(key) {
-  const stages = {
-    proto: {
-      num: 2, name: '3D Proto', subtitle: 'Initial Design & Fit Review',
-      tagColor: '#888', hasTabs: true,
-      tabs: [
-        {
-          label: 'Proto',
-          mc: true,
-          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
-          colorways: '灰色',
-        },
-        {
-          label: '聯名款（GAP X & Collab）',
-          mc: true,
-          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
-          colorways: '灰色 + 各色',
-        },
-      ],
-    },
-    la: {
-      num: 3, name: '3D LA', subtitle: 'Line Adoption / Adoption Validation',
-      tagColor: '#f0e000', hasTabs: false,
-      mc: false,
-      pose: 'Regular Pose，隱藏人台',
-      colorways: '灰色 + 各色',
-    },
-    fit: {
-      num: 4, name: '3D Fit', subtitle: 'Fit Validation',
-      tagColor: '#22c55e', hasTabs: false,
-      mc: true,
-      pose: 'Regular Pose，顯示人台',
-      colorways: '灰色',
-    },
-    reference: {
-      num: 6, name: '3D RS', subtitle: 'Future Development',
-      tagColor: '#16a34a', hasTabs: false,
-      mc: false,
-      pose: 'Regular Pose，顯示人台',
-      colorways: '灰色 + 各色',
-    },
-  };
-
-  const s = stages[key];
-  if (!s) return;
-
-  // highlight selected
-  document.querySelectorAll('.stage-box.stage-active').forEach(b => {
-    b.style.borderColor = '';
-    b.style.background = '';
-  });
-  const box = document.getElementById('stagebox-' + key);
-  if (box) {
-    box.style.borderColor = 'var(--official)';
-    box.style.background = 'rgba(59,130,246,0.12)';
-  }
-
-  const mcNote = `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5">請 TD 提供 MC Link<br>若無 MC Link（如 CO 款）可用尺寸表截圖替代</div>`;
-
-  const renderInfoCard = (tab) => `
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px">
-      <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">WORKFLOW</div>
-        <div style="width:40px;height:16px;background:${s.tagColor};border-radius:3px;border:1px solid rgba(255,255,255,0.1)"></div>
-      </div>
-      <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">尺寸表</div>
-        <div style="font-size:16px">${tab.mc ? '✅' : '🚫'}</div>
-        ${tab.mc ? mcNote : ''}
-      </div>
-      <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">AVATAR POSE</div>
-        <div style="font-size:18px;color:var(--text);white-space:pre-line">${tab.pose}</div>
-      </div>
-      <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">各色</div>
-        <div style="font-size:18px;color:var(--text)">${tab.colorways}</div>
-      </div>
-    </div>
-  `;
-
-  const relatedLinks = {
-    proto:     ['prefit','details','checklist','closet'],
-    la:        ['prefit','details','checklist','closet'],
-    fit:       ['prefit','details','checklist','closet'],
-    reference: ['details','checklist','closet'],
-  };
-
-  const linkLabels = {
-    prefit:    '👗 Prefit',
-    details:   '✏️ 細節',
-    checklist: '✅ Checklist',
-    closet:    '☁️ CLO-SET上傳',
-    naming:    '🏷️ 檔案命名',
-  };
-
-  const relatedHtml = (relatedLinks[key] || []).map(slug => `
-    <button onclick="showSectionWithStage('${slug}','${key}')"
-      style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;transition:all 0.15s"
-      onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
-      ${linkLabels[slug]}
-    </button>
   `).join('');
-
-  // 只抓「樣品種類」section 的 stage 資料
-  const stagesSection = allSections.find(s => s.slug === 'stages');
-  const stageEntries = stagesSection
-    ? allEntries.filter(e => e.section_id === stagesSection.id && e.stage === key)
-    : [];
-
-  const relatedSection = `
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07)">
-      <div style="font-size:13px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:8px">相關流程</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${relatedHtml}</div>
-    </div>
-  `;
-
-  const container = document.getElementById('stageContent');
-
-  if (s.hasTabs) {
-    container.innerHTML = `
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-header">
-          <div class="card-title">STAGE ${s.num} — ${s.name}</div>
-          <span style="font-size:13px;color:var(--text-dim)">${s.subtitle}</span>
-          <span class="badge badge-official" style="margin-left:auto">官方規範</span>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px;margin-bottom:4px">
-          ${s.tabs.map((t,i) => `
-            <button onclick="switchStageTab(this,'stab-${i}')"
-              style="padding:8px 18px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;${i===0 ? 'background:var(--gap-blue);color:#fff;border:2px solid var(--gap-blue)' : 'background:var(--card);color:var(--text-dim);border:2px solid var(--border)'}"
-              class="stage-proto-tab ${i===0?'stab-active':''}">${t.label}</button>
-          `).join('')}
-        </div>
-        ${s.tabs.map((t,i) => `
-          <div id="stab-${i}" class="tab-panel ${i===0?'active':''}">
-            ${renderInfoCard(t)}
-          </div>
-        `).join('')}
-        ${relatedSection}
-      </div>
-      ${stageEntries.length
-        ? stageEntries.map(e => renderCard(e)).join('')
-        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
-      }
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-header">
-          <div class="card-title">STAGE ${s.num} — ${s.name}</div>
-          <span style="font-size:13px;color:var(--text-dim)">${s.subtitle}</span>
-          <span class="badge badge-official" style="margin-left:auto">官方規範</span>
-        </div>
-        ${renderInfoCard(s)}
-        ${relatedSection}
-      </div>
-      ${stageEntries.length
-        ? stageEntries.map(e => renderCard(e)).join('')
-        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
-      }
-    `;
-  }
 }
 
-function switchStageTab(btn, panelId) {
-  btn.closest('div').querySelectorAll('.stage-proto-tab').forEach(b => {
-    b.style.background = 'var(--card)';
-    b.style.color = 'var(--text-dim)';
-    b.style.borderColor = 'var(--border)';
-    b.classList.remove('stab-active');
-  });
-  btn.style.background = 'var(--gap-blue)';
-  btn.style.color = '#fff';
-  btn.style.borderColor = 'var(--gap-blue)';
-  btn.classList.add('stab-active');
-  document.querySelectorAll('[id^="stab-"]').forEach(p => p.classList.remove('active'));
-  document.getElementById(panelId)?.classList.add('active');
+function openNewEntry() {
+  editingEntryId = null;
+  document.getElementById('modalTitle').textContent = '新增條目';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fContent').value = '';
+  document.getElementById('fSource').value = 'internal';
+  document.getElementById('fOrder').value = 0;
+  document.getElementById('fIsChecklist').checked = false;
+  document.getElementById('fStage').value = '';
+  document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
+  document.getElementById('pathList').innerHTML = '';
+  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
+  toggleStageField(currentSectionId);
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-function renderAvatarPage(section, entries) {
-  const cats  = entries.filter(e => e.sort_order <= 5);
-  const notes = entries.filter(e => e.sort_order > 5);
-  return `
-    <div class="page-header">
-      <div class="page-title">👤 ${section.name}</div>
-      <div class="page-desc">點選 Category 查看人台路徑與尺碼資訊</div>
-    </div>
-    <div class="type-tabs">
-      ${cats.map((e,i) => `
-        <button class="type-tab ${i===0?'active':''}" onclick="switchAvatarTab(this,'avp-${i}')">
-          ${escHtml(e.title)}
-        </button>
-      `).join('')}
-    </div>
-    ${cats.map((e,i) => `
-      <div id="avp-${i}" class="tab-panel ${i===0?'active':''}">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">${escHtml(e.title)}</div>
-            <span class="badge badge-official">官方規範</span>
-          </div>
-          <div class="card-content">${escHtml(e.content||'')}</div>
-          ${(e.paths||[]).map(p=>`
-            <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
-              <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
-              <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('')}
-    ${notes.map(e => renderCard(e)).join('')}
-  `;
+function openEditEntry(id) {
+  editingEntryId = id;
+  const e = allEntries.find(x=>x.id===id);
+  if (!e) return;
+  document.getElementById('modalTitle').textContent = '編輯條目';
+  document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('fTitle').value = e.title||'';
+  document.getElementById('fContent').value = e.content||'';
+  document.getElementById('fSource').value = e.source||'internal';
+  document.getElementById('fOrder').value = e.sort_order||0;
+  document.getElementById('fIsChecklist').checked = !!e.is_checklist;
+  document.getElementById('fSection').value = e.section_id;
+  document.getElementById('fStage').value = e.stage||'';
+  document.getElementById('pathList').innerHTML = '';
+  (e.paths||[]).forEach(p => addPathField(p));
+  const types = e.dev_type||['all'];
+  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
+  toggleStageField(e.section_id);
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-function switchAvatarTab(btn, panelId) {
-  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('[id^="avp-"]').forEach(p => p.classList.remove('active'));
-  document.getElementById(panelId)?.classList.add('active');
+function toggleStageField(sectionId) {
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist'].includes(s.slug)
+  );
+  const show = stageSections.some(s => s.id === sectionId);
+  document.getElementById('stageField').style.display = show ? 'block' : 'none';
 }
 
-function copyPath(path) {
-  navigator.clipboard.writeText(path).then(() => {
-    showCopyToast();
-  }).catch(() => {
-    // fallback
-    const el = document.createElement('textarea');
-    el.value = path;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    showCopyToast();
-  });
+// 當分類改變時，動態顯示/隱藏 Stage 欄位
+document.getElementById('fSection').addEventListener('change', function() {
+  toggleStageField(this.value);
+});
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function addPathField(val='') {
+  const div = document.createElement('div');
+  div.className = 'path-item';
+  div.innerHTML = `<input type="text" placeholder="\\\\192.168.1.220\\3ddb\\..." value="${esc(val)}"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px">✕</button>`;
+  document.getElementById('pathList').appendChild(div);
 }
 
-function showCopyToast() {
-  const toast = document.createElement('div');
-  toast.textContent = '✓ 已複製路徑';
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e3347;border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s';
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
-}
+async function saveEntry() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { showToast('請填寫標題','error'); return; }
+  const section_id = document.getElementById('fSection').value;
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist'].includes(s.slug)
+  );
+  const isStageSection = stageSections.some(s => s.id === section_id);
 
-// ── 共用 Stage 流程介面 ────────────────────────
-function renderStageBasedPage(section, entries, pageKey, title, desc) {
-  const stageList = [
-    { key: 'block',     num: 1, name: '3D Block',    active: false },
-    { key: 'proto',     num: 2, name: '3D Proto',    active: true  },
-    { key: 'la',        num: 3, name: '3D LA',       active: true  },
-    { key: 'fit',       num: 4, name: '3D Fit',      active: true  },
-    { key: 'sizeset',   num: 5, name: '3D Size Set', active: false },
-    { key: 'reference', num: 6, name: '3D RS',       active: true  },
-    { key: 'graphics',  num: 7, name: '3D Graphics', active: false },
-  ];
-  const informalSection = allSections.find(s => s.slug === 'informal');
-  const informalEntries = informalSection
-    ? allEntries.filter(e => e.section_id === informalSection.id)
-    : [];
-  return `
-    <div class="page-header">
-      <div class="page-title">${title}</div>
-      <div class="page-desc">${desc}</div>
-    </div>
-    <div class="type-tabs">
-      <button class="type-tab active" onclick="switchTab(this,'${pageKey}main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      <button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
-    </div>
-    <div class="tab-panel active" id="${pageKey}main-formal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">點選 Stage 查看對應內容</div>
-      <div class="stage-flow">
-        ${stageList.map((s, i) => `
-          <div id="${pageKey}box-${s.key}"
-            ${s.active ? `onclick="selectStageTab('${pageKey}','${s.key}')"` : ''}
-            class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
-            style="${s.active ? 'cursor:pointer' : 'opacity:0.45;cursor:default'}">
-            <div class="stage-num">STAGE ${s.num}</div>
-            <div class="stage-name">${s.name}</div>
-            ${!s.active ? '<div style="font-size:12px;color:var(--text-dim);margin-top:2px">尚未收過需求</div>' : ''}
-          </div>
-          ${i < stageList.length-1 ? '<span class="stage-arrow">→</span>' : ''}
-        `).join('')}
-      </div>
-      <div id="${pageKey}stageContent" style="margin-top:16px"></div>
-    </div>
-    <div class="tab-panel" id="${pageKey}main-informal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">客人沒有在 Centric 下 SPR，不需上傳 CLO-SET</div>
-      ${informalEntries.length
-        ? informalEntries.map(e => renderCard(e)).join('')
-        : '<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:16px">詳細內容請至左側「📸 非正單流程」查看</div>'}
-    </div>
-  `;
-}
-
-function selectStageTab(pageKey, stageKey) {
-  ['proto','la','fit','reference'].forEach(k => {
-    const box = document.getElementById(`${pageKey}box-${k}`);
-    if (box) {
-      box.style.borderColor = k === stageKey ? 'var(--official)' : '';
-      box.style.background  = k === stageKey ? 'rgba(59,130,246,0.12)' : '';
-    }
-  });
-  const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
-  const sec = allSections.find(s => s.slug === slugMap[pageKey]);
-  const stageEntries = sec
-    ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey)
-    : [];
-  const container = document.getElementById(`${pageKey}stageContent`);
-
-  // Stage 2 Proto：直接顯示所有內容，不切 tab
-  if (stageKey === 'proto' && pageKey !== 'cl') {
-    container.innerHTML = stageEntries.length
-      ? stageEntries.map(e => renderCard(e)).join('')
-      : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
-    return;
-  }
-
-  if (pageKey === 'cl') {
-    if (!stageEntries.length) {
-      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無 Checklist，請至後台新增</div>';
-      return;
-    }
-    const id = `cl-${stageKey}`;
-    container.innerHTML = `
-      <div class="checklist" id="${id}">
-        ${stageEntries.map(e => {
-          const hasSep = (p) => p.includes('｜');
-          const pathsHtml = (e.paths||[]).map(p => {
-            const label = hasSep(p) ? p.split('｜')[0].trim() : '';
-            const value = hasSep(p) ? p.split('｜')[1].trim() : p.trim();
-            const isUrl = value.startsWith('http');
-            return `
-              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 24px">
-                ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
-                ${isUrl ? `
-                  <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
-                  <span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>
-                ` : `
-                  <button onclick="copyPath('${escHtml(value)}')" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
-                  <span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>
-                `}
-              </div>`;
-          }).join('');
-
-          return `
-            <div class="check-item" onclick="toggleCheck(this)">
-              <input type="checkbox" onclick="event.stopPropagation();toggleCheck(this.parentElement)">
-              <div style="flex:1">
-                <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
-                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(escHtml(e.content))}</div>` : ''}
-                ${pathsHtml}
-              </div>
-            </div>`;
-        }).join('')}
-      </div>
-      <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
-    `;
-    bindChecklistEvents();
-  } else {
-    container.innerHTML = stageEntries.length
-      ? stageEntries.map(e => renderCard(e)).join('')
-      : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
-  }
-}
-
-function switchProtoSubTab(pageKey, tab) {
-  const protoBtn  = document.getElementById(`${pageKey}-subtab-proto`);
-  const collabBtn = document.getElementById(`${pageKey}-subtab-collab`);
-  const protoPanel  = document.getElementById(`${pageKey}-proto-panel`);
-  const collabPanel = document.getElementById(`${pageKey}-collab-panel`);
-  if (tab === 'proto') {
-    protoBtn.style.background = 'var(--gap-blue)'; protoBtn.style.color = '#fff'; protoBtn.style.borderColor = 'var(--gap-blue)';
-    collabBtn.style.background = 'var(--card)'; collabBtn.style.color = 'var(--text-dim)'; collabBtn.style.borderColor = 'var(--border)';
-    protoPanel.style.display = 'block'; collabPanel.style.display = 'none';
-  } else {
-    collabBtn.style.background = 'var(--gap-blue)'; collabBtn.style.color = '#fff'; collabBtn.style.borderColor = 'var(--gap-blue)';
-    protoBtn.style.background = 'var(--card)'; protoBtn.style.color = 'var(--text-dim)'; protoBtn.style.borderColor = 'var(--border)';
-    collabPanel.style.display = 'block'; protoPanel.style.display = 'none';
-  }
-}
-
-function renderPrefitPage(section, entries) {
-  return renderStageBasedPage(section, entries, 'pf', '👗 Prefit', '點選 Stage 查看對應的 Prefit 規則');
-}
-function renderDetailsPage(section, entries) {
-  return renderStageBasedPage(section, entries, 'dt', '✏️ 細節', '點選 Stage 查看對應的細節注意事項');
-}
-function renderChecklistPage(section, entries) {
-  return renderStageBasedPage(section, entries, 'cl', '✅ Checklist', '點選 Stage 查看對應的提交前確認清單');
-}
-
-function renderInformalPage(section, entries) {
-  return `
-    <div class="page-header">
-      <div class="page-title">📸 ${section.name}</div>
-      <div class="page-desc">只需 Snapshot + 系統結單，不需要上傳 CLO-SET</div>
-    </div>
-    <div class="col-grid cols-2">
-      <div class="col-card">
-        <div class="col-tag tag-color">各色樣 + 定位/對條格</div>
-        <ul class="col-list">
-          <li>目前遇到的情境：</li>
-          <li>看定位、核定位</li>
-          <li>實樣來不及，先提供 3D 各色</li>
-          <li>2D 參考定位</li>
-        </ul>
-      </div>
-      <div class="col-card">
-        <div class="col-tag tag-fit">Fit</div>
-        <ul class="col-list">
-          <li>目前遇到的情境：</li>
-          <li>開會樣：實樣來不及，先提供 3D for reference</li>
-          <li>客人內部會議 for 高層客製化樣衣</li>
-          <li>客人 TD 要求要先看</li>
-          <li>通常是單碼，若有全碼要先確認人台</li>
-        </ul>
-      </div>
-    </div>
-    ${entries.map(e => renderCard(e)).join('')}
-  `;
-}
-
-function renderQCPage(section, entries) {
-  const qcItems = entries.filter(e => e.source === 'warning');
-  const others  = entries.filter(e => e.source !== 'warning');
-  return `
-    <div class="page-header">
-      <div class="page-title">⚠️ ${section.name}</div>
-      <div class="page-desc">CLO-SET 上傳後常見的 QC Failed 原因與處理方式</div>
-    </div>
-    ${qcItems.length ? `
-      <div class="qc-grid">
-        ${qcItems.map(e => `
-          <div class="qc-item">
-            <div class="qc-fail">❌ ${escHtml(e.title)}</div>
-            <div class="qc-body">${escHtml(e.content || '')}</div>
-          </div>
-        `).join('')}
-      </div>
-    ` : ''}
-    ${others.map(e => renderCard(e)).join('')}
-  `;
-}
-
-// ── Search ─────────────────────────────────────
-function handleSearch(q) {
-  if (!q.trim()) {
-    document.getElementById('page-search').classList.remove('active');
-    document.getElementById('page-content').classList.add('active');
-    if (currentSlug) showSection(currentSlug);
-    return;
-  }
-
-  document.getElementById('page-content').classList.remove('active');
-  document.getElementById('page-feedback').classList.remove('active');
-  document.getElementById('page-search').classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-  const kws = q.toLowerCase().split(/\s+/).filter(Boolean);
-  const results = allEntries.filter(e => {
-    const text = [e.title, e.content, ...(e.paths||[])].join(' ').toLowerCase();
-    return kws.some(k => text.includes(k));
-  });
-
-  const container = document.getElementById('searchResults');
-  if (!results.length) {
-    container.innerHTML = '<div class="loading" style="padding:40px 0">找不到相關結果，試試其他關鍵字</div>';
-    return;
-  }
-
-  container.innerHTML = results.map(e => {
-    const section = allSections.find(s => s.id === e.section_id);
-    let content = escHtml(e.content || '');
-    kws.forEach(k => {
-      content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
-    });
-    return `
-      <div class="result-card" onclick="showSection('${section?.slug}')">
-        <div class="result-section">📂 ${section?.name || ''}</div>
-        <div class="result-title">${escHtml(e.title)}</div>
-        <div class="result-body">${content}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-// ── UI helpers ─────────────────────────────────
-function switchTab(btn, group, id) {
-  btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
-  document.getElementById(`${group}-${id}`)?.classList.add('active');
-}
-
-function toggleCheck(el, event) {
-  if (event) event.stopPropagation();
-  // 找到最近的 check-item
-  if (!el.classList.contains('check-item')) {
-    el = el.closest('.check-item');
-  }
-  if (!el) return;
-  const cb = el.querySelector('input[type=checkbox]');
-  if (!cb) return;
-  cb.checked = !cb.checked;
-  el.classList.toggle('done', cb.checked);
-}
-
-function bindChecklistEvents() {
-  document.querySelectorAll('.check-item').forEach(item => {
-    // 移除舊的 listener 避免重複
-    item.replaceWith(item.cloneNode(true));
-  });
-  document.querySelectorAll('.check-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
-      toggleCheck(item, e);
-    });
-    const cb = item.querySelector('input[type=checkbox]');
-    if (cb) cb.addEventListener('click', (e) => {
-      e.stopPropagation();
-      item.classList.toggle('done', cb.checked);
-    });
-  });
-}
-
-function resetChecklist(id) {
-  document.getElementById(id)?.querySelectorAll('.check-item').forEach(item => {
-    item.classList.remove('done');
-    const cb = item.querySelector('input');
-    if (cb) cb.checked = false;
-  });
-}
-
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── Feedback / 留言板 ───────────────────────────
-let fbImageFile = null;
-let fbCurrentFilter = 'all';
-
-const fbCatColors = {
-  '開發處內部': { bg:'rgba(59,130,246,0.15)',  color:'#93c5fd',  border:'rgba(59,130,246,0.3)'  },
-  '業務':       { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d',  border:'rgba(245,158,11,0.3)'  },
-  'DPC':        { bg:'rgba(16,185,129,0.15)',  color:'#6ee7b7',  border:'rgba(16,185,129,0.3)'  },
-  '客人':       { bg:'rgba(168,85,247,0.15)',  color:'#d8b4fe',  border:'rgba(168,85,247,0.3)'  },
-  '其他':       { bg:'rgba(148,163,184,0.15)', color:'#cbd5e1',  border:'rgba(148,163,184,0.3)' },
-};
-
-function fbCatIcon(cat) {
-  return {'開發處內部':'🏢','業務':'📋','DPC':'🖥️','客人':'👤','其他':'💡'}[cat] || '💡';
-}
-
-function showFeedback() {
-  document.getElementById('searchInput').value = '';
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-feedback').classList.add('active');
-  document.getElementById('nav-feedback').classList.add('active');
-
-  // 渲染篩選按鈕
-  const filtersEl = document.getElementById('fbFilters');
-  const cats = ['開發處內部','業務','DPC','客人','其他'];
-  filtersEl.innerHTML = `
-    <button class="fb-filter" id="fbf-all" onclick="filterFeedback(this,'all')"
-      style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(59,130,246,0.15);color:#93c5fd">
-      全部
-    </button>
-    ${cats.map(cat => `
-      <button class="fb-filter" id="fbf-${cat}" onclick="filterFeedback(this,'${cat}')"
-        style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--card);color:var(--text-dim)">
-        ${fbCatIcon(cat)} ${cat}
-      </button>
-    `).join('')}
-  `;
-
-  loadFeedback();
-}
-
-async function loadFeedback() {
-  const { data, error } = await sb
-    .from('feedback')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  const list = document.getElementById('fbList');
-  if (error || !data?.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:16px">還沒有留言，來第一個留言吧！</div>';
-    return;
-  }
-
-  renderFeedbackList(data);
-}
-
-function renderFeedbackList(data) {
-  const list = document.getElementById('fbList');
-  const filtered = fbCurrentFilter === 'all'
-    ? data
-    : data.filter(f => f.category === fbCurrentFilter);
-
-  if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:16px">這個分類還沒有留言</div>';
-    return;
-  }
-
-  list.innerHTML = filtered.map(f => {
-    const cat = f.category || '其他';
-    const c = fbCatColors[cat] || fbCatColors['其他'];
-    return `
-      <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--gap-blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">
-              ${escHtml((f.author||'匿')[0].toUpperCase())}
-            </div>
-            <div>
-              <div style="font-size:16px;font-weight:600;color:#fff">${escHtml(f.author||'匿名')}</div>
-              <div style="font-size:13px;color:var(--text-dim)">${formatDate(f.created_at)}</div>
-            </div>
-            <span style="font-size:13px;font-weight:600;padding:2px 8px;border-radius:10px;background:${c.bg};color:${c.color};border:1px solid ${c.border}">
-              ${fbCatIcon(cat)} ${cat}
-            </span>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button onclick="editFeedback('${f.id}')"
-              style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px"
-              onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
-            <button onclick="deleteFeedback('${f.id}')"
-              style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px"
-              onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
-          </div>
-        </div>
-        <div id="fb-view-${f.id}">
-          <div style="display:flex;gap:14px;align-items:flex-start">
-            ${f.image_url ? `
-              <div style="flex-shrink:0">
-                <img src="${f.image_url}" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"
-                  onclick="window.open('${f.image_url}','_blank')">
-              </div>
-            ` : ''}
-            ${f.content ? `
-              <div style="flex:1;font-size:16px;color:var(--text);line-height:1.75;white-space:pre-wrap">${escHtml(f.content)}</div>
-            ` : ''}
-          </div>
-        </div>
-        <div id="fb-edit-${f.id}" style="display:none">
-          <textarea id="fb-edit-text-${f.id}"
-            style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6">${escHtml(f.content||'')}</textarea>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-            <button onclick="cancelEdit('${f.id}')"
-              style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="saveEdit('${f.id}')"
-              style="background:var(--gap-blue);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">儲存</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-let allFeedbackData = [];
-
-async function loadFeedback() {
-  const { data, error } = await sb
-    .from('feedback')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  const list = document.getElementById('fbList');
-  if (error) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#fca5a5;font-size:16px">載入失敗，請重新整理</div>';
-    return;
-  }
-  allFeedbackData = data || [];
-  renderFeedbackList(allFeedbackData);
-}
-
-function filterFeedback(btn, cat) {
-  fbCurrentFilter = cat;
-  document.querySelectorAll('.fb-filter').forEach(b => {
-    b.style.background = 'var(--card)';
-    b.style.color = 'var(--text-dim)';
-    b.style.borderColor = 'var(--border)';
-  });
-  btn.style.background = 'rgba(59,130,246,0.15)';
-  btn.style.color = '#93c5fd';
-  btn.style.borderColor = 'var(--official)';
-  renderFeedbackList(allFeedbackData);
-}
-
-async function submitFeedback() {
-  const author   = document.getElementById('fbAuthor').value.trim() || '匿名';
-  const content  = document.getElementById('fbContent').value.trim();
-  const category = document.getElementById('fbCategory').value;
-
-  if (!content && !fbImageFile) {
-    alert('請輸入留言內容或上傳圖片');
-    return;
-  }
-
-  let image_url = null;
-  if (fbImageFile) {
-    const ext = fbImageFile.name?.split('.').pop() || 'png';
-    const filename = `${Date.now()}.${ext}`;
-    const { error: upErr } = await sb.storage
-      .from('feedback-images')
-      .upload(filename, fbImageFile, { contentType: fbImageFile.type });
-    if (upErr) { alert('圖片上傳失敗：' + upErr.message); return; }
-    const { data: urlData } = sb.storage.from('feedback-images').getPublicUrl(filename);
-    image_url = urlData.publicUrl;
-  }
-
-  const { error } = await sb.from('feedback').insert({ author, content, image_url, category });
-  if (error) { alert('發布失敗：' + error.message); return; }
-
-  document.getElementById('fbContent').value = '';
-  document.getElementById('fbAuthor').value = '';
-  clearFbImage();
-  loadFeedback();
-}
-
-async function deleteFeedback(id) {
-  if (!confirm('確定要刪除這則留言嗎？')) return;
-  await sb.from('feedback').delete().eq('id', id);
-  allFeedbackData = allFeedbackData.filter(f => f.id !== id);
-  renderFeedbackList(allFeedbackData);
-}
-
-function handlePaste(e) {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      setFbImage(item.getAsFile());
-      e.preventDefault();
-      break;
-    }
-  }
-}
-
-function handleDrop(e) {
-  e.preventDefault();
-  handleDragLeave(e);
-  const file = e.dataTransfer?.files?.[0];
-  if (file?.type.startsWith('image/')) setFbImage(file);
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('fbDropZone').style.borderColor = 'var(--official)';
-  document.getElementById('fbDropZone').style.background = 'rgba(59,130,246,0.05)';
-}
-
-function handleDragLeave(e) {
-  document.getElementById('fbDropZone').style.borderColor = 'var(--border)';
-  document.getElementById('fbDropZone').style.background = '';
-}
-
-function handleFileSelect(e) {
-  const file = e.target.files?.[0];
-  if (file) setFbImage(file);
-}
-
-function setFbImage(file) {
-  fbImageFile = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('fbPreviewImg').src = e.target.result;
-    document.getElementById('fbImagePreview').style.display = 'block';
-    document.getElementById('fbDropZone').style.display = 'none';
+  const payload = {
+    section_id,
+    title,
+    content:      document.getElementById('fContent').value.trim(),
+    source:       document.getElementById('fSource').value,
+    sort_order:   parseInt(document.getElementById('fOrder').value)||0,
+    is_checklist: document.getElementById('fIsChecklist').checked,
+    paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
+    dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
+    stage:        isStageSection ? (document.getElementById('fStage').value || null) : null,
   };
-  reader.readAsDataURL(file);
+  if (!payload.dev_type.length) payload.dev_type = ['all'];
+
+  const { error } = editingEntryId
+    ? await sb.from('entries').update(payload).eq('id', editingEntryId)
+    : await sb.from('entries').insert(payload);
+
+  if (error) { showToast('儲存失敗：'+error.message,'error'); }
+  else { showToast('儲存成功 ✓','success'); closeModal(); await loadData(); selectSection(payload.section_id); }
 }
 
-function clearFbImage() {
-  fbImageFile = null;
-  document.getElementById('fbImagePreview').style.display = 'none';
-  document.getElementById('fbDropZone').style.display = 'block';
-  document.getElementById('fbFileInput').value = '';
+async function deleteEntry() {
+  if (!editingEntryId || !confirm('確定要刪除這個條目嗎？')) return;
+  const { error } = await sb.from('entries').delete().eq('id', editingEntryId);
+  if (error) { showToast('刪除失敗','error'); }
+  else { showToast('已刪除','success'); closeModal(); await loadData(); selectSection(currentSectionId); }
 }
 
-function editFeedback(id) {
-  document.getElementById('fb-view-' + id).style.display = 'none';
-  document.getElementById('fb-edit-' + id).style.display = 'block';
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-function cancelEdit(id) {
-  document.getElementById('fb-view-' + id).style.display = 'block';
-  document.getElementById('fb-edit-' + id).style.display = 'none';
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function saveEdit(id) {
-  const content = document.getElementById('fb-edit-text-' + id).value.trim();
-  const { error } = await sb.from('feedback').update({ content }).eq('id', id);
-  if (error) { alert('儲存失敗：' + error.message); return; }
-  // update local data
-  const item = allFeedbackData.find(f => f.id === id);
-  if (item) item.content = content;
-  renderFeedbackList(allFeedbackData);
-}
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
 
-function formatDate(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-
-// ── Start ──────────────────────────────────────
 init();
 </script>
 </body>
