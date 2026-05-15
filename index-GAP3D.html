@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GAP 3D 作業知識庫</title>
+<title>GAP 3D Standard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
@@ -414,7 +414,7 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
 
 <header>
   <div class="logo">GAP</div>
-  <h1>3D DPC 作業知識庫</h1>
+  <h1>GAP 3D Standard</h1>
   <div class="header-right">
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
@@ -702,6 +702,39 @@ function renderCard(e) {
       </div>
     `;
   }).join('');
+
+  // 兩欄 Comments 特殊處理
+  if (e.content?.startsWith('TWO_COL')) {
+    const parts = e.content.replace('TWO_COL\n','').split('---SPLIT---');
+    const left  = parts[0]?.trim() || '';
+    const right = parts[1]?.trim() || '';
+    const leftTitle  = left.split('\n')[0];
+    const leftBody   = left.split('\n').slice(1).join('\n');
+    const rightTitle = right.split('\n')[0];
+    const rightBody  = right.split('\n').slice(1).join('\n');
+
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${escHtml(e.title)}</div>
+          <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+          <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
+            <div style="font-size:15px;font-weight:600;color:#6ee7b7;margin-bottom:8px">${escHtml(leftTitle)}</div>
+            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(leftBody)}</pre>
+            <button onclick="copyPath('${escHtml(leftBody)}')" style="margin-top:10px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+          </div>
+          <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
+            <div style="font-size:15px;font-weight:600;color:#fcd34d;margin-bottom:8px">${escHtml(rightTitle)}</div>
+            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(rightBody)}</pre>
+            <button onclick="copyPath('${escHtml(rightBody)}')" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fcd34d;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+          </div>
+        </div>
+        ${paths}
+      </div>
+    `;
+  }
 
   const content = e.content
     ? `<div class="card-content">${linkify(escHtml(e.content))}</div>`
