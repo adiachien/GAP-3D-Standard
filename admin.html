@@ -340,7 +340,11 @@ async function saveEntry() {
   const title = document.getElementById('fTitle').value.trim();
   if (!title) { showToast('請填寫標題','error'); return; }
   const section_id = document.getElementById('fSection').value;
-  const stagesSection = allSections.find(s=>s.slug==='stages');
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist'].includes(s.slug)
+  );
+  const isStageSection = stageSections.some(s => s.id === section_id);
+
   const payload = {
     section_id,
     title,
@@ -350,7 +354,7 @@ async function saveEntry() {
     is_checklist: document.getElementById('fIsChecklist').checked,
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
     dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
-    stage:        (stagesSection && section_id === stagesSection.id) ? (document.getElementById('fStage').value || null) : null,
+    stage:        isStageSection ? (document.getElementById('fStage').value || null) : null,
   };
   if (!payload.dev_type.length) payload.dev_type = ['all'];
 
