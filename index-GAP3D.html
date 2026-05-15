@@ -1094,16 +1094,35 @@ function selectStageTab(pageKey, stageKey) {
     const id = `cl-${stageKey}`;
     container.innerHTML = `
       <div class="checklist" id="${id}">
-        ${stageEntries.map(e => `
-          <div class="check-item" onclick="toggleCheck(this)">
-            <input type="checkbox" onclick="event.stopPropagation();toggleCheck(this.parentElement)">
-            <span>${escHtml(e.title)}${(e.paths||[]).map(p=>`
-              <div style="display:flex;align-items:center;gap:8px;margin:4px 0">
-                <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
-                <span class="path-block" style="margin:0;flex:1">${escHtml(p)}</span>
-              </div>`).join('')}</span>
-          </div>
-        `).join('')}
+        ${stageEntries.map(e => {
+          const hasSep = (p) => p.includes('｜');
+          const pathsHtml = (e.paths||[]).map(p => {
+            const label = hasSep(p) ? p.split('｜')[0].trim() : '';
+            const value = hasSep(p) ? p.split('｜')[1].trim() : p.trim();
+            const isUrl = value.startsWith('http');
+            return `
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 24px">
+                ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
+                ${isUrl ? `
+                  <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
+                  <span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>
+                ` : `
+                  <button onclick="copyPath('${escHtml(value)}')" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+                  <span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>
+                `}
+              </div>`;
+          }).join('');
+
+          return `
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox" onclick="event.stopPropagation();toggleCheck(this.parentElement)">
+              <div style="flex:1">
+                <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
+                ${e.content ? `<div style="font-size:15px;color:var(--text-dim);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(escHtml(e.content))}</div>` : ''}
+                ${pathsHtml}
+              </div>
+            </div>`;
+        }).join('')}
       </div>
       <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
     `;
