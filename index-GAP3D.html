@@ -507,11 +507,11 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
         <table id="trackerTable" style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="border-bottom:2px solid var(--border)">
-              <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">品牌/Category</th>
-              <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">負責人</th>
-              <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600">款數</th>
-              <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600">3D款數</th>
-              <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600">進單狀態</th>
+              <th onclick="sortTracker('brand')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">品牌/Category <span id="sort-brand"></span></th>
+              <th onclick="sortTracker('owner')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">負責人 <span id="sort-owner"></span></th>
+              <th onclick="sortTracker('count')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">款數 <span id="sort-count"></span></th>
+              <th onclick="sortTracker('count_3d')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">3D款數 <span id="sort-count_3d"></span></th>
+              <th onclick="sortTracker('status')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">進單狀態 <span id="sort-status"></span></th>
               <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">備註</th>
               <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">Miro</th>
               <th style="padding:10px 12px"></th>
@@ -1567,28 +1567,50 @@ function renderTrackerRows() {
   applyTrackerFilter();
 }
 
+let trackerSortCol = null;
+let trackerSortAsc = true;
+
+function sortTracker(col) {
+  if (trackerSortCol === col) {
+    trackerSortAsc = !trackerSortAsc;
+  } else {
+    trackerSortCol = col;
+    trackerSortAsc = true;
+  }
+  // update sort indicators
+  ['brand','owner','count','count_3d','status'].forEach(c => {
+    const el = document.getElementById('sort-' + c);
+    if (el) el.textContent = c === col ? (trackerSortAsc ? '↑' : '↓') : '';
+  });
+  applyTrackerFilter();
+}
+
 function applyTrackerFilter() {
   const ownerFilter  = document.getElementById('filterOwner').value;
   const statusFilter = document.getElementById('filterStatus').value;
   const allRows = trackerRows.filter(r => r.season_id === currentSeason);
 
-  const filtered = allRows.filter(r => {
+  let filtered = allRows.filter(r => {
     if (ownerFilter  && r.owner  !== ownerFilter)  return false;
     if (statusFilter && r.status !== statusFilter) return false;
     return true;
   });
+
+  // 排序
+  if (trackerSortCol) {
+    filtered = [...filtered].sort((a, b) => {
+      const av = a[trackerSortCol] ?? '';
+      const bv = b[trackerSortCol] ?? '';
+      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv));
+      return trackerSortAsc ? cmp : -cmp;
+    });
+  }
 
   // 加總
   const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
   const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
   document.getElementById('trackerSummary').innerHTML =
     `共 <strong style="color:#fff">${filtered.length}</strong> 筆　款數合計：<strong style="color:#93c5fd">${totalCount}</strong>　3D款數合計：<strong style="color:#6ee7b7">${totalCount3d}</strong>`;
-
-  const tbody = document.getElementById('trackerBody');
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>`;
-    return;
-  }
 
   const statusColors = {
     '待確認':   { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d'  },
@@ -1597,6 +1619,12 @@ function applyTrackerFilter() {
     '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
     '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
   };
+
+  const tbody = document.getElementById('trackerBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>`;
+    return;
+  }
 
   tbody.innerHTML = filtered.map(r => {
     const sc = statusColors[r.status] || statusColors['待確認'];
@@ -1607,13 +1635,26 @@ function applyTrackerFilter() {
         <td style="padding:12px;text-align:center;color:var(--text)">${r.count ?? '-'}</td>
         <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d ?? '-'}</td>
         <td style="padding:12px;text-align:center">
-          <span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${sc.bg};color:${sc.color}">${escHtml(r.status||'')}</span>
+          <select onchange="updateStatus('${r.id}',this.value)"
+            style="background:${sc.bg};color:${sc.color};border:none;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none">
+            ${['待確認','尚未進單','已進單','確定沒有','不需要3D'].map(s =>
+              `<option value="${s}" ${r.status===s?'selected':''} style="background:var(--navy-mid);color:var(--text)">${s}</option>`
+            ).join('')}
+          </select>
         </td>
         <td style="padding:12px;color:var(--text-dim);font-size:13px">${escHtml(r.note||'')}</td>
         <td style="padding:12px">${r.miro_url?`<a href="${escHtml(r.miro_url)}" target="_blank" style="color:#93c5fd;font-size:12px;text-decoration:none">🔗 Miro</a>`:'—'}</td>
         <td style="padding:12px"><button onclick="openEditRow('${r.id}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
       </tr>`;
   }).join('');
+}
+
+async function updateStatus(id, status) {
+  const { error } = await sb.from('tracker_rows').update({ status }).eq('id', id);
+  if (error) { alert('更新失敗'); return; }
+  const row = trackerRows.find(r => r.id === id);
+  if (row) row.status = status;
+  applyTrackerFilter();
 }
 
 function openAddSeason() {
