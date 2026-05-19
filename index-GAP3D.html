@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GAP 3D Standard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
@@ -480,7 +481,23 @@ mark { background:rgba(245,158,11,0.3); color:#fde68a; border-radius:2px; paddin
       <!-- Miro 連結區 -->
       <div id="trackerMiroLinks" style="margin-bottom:16px"></div>
 
-      <!-- 表格 -->
+      <!-- 數量加總 + 篩選 + 匯出 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div id="trackerSummary" style="font-size:13px;color:var(--text-dim);flex:1"></div>
+        <select id="filterOwner" onchange="applyTrackerFilter()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+          <option value="">全部負責人</option>
+        </select>
+        <select id="filterStatus" onchange="applyTrackerFilter()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+          <option value="">全部狀態</option>
+          <option>待確認</option>
+          <option>尚未進單</option>
+          <option>已進單</option>
+          <option>確定沒有</option>
+          <option>不需要3D</option>
+        </select>
+        <button onclick="exportTrackerExcel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
+      </div>
+
       <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
         <div id="trackerSeasonTitle" style="font-size:16px;font-weight:600;color:#fff"></div>
         <button onclick="openAddRow()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增列</button>
@@ -1456,6 +1473,31 @@ async function showTracker() {
   await loadTrackerData();
 }
 
+function exportTrackerExcel() {
+  const XLSX = window.XLSX;
+  if (!XLSX) { alert('載入中，請稍後再試'); return; }
+
+  const ownerFilter  = document.getElementById('filterOwner').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
+  const filtered = allRows.filter(r => {
+    if (ownerFilter  && r.owner  !== ownerFilter)  return false;
+    if (statusFilter && r.status !== statusFilter) return false;
+    return true;
+  });
+
+  const season = trackerSeasons.find(s => s.id === currentSeason);
+  const data = [
+    ['品牌/Category', '負責人', '款數', '3D款數', '進單狀態', '備註', 'Miro 連結'],
+    ...filtered.map(r => [r.brand||'', r.owner||'', r.count||'', r.count_3d||'', r.status||'', r.note||'', r.miro_url||''])
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, season?.name || 'Sheet1');
+  XLSX.writeFile(wb, `開發追蹤_${season?.name || 'export'}.xlsx`);
+}
+
 async function loadTrackerData() {
   const [{ data: seasons }, { data: rows }] = await Promise.all([
     sb.from('tracker_seasons').select('*').order('sort_order'),
@@ -1513,20 +1555,57 @@ const statusColors = {
 };
 
 function renderTrackerRows() {
-  const rows = trackerRows.filter(r => r.season_id === currentSeason);
+  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
+
+  // 更新負責人篩選選項
+  const owners = [...new Set(allRows.map(r => r.owner).filter(Boolean))];
+  const filterOwner = document.getElementById('filterOwner');
+  const currentOwner = filterOwner.value;
+  filterOwner.innerHTML = '<option value="">全部負責人</option>' +
+    owners.map(o => `<option value="${escHtml(o)}" ${currentOwner===o?'selected':''}>${escHtml(o)}</option>`).join('');
+
+  applyTrackerFilter();
+}
+
+function applyTrackerFilter() {
+  const ownerFilter  = document.getElementById('filterOwner').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
+
+  const filtered = allRows.filter(r => {
+    if (ownerFilter  && r.owner  !== ownerFilter)  return false;
+    if (statusFilter && r.status !== statusFilter) return false;
+    return true;
+  });
+
+  // 加總
+  const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
+  const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
+  document.getElementById('trackerSummary').innerHTML =
+    `共 <strong style="color:#fff">${filtered.length}</strong> 筆　款數合計：<strong style="color:#93c5fd">${totalCount}</strong>　3D款數合計：<strong style="color:#6ee7b7">${totalCount3d}</strong>`;
+
   const tbody = document.getElementById('trackerBody');
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">還沒有資料，點右上角「新增列」開始</td></tr>`;
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>`;
     return;
   }
-  tbody.innerHTML = rows.map(r => {
+
+  const statusColors = {
+    '待確認':   { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d'  },
+    '尚未進單': { bg:'rgba(239,68,68,0.15)',   color:'#fca5a5'  },
+    '已進單':   { bg:'rgba(16,185,129,0.15)',  color:'#6ee7b7'  },
+    '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
+    '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
+  };
+
+  tbody.innerHTML = filtered.map(r => {
     const sc = statusColors[r.status] || statusColors['待確認'];
     return `
       <tr style="border-bottom:1px solid var(--border)">
         <td style="padding:12px;font-weight:600;color:#fff">${escHtml(r.brand||'')}</td>
         <td style="padding:12px;color:var(--text)">${escHtml(r.owner||'')}</td>
-        <td style="padding:12px;text-align:center;color:var(--text)">${r.count||'-'}</td>
-        <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d||'-'}</td>
+        <td style="padding:12px;text-align:center;color:var(--text)">${r.count ?? '-'}</td>
+        <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d ?? '-'}</td>
         <td style="padding:12px;text-align:center">
           <span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${sc.bg};color:${sc.color}">${escHtml(r.status||'')}</span>
         </td>
