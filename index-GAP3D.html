@@ -1470,9 +1470,13 @@ async function loadTrackerData() {
 function renderSeasonTabs() {
   const tabs = document.getElementById('seasonTabs');
   tabs.innerHTML = trackerSeasons.map((s, i) => `
-    <div id="stab-${s.id}" onclick="selectSeason('${s.id}')"
-      style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};background:${i===0?'rgba(59,130,246,0.12)':'var(--card)'};color:${i===0?'#fff':'var(--text-dim)'}">
-      ${escHtml(s.name)}
+    <div style="display:flex;align-items:center;gap:2px">
+      <div id="stab-${s.id}" onclick="selectSeason('${s.id}')"
+        style="padding:8px 14px;border-radius:8px 0 0 8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};border-right:none;background:${i===0?'rgba(59,130,246,0.12)':'var(--card)'};color:${i===0?'#fff':'var(--text-dim)'}">
+        ${escHtml(s.name)}
+      </div>
+      <button onclick="editSeason('${s.id}')"
+        style="padding:8px 8px;border-radius:0 8px 8px 0;font-size:11px;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};background:${i===0?'rgba(59,130,246,0.12)':'var(--card)'};color:var(--text-dim)">✏️</button>
     </div>
   `).join('');
 }
@@ -1546,6 +1550,17 @@ async function confirmAddSeason() {
   document.getElementById('newSeasonName').value = '';
   document.getElementById('addSeasonBox').style.display = 'none';
   await loadTrackerData();
+}
+
+async function editSeason(id) {
+  const s = trackerSeasons.find(x => x.id === id);
+  if (!s) return;
+  const newName = prompt('季節名稱：', s.name);
+  if (!newName || newName === s.name) return;
+  const { error } = await sb.from('tracker_seasons').update({ name: newName }).eq('id', id);
+  if (error) { alert('更新失敗：' + error.message); return; }
+  await loadTrackerData();
+  selectSeason(id);
 }
 
 function openAddRow() {
