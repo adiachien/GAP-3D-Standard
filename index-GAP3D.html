@@ -10,18 +10,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --navy: #f5f5f5;
-  --navy-mid: #ffffff;
-  --navy-light: #f0f0f0;
-  --gap-blue: #1a3fa6;
-  --official: #1a3fa6;
-  --internal: #d97706;
-  --warning: #dc2626;
-  --text: #1a1a2e;
-  --text-dim: #6b7280;
-  --border: rgba(0,0,0,0.1);
-  --card: #ffffff;
-  --sidebar-w: 230px;
+  /* 主色 */
+  --gap-navy:    #002A5C;
+  --gap-blue:    #1d4ed8;
+  --gap-blue-light: #3b82f6;
+
+  /* 功能色 */
+  --official:    #1d4ed8;   /* 官方規範 — 藍 */
+  --internal:    #0891b2;   /* 內部SOP — 青藍 */
+  --warning:     #b91c1c;   /* 重要警示 — 紅 */
+
+  /* 狀態色 */
+  --status-ok:   #166534;   /* 已進單 — 綠 */
+  --status-wait: #d97706;   /* 待確認 — 橘黃 */
+
+  /* 背景層次 */
+  --bg-page:     #f8f9fb;   /* 頁面背景 */
+  --bg-sidebar:  #f1f3f7;   /* Sidebar */
+  --bg-card:     #ffffff;   /* 卡片 */
+  --bg-input:    #f1f3f7;   /* 輸入框 */
+
+  /* 邊框 */
+  --border:      #dde1e9;
+
+  /* 文字 */
+  --text:        #0f172a;   /* 主要文字 */
+  --text-dim:    #475569;   /* 次要文字 */
+  --text-muted:  #94a3b8;   /* 淡色文字 */
+
+  /* 相容舊變數 */
+  --navy:        var(--bg-page);
+  --navy-mid:    var(--bg-card);
+  --navy-light:  var(--bg-input);
+  --card:        var(--bg-card);
+  --sidebar-w:   230px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -29,7 +51,7 @@ html, body { height:100%; overflow:hidden; }
 
 body {
   font-family: 'Noto Sans TC', sans-serif;
-  background: var(--navy);
+  background: var(--bg-page);
   color: var(--text);
   display: flex;
   flex-direction: column;
@@ -104,8 +126,8 @@ header h1 { font-size: 18px; font-weight: 500; }
 aside {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
-  background: #fafafa;
-  border-right: 1px solid #e5e7eb;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 12px 0 20px;
   flex-shrink: 0;
@@ -120,7 +142,7 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 
 .search-sidebar input {
   width: 100%;
-  background: var(--navy-light);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 7px 10px 7px 30px;
@@ -129,8 +151,8 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
   font-family: inherit;
   outline: none;
 }
-.search-sidebar input::placeholder { color: var(--text-dim); }
-.search-sidebar input:focus { border-color: rgba(59,130,246,0.5); }
+.search-sidebar input::placeholder { color: var(--text-muted); }
+.search-sidebar input:focus { border-color: var(--gap-blue-light); box-shadow: 0 0 0 2px rgba(29,78,216,0.08); }
 .search-wrap-inner { position: relative; }
 .search-wrap-inner::before {
   content: '🔍';
@@ -164,11 +186,11 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
   transition: all 0.12s;
   user-select: none;
 }
-.nav-item:hover { color: var(--text); background: rgba(26,63,166,0.05); }
+.nav-item:hover { color: var(--text); background: rgba(0,42,92,0.04); }
 .nav-item.active {
-  color: var(--gap-blue);
-  background: rgba(26,63,166,0.08);
-  border-left-color: var(--gap-blue);
+  color: var(--gap-navy);
+  background: rgba(0,42,92,0.07);
+  border-left-color: var(--gap-navy);
   font-weight: 600;
 }
 .nav-icon { font-size: 16px; }
@@ -219,9 +241,9 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   letter-spacing: 0.04em;
   flex-shrink: 0;
 }
-.badge-official { background:rgba(26,63,166,0.1); color:#1a3fa6; border:1px solid rgba(26,63,166,0.2); }
-.badge-internal  { background:rgba(217,119,6,0.1);  color:#b45309; border:1px solid rgba(217,119,6,0.2);  }
-.badge-warning   { background:rgba(220,38,38,0.1);  color:#dc2626; border:1px solid rgba(220,38,38,0.2);  }
+.badge-official { background:rgba(29,78,216,0.08);  color:#1d4ed8; border:1px solid rgba(29,78,216,0.2);  }
+.badge-internal  { background:rgba(8,145,178,0.08);  color:#0e7490; border:1px solid rgba(8,145,178,0.2);  }
+.badge-warning   { background:rgba(185,28,28,0.08);  color:#b91c1c; border:1px solid rgba(185,28,28,0.2);  }
 
 .card-content { font-size: 16px; color: var(--text); line-height: 1.75; white-space: pre-wrap; }
 
@@ -239,21 +261,21 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 }
 
 .highlight-box {
-  background: rgba(220,38,38,0.06);
-  border: 1px solid rgba(220,38,38,0.2);
+  background: rgba(185,28,28,0.05);
+  border: 1px solid rgba(185,28,28,0.18);
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 14px;
-  color: #dc2626;
+  color: #b91c1c;
   margin-top: 8px;
 }
 
 .tip-box {
-  background: rgba(217,119,6,0.06);
+  background: rgba(8,145,178,0.06);
   border-left: 3px solid var(--internal);
   padding: 8px 12px;
   font-size: 14px;
-  color: #b45309;
+  color: #0e7490;
   margin-top: 8px;
   border-radius: 0 4px 4px 0;
 }
@@ -263,7 +285,7 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   display: flex;
   gap: 4px;
   margin-bottom: 16px;
-  background: #f3f4f6;
+  background: var(--bg-sidebar);
   padding: 4px;
   border-radius: 8px;
   width: fit-content;
@@ -281,7 +303,7 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   transition: all 0.12s;
 }
 .type-tab:hover { color: var(--text); }
-.type-tab.active { background: var(--gap-blue); color: #fff; }
+.type-tab.active { background: var(--gap-navy); color: #fff; }
 
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
@@ -472,7 +494,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       <!-- 季節 tabs -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
         <div id="seasonTabs" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
-        <button onclick="openAddSeason()" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增季節</button>
+        <button onclick="openAddSeason()" style="background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增季節</button>
       </div>
 
       <!-- 新增季節輸入 -->
@@ -501,12 +523,12 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           <option>確定沒有</option>
           <option>不需要3D</option>
         </select>
-        <button onclick="exportTrackerExcel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
+        <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
       </div>
 
       <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
         <div id="trackerSeasonTitle" style="font-size:16px;font-weight:600;color:#fff"></div>
-        <button onclick="openAddRow()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增列</button>
+        <button onclick="openAddRow()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增列</button>
       </div>
 
       <div style="overflow-x:auto">
@@ -551,7 +573,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
             <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Miro 連結</label><input id="rMiro" placeholder="https://miro.com/..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
           </div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-            <button id="rowDeleteBtn" onclick="deleteTrackerRow()" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">刪除</button>
+            <button id="rowDeleteBtn" onclick="deleteTrackerRow()" style="display:none;background:rgba(185,28,28,0.08);color:#991b1b;border:1px solid rgba(185,28,28,0.18);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">刪除</button>
             <button onclick="closeRowModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
             <button onclick="saveTrackerRow()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
           </div>
@@ -799,16 +821,16 @@ function renderCard(e) {
         <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:120px;flex-shrink:0">${escHtml(label)}</span>
         ${isUrl ? `
           <a href="${escHtml(value)}" target="_blank"
-            style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
             🔗 開啟
           </a>
           <span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>
         ` : `
           <button onclick="copyPath('${escHtml(value)}')"
-            style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
             📋 copy
           </button>
-          <span style="font-size:12px;color:#7dd3fc;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>
+          <span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>
         `}
       </div>
     `;
@@ -832,14 +854,14 @@ function renderCard(e) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
-            <div style="font-size:15px;font-weight:600;color:#6ee7b7;margin-bottom:8px">${escHtml(leftTitle)}</div>
+            <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${escHtml(leftTitle)}</div>
             <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(leftBody)}</pre>
-            <button onclick="copyPath('${escHtml(leftBody)}')" style="margin-top:10px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button onclick="copyPath('${escHtml(leftBody)}')" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
           <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
-            <div style="font-size:15px;font-weight:600;color:#fcd34d;margin-bottom:8px">${escHtml(rightTitle)}</div>
+            <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${escHtml(rightTitle)}</div>
             <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(rightBody)}</pre>
-            <button onclick="copyPath('${escHtml(rightBody)}')" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fcd34d;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button onclick="copyPath('${escHtml(rightBody)}')" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
         </div>
         ${paths}
@@ -865,7 +887,7 @@ function renderCard(e) {
 
 function linkify(text) {
   return text.replace(/(https?:\/\/[^\s<]+)/g, url =>
-    `<a href="${url}" target="_blank" style="color:#7dd3fc;text-decoration:underline;text-underline-offset:2px">${url}</a>`
+    `<a href="${url}" target="_blank" style="color:#1d4ed8;text-decoration:underline;text-underline-offset:2px">${url}</a>`
   );
 }
 
@@ -892,12 +914,12 @@ function renderStagesPage(section, entries) {
       <div class="page-title">📋 ${section.name}</div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;border-color:rgba(59,130,246,0.25);background:rgba(59,130,246,0.06)">
-      <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
+    <div class="card" style="margin-bottom:20px;border-color:rgba(29,78,216,0.2);background:rgba(59,130,246,0.06)">
+      <div style="font-size:16px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
       <div style="font-size:16px;color:var(--text);line-height:1.8">
         請業務確認 Centric 是否有下 SPR（Sample Request）<br>
-        ・有 SPR → <strong style="color:#6ee7b7">正單</strong>，需上傳 CLO-SET<br>
-        ・沒有 SPR → <strong style="color:#fcd34d">非正單</strong>，只需提供 3D 照片
+        ・有 SPR → <strong style="color:#166534">正單</strong>，需上傳 CLO-SET<br>
+        ・沒有 SPR → <strong style="color:#92400e">非正單</strong>，只需提供 3D 照片
       </div>
       <div style="font-size:17px;color:var(--text-dim);margin-top:8px">我們自己也可以去 Centric 看，但通常請業務確認 😄</div>
     </div>
@@ -993,7 +1015,7 @@ function selectStage(key) {
   const box = document.getElementById('stagebox-' + key);
   if (box) {
     box.style.borderColor = 'var(--official)';
-    box.style.background = 'rgba(59,130,246,0.12)';
+    box.style.background = 'rgba(29,78,216,0.08)';
   }
 
   const mcNote = `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5">請 TD 提供 MC Link<br>若無 MC Link（如 CO 款）可用尺寸表截圖替代</div>`;
@@ -1037,7 +1059,7 @@ function selectStage(key) {
 
   const relatedHtml = (relatedLinks[key] || []).map(slug => `
     <button onclick="showSectionWithStage('${slug}','${key}')"
-      style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;transition:all 0.15s"
+      style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:rgba(59,130,246,0.1);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;transition:all 0.15s"
       onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
       ${linkLabels[slug]}
     </button>
@@ -1145,7 +1167,7 @@ function renderAvatarPage(section, entries) {
           ${(e.paths||[]).map(p=>`
             <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
               <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
-              <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
+              <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
             </div>
           `).join('')}
         </div>
@@ -1180,7 +1202,7 @@ function copyPath(path) {
 function showCopyToast() {
   const toast = document.createElement('div');
   toast.textContent = '✓ 已複製路徑';
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e3347;border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid rgba(16,185,129,0.3);color:#166534;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s';
   document.body.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
 }
@@ -1240,7 +1262,7 @@ function selectStageTab(pageKey, stageKey) {
     const box = document.getElementById(`${pageKey}box-${k}`);
     if (box) {
       box.style.borderColor = k === stageKey ? 'var(--official)' : '';
-      box.style.background  = k === stageKey ? 'rgba(59,130,246,0.12)' : '';
+      box.style.background  = k === stageKey ? 'rgba(29,78,216,0.08)' : '';
     }
   });
   const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
@@ -1276,10 +1298,10 @@ function selectStageTab(pageKey, stageKey) {
               <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 24px">
                 ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
                 ${isUrl ? `
-                  <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
+                  <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
                   <span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>
                 ` : `
-                  <button onclick="copyPath('${escHtml(value)}')" style="flex-shrink:0;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#93c5fd;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+                  <button onclick="copyPath('${escHtml(value)}')" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
                   <span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>
                 `}
               </div>`;
@@ -1517,11 +1539,11 @@ function renderSeasonTabs() {
   tabs.innerHTML = trackerSeasons.map((s, i) => `
     <div style="display:flex;align-items:center;gap:2px">
       <div id="stab-${s.id}" onclick="selectSeason('${s.id}')"
-        style="padding:8px 14px;border-radius:8px 0 0 8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};border-right:none;background:${i===0?'rgba(59,130,246,0.12)':'var(--card)'};color:${i===0?'#fff':'var(--text-dim)'}">
+        style="padding:8px 14px;border-radius:8px 0 0 8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};border-right:none;background:${i===0?'rgba(29,78,216,0.08)':'var(--card)'};color:${i===0?'#fff':'var(--text-dim)'}">
         ${escHtml(s.name)}
       </div>
       <button onclick="editSeason('${s.id}')"
-        style="padding:8px 8px;border-radius:0 8px 8px 0;font-size:11px;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};background:${i===0?'rgba(59,130,246,0.12)':'var(--card)'};color:var(--text-dim)">✏️</button>
+        style="padding:8px 8px;border-radius:0 8px 8px 0;font-size:11px;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};background:${i===0?'rgba(29,78,216,0.08)':'var(--card)'};color:var(--text-dim)">✏️</button>
     </div>
   `).join('');
 }
@@ -1534,14 +1556,14 @@ function selectSeason(id) {
     const el = document.getElementById('stab-' + x.id);
     if (!el) return;
     el.style.borderColor = x.id === id ? 'var(--official)' : 'var(--border)';
-    el.style.background  = x.id === id ? 'rgba(59,130,246,0.12)' : 'var(--card)';
+    el.style.background  = x.id === id ? 'rgba(29,78,216,0.08)' : 'var(--card)';
     el.style.color       = x.id === id ? '#fff' : 'var(--text-dim)';
   });
 
   // Miro links
   const miroLinks = document.getElementById('trackerMiroLinks');
   if (s?.miro_url) {
-    miroLinks.innerHTML = `<a href="${escHtml(s.miro_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;padding:6px 14px;border-radius:6px;font-size:13px;text-decoration:none">🔗 Miro Board — ${escHtml(s.name)}</a>`;
+    miroLinks.innerHTML = `<a href="${escHtml(s.miro_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:6px 14px;border-radius:6px;font-size:13px;text-decoration:none">🔗 Miro Board — ${escHtml(s.name)}</a>`;
   } else {
     miroLinks.innerHTML = '';
   }
@@ -1550,11 +1572,11 @@ function selectSeason(id) {
 }
 
 const statusColors = {
-  '待確認':   { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d'  },
-  '尚未進單': { bg:'rgba(239,68,68,0.15)',   color:'#fca5a5'  },
-  '已進單':   { bg:'rgba(16,185,129,0.15)',  color:'#6ee7b7'  },
-  '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
-  '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
+  '待確認':   { bg:'rgba(217,119,6,0.1)',   color:'#92400e'  },
+  '尚未進單': { bg:'rgba(185,28,28,0.1)',   color:'#991b1b'  },
+  '已進單':   { bg:'rgba(22,101,52,0.1)',   color:'#166534'  },
+  '確定沒有': { bg:'rgba(100,116,139,0.1)', color:'#475569'  },
+  '不需要3D': { bg:'rgba(100,116,139,0.1)', color:'#475569'  },
 };
 
 function renderTrackerRows() {
@@ -1613,12 +1635,12 @@ function applyTrackerFilter() {
   const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
   const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
   document.getElementById('trackerSummary').innerHTML =
-    `共 <strong style="color:#fff">${filtered.length}</strong> 筆　款數合計：<strong style="color:#93c5fd">${totalCount}</strong>　3D款數合計：<strong style="color:#6ee7b7">${totalCount3d}</strong>`;
+    `共 <strong style="color:#fff">${filtered.length}</strong> 筆　款數合計：<strong style="color:#1d4ed8">${totalCount}</strong>　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
 
   const statusColors = {
     '待確認':   { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d'  },
-    '尚未進單': { bg:'rgba(239,68,68,0.15)',   color:'#fca5a5'  },
-    '已進單':   { bg:'rgba(16,185,129,0.15)',  color:'#6ee7b7'  },
+    '尚未進單': { bg:'rgba(185,28,28,0.08)',   color:'#fca5a5'  },
+    '已進單':   { bg:'rgba(22,101,52,0.08)',  color:'#6ee7b7'  },
     '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
     '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
   };
@@ -1646,7 +1668,7 @@ function applyTrackerFilter() {
           </select>
         </td>
         <td style="padding:12px;color:var(--text-dim);font-size:13px">${escHtml(r.note||'')}</td>
-        <td style="padding:12px">${r.miro_url?`<a href="${escHtml(r.miro_url)}" target="_blank" style="color:#93c5fd;font-size:12px;text-decoration:none">🔗 Miro</a>`:'—'}</td>
+        <td style="padding:12px">${r.miro_url?`<a href="${escHtml(r.miro_url)}" target="_blank" style="color:#1d4ed8;font-size:12px;text-decoration:none">🔗 Miro</a>`:'—'}</td>
         <td style="padding:12px"><button onclick="openEditRow('${r.id}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
       </tr>`;
   }).join('');
@@ -1747,9 +1769,9 @@ let fbImageFile = null;
 let fbCurrentFilter = 'all';
 
 const fbCatColors = {
-  '開發處內部': { bg:'rgba(59,130,246,0.15)',  color:'#93c5fd',  border:'rgba(59,130,246,0.3)'  },
+  '開發處內部': { bg:'rgba(29,78,216,0.08)',  color:'#93c5fd',  border:'rgba(59,130,246,0.3)'  },
   '業務':       { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d',  border:'rgba(245,158,11,0.3)'  },
-  'DPC':        { bg:'rgba(16,185,129,0.15)',  color:'#6ee7b7',  border:'rgba(16,185,129,0.3)'  },
+  'DPC':        { bg:'rgba(22,101,52,0.08)',  color:'#6ee7b7',  border:'rgba(16,185,129,0.3)'  },
   '客人':       { bg:'rgba(168,85,247,0.15)',  color:'#d8b4fe',  border:'rgba(168,85,247,0.3)'  },
   '其他':       { bg:'rgba(148,163,184,0.15)', color:'#cbd5e1',  border:'rgba(148,163,184,0.3)' },
 };
@@ -1770,7 +1792,7 @@ function showFeedback() {
   const cats = ['開發處內部','業務','DPC','客人','其他'];
   filtersEl.innerHTML = `
     <button class="fb-filter" id="fbf-all" onclick="filterFeedback(this,'all')"
-      style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(59,130,246,0.15);color:#93c5fd">
+      style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(29,78,216,0.08);color:#1d4ed8">
       全部
     </button>
     ${cats.map(cat => `
@@ -1875,7 +1897,7 @@ async function loadFeedback() {
 
   const list = document.getElementById('fbList');
   if (error) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#fca5a5;font-size:16px">載入失敗，請重新整理</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#991b1b;font-size:16px">載入失敗，請重新整理</div>';
     return;
   }
   allFeedbackData = data || [];
@@ -1889,7 +1911,7 @@ function filterFeedback(btn, cat) {
     b.style.color = 'var(--text-dim)';
     b.style.borderColor = 'var(--border)';
   });
-  btn.style.background = 'rgba(59,130,246,0.15)';
+  btn.style.background = 'rgba(29,78,216,0.08)';
   btn.style.color = '#93c5fd';
   btn.style.borderColor = 'var(--official)';
   renderFeedbackList(allFeedbackData);
