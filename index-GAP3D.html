@@ -536,9 +536,8 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           <thead>
             <tr style="border-bottom:2px solid var(--border)">
               <th onclick="sortTracker('brand')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">品牌/Category <span id="sort-brand"></span></th>
-              <th onclick="sortTracker('owner')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">負責人 <span id="sort-owner"></span></th>
-              <th onclick="sortTracker('count')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">款數 <span id="sort-count"></span></th>
               <th onclick="sortTracker('count_3d')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">3D款數 <span id="sort-count_3d"></span></th>
+              <th onclick="sortTracker('owner')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">負責人 <span id="sort-owner"></span></th>
               <th onclick="sortTracker('status')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">進單狀態 <span id="sort-status"></span></th>
               <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">備註</th>
               <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">Miro</th>
@@ -707,6 +706,9 @@ function renderNav() {
       <div class="group-label">開發追蹤</div>
       <div class="nav-item" id="nav-tracker" onclick="showTracker()">
         <span class="nav-icon">📊</span>開發追蹤
+      </div>
+      <div class="nav-item" id="nav-sp27" onclick="showSection('sp27')">
+        <span class="nav-icon">🚀</span>Kick Off 重點
       </div>
     </div>
     <div class="section-group" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
@@ -1513,8 +1515,8 @@ function exportTrackerExcel() {
 
   const season = trackerSeasons.find(s => s.id === currentSeason);
   const data = [
-    ['品牌/Category', '負責人', '款數', '3D款數', '進單狀態', '備註', 'Miro 連結'],
-    ...filtered.map(r => [r.brand||'', r.owner||'', r.count||'', r.count_3d||'', r.status||'', r.note||'', r.miro_url||''])
+    ['品牌/Category', '3D款數', '負責人', '進單狀態', '備註', 'Miro 連結'],
+    ...filtered.map(r => [r.brand||'', r.count_3d||'', r.owner||'', r.status||'', r.note||'', r.miro_url||''])
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1635,7 +1637,7 @@ function applyTrackerFilter() {
   const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
   const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
   document.getElementById('trackerSummary').innerHTML =
-    `共 <strong style="color:var(--text)">${filtered.length}</strong> 筆　款數合計：<strong style="color:#1d4ed8">${totalCount}</strong>　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
+    `共 <strong style="color:var(--text)">${filtered.length}</strong> 筆　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
 
   const statusColors = {
     '待確認':   { bg:'rgba(217,119,6,0.1)',   color:'#92400e'  },
@@ -1656,9 +1658,8 @@ function applyTrackerFilter() {
     return `
       <tr style="border-bottom:1px solid var(--border)">
         <td style="padding:12px;font-weight:600;color:var(--text)">${escHtml(r.brand||'')}</td>
-        <td style="padding:12px;color:var(--text)">${escHtml(r.owner||'')}</td>
-        <td style="padding:12px;text-align:center;color:var(--text)">${r.count ?? '-'}</td>
         <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d ?? '-'}</td>
+        <td style="padding:12px;color:var(--text)">${escHtml(r.owner||'')}</td>
         <td style="padding:12px;text-align:center">
           <select onchange="updateStatus('${r.id}',this.value)"
             style="background:${sc.bg};color:${sc.color};border:none;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none">
