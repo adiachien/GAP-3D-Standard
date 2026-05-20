@@ -435,7 +435,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 /* ── QC GRID ── */
 .qc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 12px; }
 .qc-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-.qc-fail { font-size: 12px; font-weight: 700; color: #fca5a5; margin-bottom: 8px; }
+.qc-fail { font-size: 12px; font-weight: 700; color: #b91c1c; margin-bottom: 8px; }
 .qc-body { font-size: 18px; color: var(--text); line-height: 1.65; }
 </style>
 </head>
@@ -527,7 +527,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
 
       <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-        <div id="trackerSeasonTitle" style="font-size:16px;font-weight:600;color:#fff"></div>
+        <div id="trackerSeasonTitle" style="font-size:16px;font-weight:600;color:var(--text)"></div>
         <button onclick="openAddRow()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增列</button>
       </div>
 
@@ -1091,7 +1091,7 @@ function selectStage(key) {
         <div style="display:flex;gap:8px;margin-top:12px;margin-bottom:4px">
           ${s.tabs.map((t,i) => `
             <button onclick="switchStageTab(this,'stab-${i}')"
-              style="padding:8px 18px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;${i===0 ? 'background:var(--gap-blue);color:#fff;border:2px solid var(--gap-blue)' : 'background:var(--card);color:var(--text-dim);border:2px solid var(--border)'}"
+              style="padding:8px 18px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;${i===0 ? 'background:var(--gap-navy);color:#fff;border:2px solid var(--gap-navy)' : 'background:var(--bg-card);color:var(--text-dim);border:2px solid var(--border)'}"
               class="stage-proto-tab ${i===0?'stab-active':''}">${t.label}</button>
           `).join('')}
         </div>
@@ -1202,7 +1202,7 @@ function copyPath(path) {
 function showCopyToast() {
   const toast = document.createElement('div');
   toast.textContent = '✓ 已複製路徑';
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid rgba(16,185,129,0.3);color:#166534;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid rgba(22,101,52,0.3);color:#166534;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
   document.body.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
 }
@@ -1635,12 +1635,12 @@ function applyTrackerFilter() {
   const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
   const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
   document.getElementById('trackerSummary').innerHTML =
-    `共 <strong style="color:#fff">${filtered.length}</strong> 筆　款數合計：<strong style="color:#1d4ed8">${totalCount}</strong>　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
+    `共 <strong style="color:var(--text)">${filtered.length}</strong> 筆　款數合計：<strong style="color:#1d4ed8">${totalCount}</strong>　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
 
   const statusColors = {
-    '待確認':   { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d'  },
-    '尚未進單': { bg:'rgba(185,28,28,0.08)',   color:'#fca5a5'  },
-    '已進單':   { bg:'rgba(22,101,52,0.08)',  color:'#6ee7b7'  },
+    '待確認':   { bg:'rgba(217,119,6,0.1)',   color:'#92400e'  },
+    '尚未進單': { bg:'rgba(185,28,28,0.08)',   color:'#991b1b'  },
+    '已進單':   { bg:'rgba(22,101,52,0.08)',   color:'#166534'  },
     '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
     '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
   };
@@ -1655,7 +1655,7 @@ function applyTrackerFilter() {
     const sc = statusColors[r.status] || statusColors['待確認'];
     return `
       <tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:12px;font-weight:600;color:#fff">${escHtml(r.brand||'')}</td>
+        <td style="padding:12px;font-weight:600;color:var(--text)">${escHtml(r.brand||'')}</td>
         <td style="padding:12px;color:var(--text)">${escHtml(r.owner||'')}</td>
         <td style="padding:12px;text-align:center;color:var(--text)">${r.count ?? '-'}</td>
         <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d ?? '-'}</td>
@@ -1769,10 +1769,10 @@ let fbImageFile = null;
 let fbCurrentFilter = 'all';
 
 const fbCatColors = {
-  '開發處內部': { bg:'rgba(29,78,216,0.08)',  color:'#93c5fd',  border:'rgba(59,130,246,0.3)'  },
-  '業務':       { bg:'rgba(245,158,11,0.15)',  color:'#fcd34d',  border:'rgba(245,158,11,0.3)'  },
-  'DPC':        { bg:'rgba(22,101,52,0.08)',  color:'#6ee7b7',  border:'rgba(16,185,129,0.3)'  },
-  '客人':       { bg:'rgba(168,85,247,0.15)',  color:'#d8b4fe',  border:'rgba(168,85,247,0.3)'  },
+  '開發處內部': { bg:'rgba(29,78,216,0.08)',  color:'#1d4ed8',  border:'rgba(29,78,216,0.2)'  },
+  '業務':       { bg:'rgba(217,119,6,0.08)',   color:'#92400e',  border:'rgba(217,119,6,0.2)'   },
+  'DPC':        { bg:'rgba(22,101,52,0.08)',   color:'#166534',  border:'rgba(22,101,52,0.2)'   },
+  '客人':       { bg:'rgba(109,40,217,0.08)',  color:'#5b21b6',  border:'rgba(109,40,217,0.2)'  },
   '其他':       { bg:'rgba(148,163,184,0.15)', color:'#cbd5e1',  border:'rgba(148,163,184,0.3)' },
 };
 
@@ -1843,7 +1843,7 @@ function renderFeedbackList(data) {
               ${escHtml((f.author||'匿')[0].toUpperCase())}
             </div>
             <div>
-              <div style="font-size:16px;font-weight:600;color:#fff">${escHtml(f.author||'匿名')}</div>
+              <div style="font-size:16px;font-weight:600;color:var(--text)">${escHtml(f.author||'匿名')}</div>
               <div style="font-size:13px;color:var(--text-dim)">${formatDate(f.created_at)}</div>
             </div>
             <span style="font-size:13px;font-weight:600;padding:2px 8px;border-radius:10px;background:${c.bg};color:${c.color};border:1px solid ${c.border}">
@@ -1853,10 +1853,10 @@ function renderFeedbackList(data) {
           <div style="display:flex;gap:4px">
             <button onclick="editFeedback('${f.id}')"
               style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px"
-              onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
+              onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
             <button onclick="deleteFeedback('${f.id}')"
               style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px"
-              onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
+              onmouseover="this.style.color='#b91c1c'" onmouseout="this.style.color='var(--text-dim)'">🗑</button>
           </div>
         </div>
         <div id="fb-view-${f.id}">
@@ -1912,7 +1912,7 @@ function filterFeedback(btn, cat) {
     b.style.borderColor = 'var(--border)';
   });
   btn.style.background = 'rgba(29,78,216,0.08)';
-  btn.style.color = '#93c5fd';
+  btn.style.color = '#1d4ed8';
   btn.style.borderColor = 'var(--official)';
   renderFeedbackList(allFeedbackData);
 }
