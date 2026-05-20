@@ -692,7 +692,9 @@ function renderNav() {
     groups[s.group_name].push(s);
   });
 
-  menu.innerHTML = Object.entries(groups).map(([group, secs]) => `
+  menu.innerHTML = Object.entries(groups)
+    .filter(([group]) => !group.startsWith('_'))  // 過濾掉 _hidden 等隱藏群組
+    .map(([group, secs]) => `
     <div class="section-group">
       <div class="group-label">${group}</div>
       ${secs.map(s => `
