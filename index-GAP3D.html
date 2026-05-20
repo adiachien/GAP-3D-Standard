@@ -817,17 +817,17 @@ function renderCard(e) {
     const isUrl  = value.startsWith('http');
 
     return `
-      <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
         <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:120px;flex-shrink:0">${escHtml(label)}</span>
         ${isUrl ? `
           <a href="${escHtml(value)}" target="_blank"
-            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
             🔗 開啟
           </a>
           <span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>
         ` : `
-          <button onclick="copyPath('${escHtml(value)}')"
-            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
+          <button class="copy-btn" data-path="${escHtml(value)}"
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
             📋 copy
           </button>
           <span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>
@@ -856,12 +856,12 @@ function renderCard(e) {
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${escHtml(leftTitle)}</div>
             <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(leftBody)}</pre>
-            <button onclick="copyPath('${escHtml(leftBody)}')" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-btn" data-path="${escHtml(leftBody)}" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
           <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${escHtml(rightTitle)}</div>
             <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(rightBody)}</pre>
-            <button onclick="copyPath('${escHtml(rightBody)}')" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-btn" data-path="${escHtml(rightBody)}" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
         </div>
         ${paths}
@@ -1167,7 +1167,7 @@ function renderAvatarPage(section, entries) {
           ${(e.paths||[]).map(p=>`
             <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
               <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
-              <button onclick="copyPath('${escHtml(p)}')" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
+              <button class="copy-btn" data-path="${escHtml(p)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
             </div>
           `).join('')}
         </div>
@@ -1301,7 +1301,7 @@ function selectStageTab(pageKey, stageKey) {
                   <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
                   <span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>
                 ` : `
-                  <button onclick="copyPath('${escHtml(value)}')" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+                  <button class="copy-btn" data-path="${escHtml(value)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
                   <span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>
                 `}
               </div>`;
@@ -2032,6 +2032,25 @@ function formatDate(iso) {
   const d = new Date(iso);
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
+
+// ── Global copy button handler ─────────────────
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const path = btn.getAttribute('data-path');
+  if (!path) return;
+  navigator.clipboard.writeText(path).then(() => {
+    showCopyToast();
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = path;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showCopyToast();
+  });
+});
 
 // ── Start ──────────────────────────────────────
 init();
