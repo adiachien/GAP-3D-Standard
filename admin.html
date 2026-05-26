@@ -154,6 +154,21 @@ header h1 { font-size:14px; font-weight:500; }
       <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
     </div>
     <div class="field">
+      <label>附圖（選填）</label>
+      <div id="imgPreviewWrap" style="display:none;margin-bottom:8px;position:relative;width:fit-content">
+        <img id="imgPreview" style="max-height:180px;max-width:100%;border-radius:7px;border:1px solid var(--border)">
+        <button onclick="clearEntryImage()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:14px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <div id="imgDropZone"
+        style="border:1.5px dashed rgba(255,255,255,0.3);border-radius:7px;padding:16px;text-align:center;font-size:13px;color:#8899aa;cursor:pointer;transition:all 0.15s;background:rgba(255,255,255,0.03)"
+        onclick="document.getElementById('entryFileInput').click()"
+        ondragover="imgDragOver(event)" ondragleave="imgDragLeave(event)" ondrop="imgDrop(event)">
+        📎 點擊或拖曳圖片上傳（建議寬度 800px 以上）
+      </div>
+      <input type="file" id="entryFileInput" accept="image/*" style="display:none" onchange="handleEntryFile(event)">
+      <div id="existingImgNote" style="display:none;margin-top:6px;font-size:11px;color:var(--text-dim)"></div>
+    </div>
+    <div class="field">
       <label>來源標籤</label>
       <select id="fSource">
         <option value="internal">🟡 內部SOP</option>
@@ -209,6 +224,48 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allSections = [], allEntries = [];
 let currentSectionId = null, editingEntryId = null;
+let entryImageFile = null;   // 新上傳的圖片檔案
+let entryImageUrl  = null;   // 已存在的圖片 URL（編輯時）
+
+function imgDragOver(e) {
+  e.preventDefault();
+  document.getElementById('imgDropZone').style.borderColor = 'rgba(59,130,246,0.6)';
+  document.getElementById('imgDropZone').style.background  = 'rgba(59,130,246,0.05)';
+}
+function imgDragLeave(e) {
+  document.getElementById('imgDropZone').style.borderColor = 'var(--border)';
+  document.getElementById('imgDropZone').style.background  = '';
+}
+function imgDrop(e) {
+  e.preventDefault();
+  imgDragLeave(e);
+  const file = e.dataTransfer?.files?.[0];
+  if (file?.type.startsWith('image/')) setEntryImage(file);
+}
+function handleEntryFile(e) {
+  const file = e.target.files?.[0];
+  if (file) setEntryImage(file);
+}
+function setEntryImage(file) {
+  entryImageFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('imgPreview').src = e.target.result;
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgDropZone').style.display = 'none';
+    document.getElementById('existingImgNote').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+function clearEntryImage() {
+  entryImageFile = null;
+  entryImageUrl  = null;
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  document.getElementById('imgDropZone').style.display = 'block';
+  document.getElementById('imgDropZone').style.borderColor = 'var(--border)';
+  document.getElementById('existingImgNote').style.display = 'none';
+  document.getElementById('entryFileInput').value = '';
+}
 
 async function init() {
   await loadData();
@@ -290,6 +347,7 @@ function openNewEntry() {
   document.getElementById('pathList').innerHTML = '';
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
   toggleStageField(currentSectionId);
+  clearEntryImage();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -311,6 +369,16 @@ function openEditEntry(id) {
   const types = e.dev_type||['all'];
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
   toggleStageField(e.section_id);
+  // 圖片
+  clearEntryImage();
+  if (e.image_url) {
+    entryImageUrl = e.image_url;
+    document.getElementById('imgPreview').src = e.image_url;
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgDropZone').style.display = 'none';
+    document.getElementById('existingImgNote').style.display = 'block';
+    document.getElementById('existingImgNote').textContent = '目前已有圖片，重新上傳會取代，點 ✕ 可刪除';
+  }
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -345,6 +413,20 @@ async function saveEntry() {
   );
   const isStageSection = stageSections.some(s => s.id === section_id);
 
+  // 處理圖片上傳
+  let image_url = entryImageUrl || null;  // 保留已有的或 null（已刪除）
+  if (entryImageFile) {
+    showToast('圖片上傳中…');
+    const ext = entryImageFile.name?.split('.').pop() || 'png';
+    const filename = `${Date.now()}.${ext}`;
+    const { error: upErr } = await sb.storage
+      .from('entry-images')
+      .upload(filename, entryImageFile, { contentType: entryImageFile.type });
+    if (upErr) { showToast('圖片上傳失敗：'+upErr.message,'error'); return; }
+    const { data: urlData } = sb.storage.from('entry-images').getPublicUrl(filename);
+    image_url = urlData.publicUrl;
+  }
+
   const payload = {
     section_id,
     title,
@@ -355,6 +437,7 @@ async function saveEntry() {
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
     dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
     stage:        isStageSection ? (document.getElementById('fStage').value || null) : null,
+    image_url,
   };
   if (!payload.dev_type.length) payload.dev_type = ['all'];
 
