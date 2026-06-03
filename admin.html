@@ -117,7 +117,10 @@ header h1 { font-size:14px; font-weight:500; }
 <div id="adminWrap">
   <div class="admin-header">
     <div class="admin-title">內容管理</div>
-    <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="openSectionManager()">⚙️ 管理分類</button>
+      <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
+    </div>
   </div>
 
   <div class="section-tabs" id="sectionTabs">
@@ -152,21 +155,6 @@ header h1 { font-size:14px; font-weight:500; }
       <label>路徑（可多個）</label>
       <div class="path-list" id="pathList"></div>
       <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
-    </div>
-    <div class="field">
-      <label>附圖（選填）</label>
-      <div id="imgPreviewWrap" style="display:none;margin-bottom:8px;position:relative;width:fit-content">
-        <img id="imgPreview" style="max-height:180px;max-width:100%;border-radius:7px;border:1px solid var(--border)">
-        <button onclick="clearEntryImage()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:14px;cursor:pointer;line-height:1">✕</button>
-      </div>
-      <div id="imgDropZone"
-        style="border:1.5px dashed rgba(255,255,255,0.3);border-radius:7px;padding:16px;text-align:center;font-size:13px;color:#8899aa;cursor:pointer;transition:all 0.15s;background:rgba(255,255,255,0.03)"
-        onclick="document.getElementById('entryFileInput').click()"
-        ondragover="imgDragOver(event)" ondragleave="imgDragLeave(event)" ondrop="imgDrop(event)">
-        📎 點擊或拖曳圖片上傳（建議寬度 800px 以上）
-      </div>
-      <input type="file" id="entryFileInput" accept="image/*" style="display:none" onchange="handleEntryFile(event)">
-      <div id="existingImgNote" style="display:none;margin-top:6px;font-size:11px;color:var(--text-dim)"></div>
     </div>
     <div class="field">
       <label>來源標籤</label>
@@ -216,6 +204,52 @@ header h1 { font-size:14px; font-weight:500; }
 
 <div class="toast" id="toast"></div>
 
+<!-- 分類管理 Modal -->
+<div class="overlay" id="sectionModalOverlay">
+  <div class="modal" style="width:680px">
+    <h3>管理分類</h3>
+    <div style="margin:16px 0 10px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="openNewSection()">＋ 新增分類</button>
+    </div>
+    <div id="sectionList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSectionModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯分類 Modal -->
+<div class="overlay" id="sectionEditOverlay">
+  <div class="modal" style="width:500px">
+    <h3 id="sectionEditTitle">新增分類</h3>
+    <div class="field">
+      <label>分類名稱</label>
+      <input id="seName" placeholder="例如：各色 3D 定位">
+    </div>
+    <div class="field">
+      <label>Slug（英文，用於網址）</label>
+      <input id="seSlug" placeholder="例如：color-placement" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>群組名稱</label>
+      <input id="seGroup" placeholder="例如：非正單（不上CLO-SET）">
+    </div>
+    <div class="field">
+      <label>Icon（emoji）</label>
+      <input id="seIcon" placeholder="例如：🎨" style="width:80px">
+    </div>
+    <div class="field">
+      <label>排序（數字越小越前面）</label>
+      <input id="seOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="seDeleteBtn" onclick="deleteSectionConfirm()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeSectionEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveSection()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://popnhqizqkhitguopapf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tNgioaXmZhzppbg9tg6Ong_WYTGdZAo';
@@ -224,48 +258,6 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allSections = [], allEntries = [];
 let currentSectionId = null, editingEntryId = null;
-let entryImageFile = null;   // 新上傳的圖片檔案
-let entryImageUrl  = null;   // 已存在的圖片 URL（編輯時）
-
-function imgDragOver(e) {
-  e.preventDefault();
-  document.getElementById('imgDropZone').style.borderColor = 'rgba(59,130,246,0.6)';
-  document.getElementById('imgDropZone').style.background  = 'rgba(59,130,246,0.05)';
-}
-function imgDragLeave(e) {
-  document.getElementById('imgDropZone').style.borderColor = 'var(--border)';
-  document.getElementById('imgDropZone').style.background  = '';
-}
-function imgDrop(e) {
-  e.preventDefault();
-  imgDragLeave(e);
-  const file = e.dataTransfer?.files?.[0];
-  if (file?.type.startsWith('image/')) setEntryImage(file);
-}
-function handleEntryFile(e) {
-  const file = e.target.files?.[0];
-  if (file) setEntryImage(file);
-}
-function setEntryImage(file) {
-  entryImageFile = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('imgPreview').src = e.target.result;
-    document.getElementById('imgPreviewWrap').style.display = 'block';
-    document.getElementById('imgDropZone').style.display = 'none';
-    document.getElementById('existingImgNote').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-function clearEntryImage() {
-  entryImageFile = null;
-  entryImageUrl  = null;
-  document.getElementById('imgPreviewWrap').style.display = 'none';
-  document.getElementById('imgDropZone').style.display = 'block';
-  document.getElementById('imgDropZone').style.borderColor = 'var(--border)';
-  document.getElementById('existingImgNote').style.display = 'none';
-  document.getElementById('entryFileInput').value = '';
-}
 
 async function init() {
   await loadData();
@@ -347,7 +339,6 @@ function openNewEntry() {
   document.getElementById('pathList').innerHTML = '';
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
   toggleStageField(currentSectionId);
-  clearEntryImage();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -369,16 +360,6 @@ function openEditEntry(id) {
   const types = e.dev_type||['all'];
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
   toggleStageField(e.section_id);
-  // 圖片
-  clearEntryImage();
-  if (e.image_url) {
-    entryImageUrl = e.image_url;
-    document.getElementById('imgPreview').src = e.image_url;
-    document.getElementById('imgPreviewWrap').style.display = 'block';
-    document.getElementById('imgDropZone').style.display = 'none';
-    document.getElementById('existingImgNote').style.display = 'block';
-    document.getElementById('existingImgNote').textContent = '目前已有圖片，重新上傳會取代，點 ✕ 可刪除';
-  }
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -413,20 +394,6 @@ async function saveEntry() {
   );
   const isStageSection = stageSections.some(s => s.id === section_id);
 
-  // 處理圖片上傳
-  let image_url = entryImageUrl || null;  // 保留已有的或 null（已刪除）
-  if (entryImageFile) {
-    showToast('圖片上傳中…');
-    const ext = entryImageFile.name?.split('.').pop() || 'png';
-    const filename = `${Date.now()}.${ext}`;
-    const { error: upErr } = await sb.storage
-      .from('entry-images')
-      .upload(filename, entryImageFile, { contentType: entryImageFile.type });
-    if (upErr) { showToast('圖片上傳失敗：'+upErr.message,'error'); return; }
-    const { data: urlData } = sb.storage.from('entry-images').getPublicUrl(filename);
-    image_url = urlData.publicUrl;
-  }
-
   const payload = {
     section_id,
     title,
@@ -437,7 +404,6 @@ async function saveEntry() {
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
     dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
     stage:        isStageSection ? (document.getElementById('fStage').value || null) : null,
-    image_url,
   };
   if (!payload.dev_type.length) payload.dev_type = ['all'];
 
@@ -466,8 +432,113 @@ function esc(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// 不自動關閉 modal（避免誤觸）
+// ── 分類管理 ──────────────────────────────────
+let editingSectionId = null;
 
+function openSectionManager() {
+  renderSectionList();
+  document.getElementById('sectionModalOverlay').classList.add('open');
+}
+function closeSectionModal() {
+  document.getElementById('sectionModalOverlay').classList.remove('open');
+}
+
+function renderSectionList() {
+  const el = document.getElementById('sectionList');
+  if (!allSections.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:12px">尚無分類</div>';
+    return;
+  }
+  el.innerHTML = allSections.map(s => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:18px;width:28px;text-align:center">${s.icon||'📁'}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#fff">${esc(s.name)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+          slug: <span style="font-family:'DM Mono',monospace">${esc(s.slug)}</span>
+          &nbsp;·&nbsp; 群組: ${esc(s.group_name)}
+          &nbsp;·&nbsp; 排序: ${s.sort_order}
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="openEditSection('${s.id}')">✏️ 編輯</button>
+    </div>
+  `).join('');
+}
+
+function openNewSection() {
+  editingSectionId = null;
+  document.getElementById('sectionEditTitle').textContent = '新增分類';
+  document.getElementById('seDeleteBtn').style.display = 'none';
+  document.getElementById('seName').value = '';
+  document.getElementById('seSlug').value = '';
+  document.getElementById('seGroup').value = '';
+  document.getElementById('seIcon').value = '';
+  document.getElementById('seOrder').value = allSections.length;
+  document.getElementById('sectionEditOverlay').classList.add('open');
+}
+
+function openEditSection(id) {
+  editingSectionId = id;
+  const s = allSections.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('sectionEditTitle').textContent = '編輯分類';
+  document.getElementById('seDeleteBtn').style.display = 'block';
+  document.getElementById('seName').value  = s.name || '';
+  document.getElementById('seSlug').value  = s.slug || '';
+  document.getElementById('seGroup').value = s.group_name || '';
+  document.getElementById('seIcon').value  = s.icon || '';
+  document.getElementById('seOrder').value = s.sort_order || 0;
+  document.getElementById('sectionEditOverlay').classList.add('open');
+}
+
+function closeSectionEdit() {
+  document.getElementById('sectionEditOverlay').classList.remove('open');
+}
+
+async function saveSection() {
+  const name  = document.getElementById('seName').value.trim();
+  const slug  = document.getElementById('seSlug').value.trim();
+  const group = document.getElementById('seGroup').value.trim();
+  if (!name || !slug || !group) { showToast('請填寫名稱、Slug 和群組', 'error'); return; }
+
+  const payload = {
+    name,
+    slug,
+    group_name:  group,
+    icon:        document.getElementById('seIcon').value.trim() || null,
+    sort_order:  parseInt(document.getElementById('seOrder').value) || 0,
+  };
+
+  const { error } = editingSectionId
+    ? await sb.from('sections').update(payload).eq('id', editingSectionId)
+    : await sb.from('sections').insert(payload);
+
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  showToast('儲存成功 ✓', 'success');
+  closeSectionEdit();
+  await loadData();
+  renderSectionTabs();
+  renderSectionList();
+}
+
+async function deleteSectionConfirm() {
+  if (!editingSectionId) return;
+  const s = allSections.find(x => x.id === editingSectionId);
+  const hasEntries = allEntries.some(e => e.section_id === editingSectionId);
+  if (hasEntries) {
+    showToast('此分類還有條目，請先刪除條目', 'error'); return;
+  }
+  if (!confirm(`確定要刪除「${s?.name}」嗎？`)) return;
+  const { error } = await sb.from('sections').delete().eq('id', editingSectionId);
+  if (error) { showToast('刪除失敗：' + error.message, 'error'); return; }
+  showToast('已刪除', 'success');
+  closeSectionEdit();
+  await loadData();
+  renderSectionTabs();
+  renderSectionList();
+}
+
+// ── Start ──────────────────────────────────────
 init();
 </script>
 </body>
