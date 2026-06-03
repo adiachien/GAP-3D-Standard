@@ -823,15 +823,13 @@ function renderSection(section, entries) {
 
   // 特殊 slug 有固定版型
   const specialPages = {
-    stages:            renderStagesPage,
-    avatar:            renderAvatarPage,
-    prefit:            renderPrefitPage,
-    details:           renderDetailsPage,
-    checklist:         renderChecklistPage,
-    informal:          renderInformalPage,
-    qc:                renderQCPage,
-    'color-placement': renderColorPlacementPage,
-    'fit-informal':    renderFitInformalPage,
+    stages:       renderStagesPage,
+    avatar:       renderAvatarPage,
+    prefit:       renderPrefitPage,
+    details:      renderDetailsPage,
+    checklist:    renderChecklistPage,
+    informal:     renderInformalPage,
+    qc:           renderQCPage,
   };
 
   if (specialPages[section.slug]) {
@@ -1632,27 +1630,169 @@ function renderInformalPage(section, entries) {
       <div class="page-title">📸 ${section.name}</div>
       <div class="page-desc">只需 Snapshot + 系統結單，不需要上傳 CLO-SET</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px">
-      <div class="card" style="cursor:pointer;border-color:rgba(29,78,216,0.2);transition:box-shadow 0.15s"
-        onclick="showSection('color-placement')"
-        onmouseover="this.style.boxShadow='0 4px 12px rgba(29,78,216,0.12)'"
-        onmouseout="this.style.boxShadow=''">
-        <div style="font-size:24px;margin-bottom:10px">🎨</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">各色 3D 定位</div>
-        <div style="font-size:13px;color:var(--text-dim);line-height:1.6">看定位、核定位、實樣來不及先提供 3D 各色</div>
-        <div style="margin-top:12px;font-size:12px;color:#1d4ed8;font-weight:600">查看流程 →</div>
+
+    <div id="informal-home">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px">
+        <div class="card" style="cursor:pointer;border-color:rgba(29,78,216,0.2);transition:box-shadow 0.15s"
+          onclick="showInformalSub('color')"
+          onmouseover="this.style.boxShadow='0 4px 12px rgba(29,78,216,0.12)'"
+          onmouseout="this.style.boxShadow=''">
+          <div style="font-size:24px;margin-bottom:10px">🎨</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">各色 3D 定位</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6">看定位、核定位、實樣來不及先提供 3D 各色</div>
+          <div style="margin-top:12px;font-size:12px;color:#1d4ed8;font-weight:600">查看流程 →</div>
+        </div>
+        <div class="card" style="cursor:pointer;border-color:rgba(109,40,217,0.2);transition:box-shadow 0.15s"
+          onclick="showInformalSub('fit')"
+          onmouseover="this.style.boxShadow='0 4px 12px rgba(109,40,217,0.12)'"
+          onmouseout="this.style.boxShadow=''">
+          <div style="font-size:24px;margin-bottom:10px">👗</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Fit（非正單）</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6">開會樣、客人內部會議、TD 要求先看</div>
+          <div style="margin-top:12px;font-size:12px;color:#7c3aed;font-weight:600">查看流程 →</div>
+        </div>
       </div>
-      <div class="card" style="cursor:pointer;border-color:rgba(109,40,217,0.2);transition:box-shadow 0.15s"
-        onclick="showSection('fit-informal')"
-        onmouseover="this.style.boxShadow='0 4px 12px rgba(109,40,217,0.12)'"
-        onmouseout="this.style.boxShadow=''">
-        <div style="font-size:24px;margin-bottom:10px">👗</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Fit（非正單）</div>
-        <div style="font-size:13px;color:var(--text-dim);line-height:1.6">開會樣、客人內部會議、TD 要求先看</div>
-        <div style="margin-top:12px;font-size:12px;color:#7c3aed;font-weight:600">查看流程 →</div>
+      ${entries.map(e => renderCard(e)).join('')}
+    </div>
+
+    <div id="informal-color" style="display:none">
+      <div style="margin-bottom:16px">
+        <button onclick="showInformalSub('home')" style="background:none;border:none;color:#1d4ed8;font-size:13px;cursor:pointer;font-family:inherit;padding:0">← 返回非正單流程</button>
+      </div>
+      ${renderColorPlacementContent(entries)}
+    </div>
+
+    <div id="informal-fit" style="display:none">
+      <div style="margin-bottom:16px">
+        <button onclick="showInformalSub('home')" style="background:none;border:none;color:#1d4ed8;font-size:13px;cursor:pointer;font-family:inherit;padding:0">← 返回非正單流程</button>
+      </div>
+      <div class="page-header">
+        <div class="page-title">👗 Fit（非正單）</div>
+        <div class="page-desc">非正單 Fit，只需提供 3D 照片</div>
+      </div>
+      <div class="card" style="color:var(--text-dim);font-size:15px;text-align:center;padding:30px">尚無內容，請至後台新增</div>
+    </div>
+  `;
+}
+
+function showInformalSub(which) {
+  document.getElementById('informal-home').style.display  = which === 'home'  ? 'block' : 'none';
+  document.getElementById('informal-color').style.display = which === 'color' ? 'block' : 'none';
+  document.getElementById('informal-fit').style.display   = which === 'fit'   ? 'block' : 'none';
+}
+
+function renderColorPlacementContent(entries) {
+  const scriptPath = '（路徑待補）';
+
+  const makeExpandCard = (id, stepNum, title, borderColor, contentHtml) => `
+    <div class="card" style="border-color:${borderColor};margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleCpStep('${id}')">
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${stepNum} ${title}</span>
+        <span id="${id}-icon" style="font-size:13px;color:var(--text-dim)">▼ 展開</span>
+      </div>
+      <div id="${id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        ${contentHtml}
       </div>
     </div>
-    ${entries.map(e => renderCard(e)).join('')}
+  `;
+
+  return `
+    <div class="page-header">
+      <div class="page-title">🎨 各色 3D 定位</div>
+      <div class="page-desc">非正單。只出圖，不上 CLO-SET。</div>
+    </div>
+    ${makeExpandCard('cp-s1','①','確認款式資訊','rgba(29,78,216,0.2)',`
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:14px;color:var(--text);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>查群組資料確認有沒有做過（款號查詢時<strong>刪掉季節後綴</strong>）</li>
+        <li style="font-size:14px;color:var(--text);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>看業務備註確認要做哪一色，只做基碼</li>
+        <li style="font-size:14px;color:var(--text);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>半年以上沒做過的款 → 疊版確認有沒有改版</li>
+      </ul>
+    `)}
+    ${makeExpandCard('cp-s2','②','製作','rgba(8,145,178,0.2)',`
+      <table style="border-collapse:collapse;font-size:14px;width:100%">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 12px;color:var(--text-dim);font-weight:600">項目</th>
+          <th style="text-align:center;padding:6px 12px;color:var(--text-dim);font-weight:600">需要做</th>
+          <th style="text-align:left;padding:6px 12px;color:var(--text-dim);font-weight:600">備註</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px">壓線</td>
+            <td style="padding:8px 12px;text-align:center;font-size:16px;color:#b91c1c">✗</td>
+            <td style="padding:8px 12px;color:var(--text-dim)">除非特殊要求</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px">Puckering</td>
+            <td style="padding:8px 12px;text-align:center;font-size:16px;color:#166534">✓</td>
+            <td style="padding:8px 12px;color:var(--text-dim)">每款都要加</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px">鈕扣換色</td>
+            <td style="padding:8px 12px;text-align:center;font-size:16px;color:#166534">✓</td>
+            <td style="padding:8px 12px;color:var(--text-dim)">有鈕扣的款才做</td>
+          </tr>
+        </tbody>
+      </table>
+    `)}
+    ${makeExpandCard('cp-s3','③','需要發 mail 嗎？','rgba(217,119,6,0.25)',`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:rgba(217,119,6,0.06);border:1px solid rgba(217,119,6,0.25);border-radius:8px;padding:12px 14px">
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">✉️ 需要發 mail</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+            <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>和 YY 串聯的款</li>
+            <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>花版複雜</li>
+          </ul>
+          <div style="margin-top:10px;font-size:13px;color:#92400e;line-height:1.6">發給：業務 ＋ YY 確認外觀<br><strong>YY 主管：周育君（不 CC 小芬姊）</strong></div>
+        </div>
+        <div style="background:rgba(22,101,52,0.05);border:1px solid rgba(22,101,52,0.2);border-radius:8px;padding:12px 14px">
+          <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:8px">✅ 不用發 mail</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+            <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>簡單 LOGO 定位</li>
+            <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>直接 Follow 2D</li>
+          </ul>
+          <div style="margin-top:10px;font-size:13px;color:#166534">直接結單</div>
+        </div>
+      </div>
+    `)}
+    ${makeExpandCard('cp-s4','④','出圖規範','rgba(109,40,217,0.2)',`
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>隱藏人台，透明背景，開高渲</li>
+        <li style="font-size:14px;color:var(--text);padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--text-dim)">・</span>不併圖，分開提供</li>
+      </ul>
+      <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em">AI 拍照腳本路徑</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 12px">
+        <button class="copy-btn" data-path="${scriptPath}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8">（路徑待補）</span>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">拍照角度</div>
+      <table style="border-collapse:collapse;font-size:14px;width:100%">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 12px;color:var(--text-dim);font-weight:600">款式情況</th>
+          <th style="text-align:left;padding:6px 12px;color:var(--text-dim);font-weight:600">出圖方式</th>
+          <th style="text-align:center;padding:6px 12px;color:var(--text-dim);font-weight:600">張數</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px;font-weight:500">正面 AW</td>
+            <td style="padding:8px 12px;color:#1d4ed8;font-weight:600">正面照</td>
+            <td style="padding:8px 12px;text-align:center;color:var(--text-dim)">1 張</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px;font-weight:500">側邊 AW</td>
+            <td style="padding:8px 12px;color:#1d4ed8;font-weight:600">正面 ＋ 側面</td>
+            <td style="padding:8px 12px;text-align:center;color:var(--text-dim)">2 張</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;font-weight:500">對條格 ／ 前後都有 AW</td>
+            <td style="padding:8px 12px;color:#1d4ed8;font-weight:600">三面照</td>
+            <td style="padding:8px 12px;text-align:center;color:var(--text-dim)">3 張</td>
+          </tr>
+        </tbody>
+      </table>
+    `)}
+    <div class="card" style="background:rgba(22,101,52,0.04);border-color:rgba(22,101,52,0.2)">
+      <span style="font-size:15px;font-weight:700;color:#166534">⑤ 系統結單（不上 CLO-SET）</span>
+    </div>
   `;
 }
 
