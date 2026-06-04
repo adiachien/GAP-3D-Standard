@@ -118,6 +118,7 @@ header h1 { font-size:14px; font-weight:500; }
   <div class="admin-header">
     <div class="admin-title">內容管理</div>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="openAccountsManager()">🔑 帳號管理</button>
       <button class="btn btn-ghost" onclick="openSectionManager()">⚙️ 管理分類</button>
       <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
     </div>
@@ -198,6 +199,52 @@ header h1 { font-size:14px; font-weight:500; }
       <button class="btn btn-danger" id="deleteBtn" onclick="deleteEntry()" style="display:none">刪除</button>
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       <button class="btn btn-primary" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 帳號管理 Modal -->
+<div class="overlay" id="accountsModalOverlay">
+  <div class="modal" style="width:680px">
+    <h3>帳號管理</h3>
+    <div style="margin:16px 0 10px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="openNewAccount()">＋ 新增帳號</button>
+    </div>
+    <div id="accountsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAccountsModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯帳號 Modal -->
+<div class="overlay" id="accountEditOverlay">
+  <div class="modal" style="width:500px">
+    <h3 id="accountEditTitle">新增帳號</h3>
+    <div class="field">
+      <label>系統名稱</label>
+      <input id="acName" placeholder="例如：GAP INC">
+    </div>
+    <div class="field">
+      <label>帳號</label>
+      <input id="acUsername" placeholder="帳號" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input id="acPassword" placeholder="密碼" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>備註（可選）</label>
+      <input id="acNote" placeholder="例如：每季更新">
+    </div>
+    <div class="field">
+      <label>排序</label>
+      <input id="acOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="acDeleteBtn" onclick="deleteAccount()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeAccountEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveAccount()">儲存</button>
     </div>
   </div>
 </div>
@@ -430,6 +477,99 @@ function showToast(msg, type='') {
 
 function esc(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 帳號管理 ──────────────────────────────────
+let allAccounts = [];
+let editingAccountId = null;
+
+async function openAccountsManager() {
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
+  document.getElementById('accountsModalOverlay').classList.add('open');
+}
+function closeAccountsModal() {
+  document.getElementById('accountsModalOverlay').classList.remove('open');
+}
+
+function renderAccountsList() {
+  const el = document.getElementById('accountsList');
+  if (!allAccounts.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:12px">尚無帳號</div>';
+    return;
+  }
+  el.innerHTML = allAccounts.map(a => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#fff">${esc(a.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;font-family:'DM Mono',monospace">
+          ${esc(a.username||'')} ／ ${a.password ? '••••••' : '—'}
+        </div>
+        ${a.note ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px">${esc(a.note)}</div>` : ''}
+      </div>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="openEditAccount('${a.id}')">✏️ 編輯</button>
+    </div>
+  `).join('');
+}
+
+function openNewAccount() {
+  editingAccountId = null;
+  document.getElementById('accountEditTitle').textContent = '新增帳號';
+  document.getElementById('acDeleteBtn').style.display = 'none';
+  ['acName','acUsername','acPassword','acNote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('acOrder').value = allAccounts.length;
+  document.getElementById('accountEditOverlay').classList.add('open');
+}
+
+function openEditAccount(id) {
+  editingAccountId = id;
+  const a = allAccounts.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('accountEditTitle').textContent = '編輯帳號';
+  document.getElementById('acDeleteBtn').style.display = 'block';
+  document.getElementById('acName').value     = a.name     || '';
+  document.getElementById('acUsername').value = a.username || '';
+  document.getElementById('acPassword').value = a.password || '';
+  document.getElementById('acNote').value     = a.note     || '';
+  document.getElementById('acOrder').value    = a.sort_order || 0;
+  document.getElementById('accountEditOverlay').classList.add('open');
+}
+
+function closeAccountEdit() {
+  document.getElementById('accountEditOverlay').classList.remove('open');
+}
+
+async function saveAccount() {
+  const name = document.getElementById('acName').value.trim();
+  if (!name) { showToast('請填寫系統名稱', 'error'); return; }
+  const payload = {
+    name,
+    username:   document.getElementById('acUsername').value.trim(),
+    password:   document.getElementById('acPassword').value.trim(),
+    note:       document.getElementById('acNote').value.trim() || null,
+    sort_order: parseInt(document.getElementById('acOrder').value) || 0,
+  };
+  const { error } = editingAccountId
+    ? await sb.from('accounts').update(payload).eq('id', editingAccountId)
+    : await sb.from('accounts').insert(payload);
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  showToast('儲存成功 ✓', 'success');
+  closeAccountEdit();
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
+}
+
+async function deleteAccount() {
+  if (!editingAccountId || !confirm('確定要刪除這個帳號？')) return;
+  const { error } = await sb.from('accounts').delete().eq('id', editingAccountId);
+  if (error) { showToast('刪除失敗', 'error'); return; }
+  showToast('已刪除', 'success');
+  closeAccountEdit();
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
 }
 
 // ── 分類管理 ──────────────────────────────────
