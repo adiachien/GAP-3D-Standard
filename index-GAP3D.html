@@ -673,6 +673,35 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
     </div>
 
+    <!-- 帳號密碼頁 -->
+    <div class="page" id="page-accounts">
+      <div class="page-header">
+        <div class="page-title">🔑 帳號密碼</div>
+      </div>
+
+      <!-- 密碼驗證區 -->
+      <div id="accounts-lock" style="max-width:360px;margin:0 auto;padding-top:20px">
+        <div class="card" style="text-align:center;padding:32px 24px">
+          <div style="font-size:36px;margin-bottom:16px">🔒</div>
+          <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">請輸入密碼</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">提示：忠孝東路</div>
+          <input id="accountsPwInput" type="password" placeholder="密碼"
+            style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:0.1em"
+            onkeydown="if(event.key==='Enter')checkAccountsPw()">
+          <div id="accountsPwError" style="display:none;font-size:12px;color:#b91c1c;margin-bottom:8px">密碼錯誤</div>
+          <button onclick="checkAccountsPw()"
+            style="width:100%;background:var(--gap-blue);color:#fff;border:none;padding:9px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+            確認
+          </button>
+        </div>
+      </div>
+
+      <!-- 帳密內容（解鎖後顯示） -->
+      <div id="accounts-content" style="display:none">
+        <div id="accounts-list"></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -761,6 +790,9 @@ function renderNav() {
     <div class="section-group" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
       <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
         <span class="nav-icon">💬</span>留言板（即時回饋）
+      </div>
+      <div class="nav-item" id="nav-accounts" onclick="showAccounts()">
+        <span class="nav-icon">🔑</span>帳號密碼
       </div>
     </div>
   `;
@@ -2034,6 +2066,76 @@ function resetChecklist(id) {
 
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 帳號密碼 ──────────────────────────────────
+const ACCOUNTS_PW = '5j/vul42j/xj4';
+let accountsUnlocked = false;
+
+function showAccounts() {
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-accounts').classList.add('active');
+  document.getElementById('nav-accounts').classList.add('active');
+  window.location.hash = 'accounts';
+
+  if (accountsUnlocked) {
+    showAccountsContent();
+  } else {
+    document.getElementById('accounts-lock').style.display = 'block';
+    document.getElementById('accounts-content').style.display = 'none';
+    setTimeout(() => document.getElementById('accountsPwInput').focus(), 100);
+  }
+}
+
+function checkAccountsPw() {
+  const val = document.getElementById('accountsPwInput').value;
+  if (val === ACCOUNTS_PW) {
+    accountsUnlocked = true;
+    document.getElementById('accountsPwError').style.display = 'none';
+    showAccountsContent();
+  } else {
+    document.getElementById('accountsPwError').style.display = 'block';
+    document.getElementById('accountsPwInput').value = '';
+    document.getElementById('accountsPwInput').focus();
+  }
+}
+
+async function showAccountsContent() {
+  document.getElementById('accounts-lock').style.display = 'none';
+  document.getElementById('accounts-content').style.display = 'block';
+
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  const list = document.getElementById('accounts-list');
+
+  if (!data?.length) {
+    list.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:15px;text-align:center;padding:30px">尚無帳號資料</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(a => `
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px">${escHtml(a.name||'')}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${a.username ? `
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">帳號</span>
+            <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1">${escHtml(a.username)}</span>
+            <button class="copy-btn" data-path="${escHtml(a.username)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+          </div>
+        ` : ''}
+        ${a.password ? `
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">密碼</span>
+            <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1;letter-spacing:0.08em">${escHtml(a.password)}</span>
+            <button class="copy-btn" data-path="${escHtml(a.password)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+          </div>
+        ` : ''}
+        ${a.note ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px">${escHtml(a.note)}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
 // ── 開發追蹤 ──────────────────────────────────
