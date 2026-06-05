@@ -1950,9 +1950,9 @@ function renderAccountsPage(section, entries) {
     ? `<div class="card-grid" id="${acGridId}">${gridItems}${expandRow}</div>`
     : '<div class="card" style="color:var(--text-dim);text-align:center;padding:30px">尚無帳號資料，請至後台新增</div>';
 
-  return \`
+  return `
     <div class="page-header">
-      <div class="page-title">🔑 \${escHtml(section.name)}</div>
+      <div class="page-title">🔑 ${escHtml(section.name)}</div>
     </div>
     <div id="aclock" style="max-width:360px;margin:0 auto;padding-top:20px">
       <div class="card" style="text-align:center;padding:32px 24px">
@@ -1970,9 +1970,9 @@ function renderAccountsPage(section, entries) {
       </div>
     </div>
     <div id="ac-content" style="display:none">
-      \${gridHtml}
+      ${gridHtml}
     </div>
-  \`;
+  `;
 }
 
 let expandedAcCardId = null;
