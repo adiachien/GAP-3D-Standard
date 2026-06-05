@@ -1994,39 +1994,12 @@ function toggleAcCard(entryId, gridId) {
 
   document.querySelectorAll('[id^="ac-gc-"].expanded').forEach(c => c.classList.remove('expanded'));
 
-  // 帳號密碼專用展開內容
-  const acSection = allSections.find(s => s.slug === 'accounts');
-  const acEntries = allEntries.filter(x => x.section_id === acSection?.id);
-  const acEntry   = acEntries.find(x => String(x.id) === String(entryId)) || e;
-
-  const rows = [];
-  if (acEntry.username) rows.push({ label: '帳號', value: acEntry.username });
-  if (acEntry.password) rows.push({ label: '密碼', value: acEntry.password });
-
-  const rowsHtml = rows.map(r => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-      <span style="font-size:12px;color:var(--text-dim);width:44px;flex-shrink:0">${r.label}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text);flex:1;letter-spacing:0.06em">${escHtml(r.value)}</span>
-      <button class="copy-btn" data-path="${escHtml(r.value)}"
-        style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
-    </div>`).join('');
-
-  const noteHtml = acEntry.note
-    ? `<div style="margin-top:10px;font-size:13px;color:var(--text-dim);line-height:1.6">${escHtml(acEntry.note)}</div>`
-    : '';
-
-  const contentHtml = acEntry.content
-    ? `<div style="margin-top:10px;font-size:14px;color:var(--text);line-height:1.75;white-space:pre-wrap">${linkify(escHtml(acEntry.content))}</div>`
-    : '';
-
   inner.innerHTML = `
     <div class="grid-expand-header">
-      <span class="grid-expand-title">🔑 ${escHtml(acEntry.title)}</span>
+      <span class="grid-expand-title">🔑 ${escHtml(e.title)}</span>
       <button class="grid-expand-close" onclick="collapseAcCard('${entryId}','${gridId}')">×</button>
     </div>
-    ${rowsHtml}
-    ${contentHtml}
-    ${noteHtml}`;
+    ${renderCard(e)}`;
 
   expandRow.classList.add('open');
   card.classList.add('expanded');
