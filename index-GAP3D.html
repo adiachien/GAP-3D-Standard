@@ -673,35 +673,6 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
     </div>
 
-    <!-- 帳號密碼頁 -->
-    <div class="page" id="page-accounts">
-      <div class="page-header">
-        <div class="page-title">🔑 帳號密碼</div>
-      </div>
-
-      <!-- 密碼驗證區 -->
-      <div id="accounts-lock" style="max-width:360px;margin:0 auto;padding-top:20px">
-        <div class="card" style="text-align:center;padding:32px 24px">
-          <div style="font-size:36px;margin-bottom:16px">🔒</div>
-          <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">請輸入密碼</div>
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">提示：忠孝東路</div>
-          <input id="accountsPwInput" type="password" placeholder="密碼"
-            style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:0.1em"
-            onkeydown="if(event.key==='Enter')checkAccountsPw()">
-          <div id="accountsPwError" style="display:none;font-size:12px;color:#b91c1c;margin-bottom:8px">密碼錯誤</div>
-          <button onclick="checkAccountsPw()"
-            style="width:100%;background:var(--gap-blue);color:#fff;border:none;padding:9px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
-            確認
-          </button>
-        </div>
-      </div>
-
-      <!-- 帳密內容（解鎖後顯示） -->
-      <div id="accounts-content" style="display:none">
-        <div id="accounts-list"></div>
-      </div>
-    </div>
-
   </main>
 </div>
 
@@ -771,7 +742,7 @@ function renderNav() {
     .map(([group, secs]) => `
     <div class="section-group">
       <div class="group-label">${group}</div>
-      ${secs.map(s => `
+      ${secs.filter(s => s.slug !== 'accounts').map(s => `
         <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
           <span class="nav-icon">${s.icon || ''}</span>${s.name}
         </div>
@@ -791,7 +762,7 @@ function renderNav() {
       <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
         <span class="nav-icon">💬</span>留言板（即時回饋）
       </div>
-      <div class="nav-item" id="nav-accounts" onclick="showAccounts()">
+      <div class="nav-item" id="nav-accounts" onclick="showSection('accounts')">
         <span class="nav-icon">🔑</span>帳號密碼
       </div>
     </div>
@@ -862,6 +833,7 @@ function renderSection(section, entries) {
     checklist:    renderChecklistPage,
     informal:     renderInformalPage,
     qc:           renderQCPage,
+    accounts:     renderAccountsPage,
   };
 
   if (specialPages[section.slug]) {
@@ -1948,6 +1920,139 @@ function renderColorPlacementPage(section, entries) {
       <span style="font-size:15px;font-weight:700;color:#166534">⑤ 系統結單（不上 CLO-SET）</span>
     </div>
   `;
+}
+
+function renderAccountsPage(section, entries) {
+  // 密碼從 Supabase settings 表拉，預設 5503F
+  sb.from('settings').select('value').eq('key','accounts_pw').single().then(({ data }) => {
+    window._accountsPw = data?.value || '5503F';
+  });
+  window._accountsPw = window._accountsPw || '5503F';
+
+  // grid card 展開式
+  const acGridId = 'ac-grid';
+  const gridItems = entries.map(e => {
+    const preview = [e.username, e.note].filter(Boolean).join(' · ') || '點開查看';
+    return `
+      <div class="grid-card" id="ac-gc-${e.id}" onclick="toggleAcCard('${e.id}','${acGridId}')">
+        <div class="grid-card-icon" style="background:rgba(234,179,8,0.1);color:#a16207">🔑</div>
+        <div class="grid-card-title">${escHtml(e.title)}</div>
+        <div class="grid-card-preview">${escHtml(preview)}</div>
+      </div>`;
+  }).join('');
+
+  const expandRow = `
+    <div class="grid-expand-row" id="${acGridId}-expand">
+      <div class="grid-expand-inner" id="${acGridId}-inner"></div>
+    </div>`;
+
+  const gridHtml = entries.length
+    ? `<div class="card-grid" id="${acGridId}">${gridItems}${expandRow}</div>`
+    : '<div class="card" style="color:var(--text-dim);text-align:center;padding:30px">尚無帳號資料，請至後台新增</div>';
+
+  return \`
+    <div class="page-header">
+      <div class="page-title">🔑 \${escHtml(section.name)}</div>
+    </div>
+    <div id="aclock" style="max-width:360px;margin:0 auto;padding-top:20px">
+      <div class="card" style="text-align:center;padding:32px 24px">
+        <div style="font-size:36px;margin-bottom:16px">🔒</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">請輸入密碼</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">提示：忠孝東路</div>
+        <input id="acPwInput" type="password" placeholder="密碼"
+          style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:0.1em"
+          onkeydown="if(event.key==='Enter')checkAcPw(window._accountsPw)">
+        <div id="acPwError" style="display:none;font-size:12px;color:#b91c1c;margin-bottom:8px">密碼錯誤</div>
+        <button onclick="checkAcPw(window._accountsPw)"
+          style="width:100%;background:var(--gap-blue);color:#fff;border:none;padding:9px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+          確認
+        </button>
+      </div>
+    </div>
+    <div id="ac-content" style="display:none">
+      \${gridHtml}
+    </div>
+  \`;
+}
+
+let expandedAcCardId = null;
+
+function toggleAcCard(entryId, gridId) {
+  const e = allEntries.find(x => String(x.id) === String(entryId));
+  if (!e) return;
+
+  const expandRow = document.getElementById(gridId + '-expand');
+  const inner     = document.getElementById(gridId + '-inner');
+  const card      = document.getElementById('ac-gc-' + entryId);
+
+  if (expandedAcCardId === entryId) {
+    expandRow.classList.remove('open');
+    card.classList.remove('expanded');
+    expandedAcCardId = null;
+    return;
+  }
+
+  document.querySelectorAll('[id^="ac-gc-"].expanded').forEach(c => c.classList.remove('expanded'));
+
+  // 帳號密碼專用展開內容
+  const acSection = allSections.find(s => s.slug === 'accounts');
+  const acEntries = allEntries.filter(x => x.section_id === acSection?.id);
+  const acEntry   = acEntries.find(x => String(x.id) === String(entryId)) || e;
+
+  const rows = [];
+  if (acEntry.username) rows.push({ label: '帳號', value: acEntry.username });
+  if (acEntry.password) rows.push({ label: '密碼', value: acEntry.password });
+
+  const rowsHtml = rows.map(r => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <span style="font-size:12px;color:var(--text-dim);width:44px;flex-shrink:0">${r.label}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text);flex:1;letter-spacing:0.06em">${escHtml(r.value)}</span>
+      <button class="copy-btn" data-path="${escHtml(r.value)}"
+        style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+    </div>`).join('');
+
+  const noteHtml = acEntry.note
+    ? `<div style="margin-top:10px;font-size:13px;color:var(--text-dim);line-height:1.6">${escHtml(acEntry.note)}</div>`
+    : '';
+
+  const contentHtml = acEntry.content
+    ? `<div style="margin-top:10px;font-size:14px;color:var(--text);line-height:1.75;white-space:pre-wrap">${linkify(escHtml(acEntry.content))}</div>`
+    : '';
+
+  inner.innerHTML = `
+    <div class="grid-expand-header">
+      <span class="grid-expand-title">🔑 ${escHtml(acEntry.title)}</span>
+      <button class="grid-expand-close" onclick="collapseAcCard('${entryId}','${gridId}')">×</button>
+    </div>
+    ${rowsHtml}
+    ${contentHtml}
+    ${noteHtml}`;
+
+  expandRow.classList.add('open');
+  card.classList.add('expanded');
+  expandedAcCardId = entryId;
+
+  setTimeout(() => expandRow.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+}
+
+function collapseAcCard(entryId, gridId) {
+  const expandRow = document.getElementById(gridId + '-expand');
+  const card      = document.getElementById('ac-gc-' + entryId);
+  if (expandRow) expandRow.classList.remove('open');
+  if (card) card.classList.remove('expanded');
+  expandedAcCardId = null;
+}
+
+function checkAcPw(pw) {
+  const val = document.getElementById('acPwInput').value;
+  if (val === pw) {
+    document.getElementById('aclock').style.display = 'none';
+    document.getElementById('ac-content').style.display = 'block';
+  } else {
+    document.getElementById('acPwError').style.display = 'block';
+    document.getElementById('acPwInput').value = '';
+    document.getElementById('acPwInput').focus();
+  }
 }
 
 function renderFitInformalPage(section, entries) {
