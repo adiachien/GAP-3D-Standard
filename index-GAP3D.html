@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GAP 3D Standard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
@@ -25,14 +24,13 @@
   --status-wait: #d97706;   /* 待確認 — 橘黃 */
 
   /* 背景層次 */
-  --bg-page:     #f4f6fa;   /* 頁面背景 */
-  --bg-sidebar:  #ffffff;   /* Sidebar */
+  --bg-page:     #f8f9fb;   /* 頁面背景 */
+  --bg-sidebar:  #f1f3f7;   /* Sidebar */
   --bg-card:     #ffffff;   /* 卡片 */
-  --bg-input:    #eef1f6;   /* 輸入框 */
+  --bg-input:    #f1f3f7;   /* 輸入框 */
 
   /* 邊框 */
-  --border:      #e7ebf2;
-  --border-soft: #eef1f6;
+  --border:      #dde1e9;
 
   /* 文字 */
   --text:        #0f172a;   /* 主要文字 */
@@ -44,7 +42,7 @@
   --navy-mid:    var(--bg-card);
   --navy-light:  var(--bg-input);
   --card:        var(--bg-card);
-  --sidebar-w:   244px;
+  --sidebar-w:   230px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -54,42 +52,37 @@ body {
   font-family: 'Noto Sans TC', sans-serif;
   background: var(--bg-page);
   color: var(--text);
-  font-size: 15px;
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
   display: flex;
   flex-direction: column;
 }
 
 /* ── HEADER ── */
 header {
-  height: 60px;
+  height: 56px;
   background: #ffffff;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  gap: 16px;
+  padding: 0 20px;
+  gap: 14px;
   flex-shrink: 0;
   position: relative;
   z-index: 50;
-  box-shadow: 0 1px 2px rgba(16,42,90,0.03);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .logo {
   font-family: 'DM Mono', monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.15em;
   color: #fff;
-  background: var(--gap-navy);
-  padding: 5px 11px;
-  border-radius: 5px;
+  background: var(--gap-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
 }
 
-header h1 { font-size: 17px; font-weight: 600; color: var(--gap-navy); letter-spacing: 0.01em; }
+header h1 { font-size: 18px; font-weight: 500; }
 
 .header-right {
   margin-left: auto;
@@ -135,7 +128,7 @@ aside {
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   overflow-y: auto;
-  padding: 14px 0 28px;
+  padding: 12px 0 20px;
   flex-shrink: 0;
 }
 
@@ -143,23 +136,22 @@ aside::-webkit-scrollbar { width: 4px; }
 aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 
 .search-sidebar {
-  padding: 12px 14px 10px;
+  padding: 10px 12px 8px;
 }
 
 .search-sidebar input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid transparent;
-  border-radius: 9px;
-  padding: 9px 10px 9px 32px;
-  font-size: 13px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px 7px 30px;
+  font-size: 12px;
   color: var(--text);
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 .search-sidebar input::placeholder { color: var(--text-muted); }
-.search-sidebar input:focus { background: #fff; border-color: var(--gap-blue-light); box-shadow: 0 0 0 3px rgba(29,78,216,0.08); }
+.search-sidebar input:focus { border-color: var(--gap-blue-light); box-shadow: 0 0 0 2px rgba(29,78,216,0.08); }
 .search-wrap-inner { position: relative; }
 .search-wrap-inner::before {
   content: '🔍';
@@ -173,31 +165,31 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 .section-group { margin-bottom: 4px; }
 
 .group-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: var(--text-muted);
-  padding: 16px 20px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  padding: 10px 14px 4px;
   text-transform: uppercase;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 1px 10px;
-  padding: 9px 12px;
-  font-size: 14px;
-  color: #3a4358;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: 15px;
+  color: #374151;
   cursor: pointer;
-  border-radius: 9px;
-  transition: background 0.12s, color 0.12s;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
   user-select: none;
 }
-.nav-item:hover { color: var(--text); background: rgba(0,42,92,0.05); }
+.nav-item:hover { color: var(--text); background: rgba(0,42,92,0.04); }
 .nav-item.active {
   color: var(--gap-navy);
-  background: rgba(29,78,216,0.10);
+  background: rgba(0,42,92,0.07);
+  border-left-color: var(--gap-navy);
   font-weight: 600;
 }
 .nav-icon { font-size: 16px; }
@@ -206,7 +198,7 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 main {
   flex: 1;
   overflow-y: auto;
-  padding: 34px 48px;
+  padding: 28px 36px;
 }
 main::-webkit-scrollbar { width: 5px; }
 main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
@@ -215,44 +207,44 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 .page.active { display: block; }
 
 .page-header {
-  margin-bottom: 28px;
-  padding-bottom: 18px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
-.page-title { font-size: 24px; font-weight: 600; color: var(--gap-navy); letter-spacing: -0.01em; margin-bottom: 6px; }
-.page-desc { font-size: 15px; color: var(--text-dim); line-height: 1.65; }
+.page-title { font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.page-desc { font-size: 16px; color: #4b5563; line-height: 1.6; }
 
 /* ── CARDS ── */
 .card {
   background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 2px rgba(16,42,90,0.04);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
-.card-title { font-size: 16px; font-weight: 600; color: var(--gap-navy); }
+.card-title { font-size: 18px; font-weight: 700; color: #111827; }
 
 .badge {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 6px;
-  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
   flex-shrink: 0;
 }
 .badge-official { background:rgba(29,78,216,0.08);  color:#1d4ed8; border:1px solid rgba(29,78,216,0.2);  }
 .badge-internal  { background:rgba(8,145,178,0.08);  color:#0e7490; border:1px solid rgba(8,145,178,0.2);  }
 .badge-warning   { background:rgba(185,28,28,0.08);  color:#b91c1c; border:1px solid rgba(185,28,28,0.2);  }
 
-.card-content { font-size: 15px; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
+.card-content { font-size: 16px; color: var(--text); line-height: 1.75; white-space: pre-wrap; }
 
 .path-block {
   font-family: 'DM Mono', monospace;
@@ -291,17 +283,17 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 .type-tabs {
   display: flex;
   gap: 4px;
-  margin-bottom: 18px;
-  background: var(--bg-input);
-  padding: 5px;
-  border-radius: 10px;
+  margin-bottom: 16px;
+  background: var(--bg-sidebar);
+  padding: 4px;
+  border-radius: 8px;
   width: fit-content;
 }
 .type-tab {
-  padding: 6px 14px;
-  font-size: 13px;
+  padding: 5px 13px;
+  font-size: 12px;
   font-weight: 500;
-  border-radius: 7px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--text-dim);
   border: none;
@@ -321,18 +313,18 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   font-size: 15px;
   color: var(--text);
-  line-height: 1.6;
+  line-height: 1.5;
   cursor: pointer;
   transition: all 0.12s;
-  box-shadow: 0 1px 2px rgba(16,42,90,0.03);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-.check-item:hover { border-color: var(--gap-blue-light); background: rgba(29,78,216,0.02); }
+.check-item:hover { border-color: #1a3fa6; background: rgba(26,63,166,0.02); }
 .check-item input[type=checkbox] { margin-top: 2px; accent-color: var(--gap-blue); flex-shrink:0; }
 .check-item.done { opacity: 0.45; text-decoration: line-through; }
 .reset-btn {
@@ -396,12 +388,11 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 }
 .stage-box {
   background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 11px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 16px;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(16,42,90,0.04);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 .stage-num { font-size: 12px; color: #6b7280; margin-bottom: 2px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
 .stage-name { font-size: 13px; font-weight: 600; color: #111827; }
@@ -410,17 +401,14 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 /* ── SEARCH RESULTS ── */
 .result-card {
   background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 2px rgba(16,42,90,0.03);
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-.result-card:hover { border-color: #93c5fd; box-shadow: 0 3px 12px rgba(29,78,216,0.08); }
 .result-section { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
-.result-title { font-size: 16px; font-weight: 600; color: var(--gap-navy); margin-bottom: 6px; }
+.result-title { font-size: 17px; font-weight: 600; color: #111827; margin-bottom: 6px; }
 .result-body { font-size: 15px; color: #374151; line-height: 1.65; }
 mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; padding:0 2px; }
 
@@ -452,10 +440,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 .card-grid-section { margin-bottom: 20px; }
 .card-grid-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-.grid-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
-.grid-card:hover { border-color: #93c5fd; box-shadow: 0 3px 12px rgba(29,78,216,0.08); }
-.grid-card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 12px; }
-.grid-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.grid-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.grid-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(29,78,216,0.08); }
+.grid-card-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 10px; }
+.grid-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .grid-card-preview { font-size: 12px; color: var(--text-dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .grid-card.expanded { border-color: var(--gap-blue); box-shadow: 0 2px 10px rgba(29,78,216,0.12); }
 .grid-expand-row {
@@ -537,93 +525,87 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <div class="page" id="page-tracker">
       <div class="page-header">
         <div class="page-title">📊 開發追蹤</div>
-        <div class="page-desc">各季開發進度追蹤，含 Miro board 連結</div>
+        <div class="page-desc">GAP / GAP OUTLET・3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）</div>
       </div>
 
-      <!-- 季節 tabs -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-        <div id="seasonTabs" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
-        <button onclick="openAddSeason()" style="background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增季節</button>
+      <!-- 更新時間 + 匯出 + 上傳 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div id="trkUpdatedAt" style="font-size:13px;color:var(--text-dim);flex:1"></div>
+        <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
+        <label style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
+          📤 上傳 Excel
+          <input id="trkFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadTrackerExcel(this.files[0]);this.value=''">
+        </label>
       </div>
+      <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
 
-      <!-- 新增季節輸入 -->
-      <div id="addSeasonBox" style="display:none;margin-bottom:16px;display:none">
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="newSeasonName" placeholder="例如：SP'27" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;width:150px">
-          <button onclick="confirmAddSeason()" style="background:var(--gap-blue);color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">新增</button>
-          <button onclick="document.getElementById('addSeasonBox').style.display='none'" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+      <!-- 總覽摘要 -->
+      <div id="trkSummary" style="margin-bottom:22px"></div>
+
+      <!-- 各 SUB 進單進度 -->
+      <div id="trkSubBlock">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">📦 各 SUB 進單進度</div>
+        <div class="card" style="margin-bottom:24px;overflow-x:auto;padding:6px 0">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">SUBGROUP</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">款數</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">狀態分佈</th>
+              </tr>
+            </thead>
+            <tbody id="trkSubBody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Miro 連結區 -->
-      <div id="trackerMiroLinks" style="margin-bottom:16px"></div>
-
-      <!-- 數量加總 + 篩選 + 匯出 -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
-        <div id="trackerSummary" style="font-size:13px;color:var(--text-dim);flex:1"></div>
-        <select id="filterOwner" onchange="applyTrackerFilter()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-          <option value="">全部負責人</option>
-        </select>
-        <select id="filterStatus" onchange="applyTrackerFilter()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-          <option value="">全部狀態</option>
-          <option>待確認</option>
-          <option>尚未進單</option>
-          <option>已進單</option>
-          <option>確定沒有</option>
-          <option>不需要3D</option>
-        </select>
-        <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
+      <!-- 各款進度 -->
+      <div id="trkStyleBlock">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">🧵 各款進度 <span id="trkStyleCount" style="font-size:13px;font-weight:500;color:var(--text-dim)"></span></div>
+          <select id="trkFilterSub" onchange="renderTrackerStyles()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            <option value="">全部 SUB</option>
+          </select>
+          <select id="trkFilterStatus" onchange="renderTrackerStyles()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            <option value="">全部狀態</option>
+          </select>
+        </div>
+        <div class="card" style="overflow-x:auto;padding:6px 0">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th onclick="sortTrkStyles('Style')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">Style <span id="trksort-Style"></span></th>
+                <th onclick="sortTrkStyles('SUBGROUP')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">SUBGROUP <span id="trksort-SUBGROUP"></span></th>
+                <th onclick="sortTrkStyles('狀態')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">狀態 <span id="trksort-狀態"></span></th>
+                <th onclick="sortTrkStyles('需求日')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">需求日 <span id="trksort-需求日"></span></th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">Customer</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">單別</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">3D次</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">類型</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">尺碼</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">客樣種類</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">負責人</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">Miro</th>
+                <th style="padding:10px 12px"></th>
+              </tr>
+            </thead>
+            <tbody id="trkStyleBody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-        <div id="trackerSeasonTitle" style="font-size:16px;font-weight:600;color:var(--text)"></div>
-        <button onclick="openAddRow()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">＋ 新增列</button>
-      </div>
-
-      <div style="overflow-x:auto">
-        <table id="trackerTable" style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border)">
-              <th onclick="sortTracker('brand')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">品牌/Category <span id="sort-brand"></span></th>
-              <th onclick="sortTracker('count_3d')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">3D款數 <span id="sort-count_3d"></span></th>
-              <th onclick="sortTracker('owner')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">負責人 <span id="sort-owner"></span></th>
-              <th onclick="sortTracker('status')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;cursor:pointer;user-select:none">進單狀態 <span id="sort-status"></span></th>
-              <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">備註</th>
-              <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600">Miro</th>
-              <th style="padding:10px 12px"></th>
-            </tr>
-          </thead>
-          <tbody id="trackerBody"></tbody>
-        </table>
-      </div>
-
-      <!-- 新增/編輯列 Modal -->
-      <div id="rowModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:500px;max-width:95vw">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:20px" id="rowModalTitle">新增列</h3>
+      <!-- 負責人 / Miro 編輯 Modal -->
+      <div id="trkManualModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯款資訊</h3>
+          <div id="trkManualStyle" style="font-size:13px;color:var(--text-dim);margin-bottom:18px;font-family:'DM Mono',monospace"></div>
           <div style="display:flex;flex-direction:column;gap:12px">
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">品牌/Category</label><input id="rBrand" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">負責人</label><input id="rOwner" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">款數</label><input id="rCount" type="number" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-              <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">3D款數</label><input id="rCount3d" type="number" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            </div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">進單狀態</label>
-              <select id="rStatus" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-                <option value="待確認">待確認</option>
-                <option value="尚未進單">尚未進單</option>
-                <option value="已進單">已進單</option>
-                <option value="確定沒有">確定沒有</option>
-                <option value="不需要3D">不需要3D</option>
-              </select>
-            </div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">備註</label><textarea id="rNote" rows="3" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical"></textarea></div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Miro 連結</label><input id="rMiro" placeholder="https://miro.com/..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">負責人</label><input id="trkOwnerInput" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Miro 連結</label><input id="trkMiroInput" placeholder="https://miro.com/..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
           </div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-            <button id="rowDeleteBtn" onclick="deleteTrackerRow()" style="display:none;background:rgba(185,28,28,0.08);color:#991b1b;border:1px solid rgba(185,28,28,0.18);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">刪除</button>
-            <button onclick="closeRowModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="saveTrackerRow()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
+            <button onclick="closeTrkManual()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="saveTrkManual()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
           </div>
         </div>
       </div>
@@ -700,21 +682,15 @@ let allEntries  = [];
 let currentSlug = null;
 
 // ── Init ───────────────────────────────────────
-async function init() {
-  // Phase 1: sections 先載 → nav 立刻出現
-  const { data: sections } = await sb.from('sections').select('*').order('sort_order');
-  allSections = sections || [];
-  renderNav();
+const GAP3D_CACHE = 'gap3d_cache_v1';
 
-  // Phase 2: entries（不含 checklist_items）背景載入
-  const { data: entries } = await sb.from('entries').select('*').order('sort_order');
-  allEntries = entries || [];
-
-  // 讀取 URL hash 決定顯示哪個分類
+function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
   const stageSlugs = ['prefit','details','checklist'];
   if (hash === 'feedback') {
     showFeedback();
+  } else if (hash === 'tracker') {
+    showTracker();
   } else if (hash && allSections.find(s => s.slug === hash)) {
     if (stageSlugs.includes(hash)) {
       showSection(hash);
@@ -727,6 +703,38 @@ async function init() {
     }
   } else if (allSections.length) {
     showSection(allSections[0].slug);
+  }
+}
+
+async function init() {
+  // Phase 0: 先用 localStorage 快取瞬間顯示（背景再更新）
+  let hadCache = false;
+  try {
+    const c = JSON.parse(localStorage.getItem(GAP3D_CACHE) || 'null');
+    if (c && c.sections && c.sections.length) {
+      allSections = c.sections;
+      allEntries  = c.entries || [];
+      renderNav();
+      routeFromHash();
+      hadCache = true;
+    }
+  } catch (e) {}
+
+  // Phase 1: 從 Supabase 抓最新資料
+  const [{ data: sections }, { data: entries }] = await Promise.all([
+    sb.from('sections').select('*').order('sort_order'),
+    sb.from('entries').select('*').order('sort_order'),
+  ]);
+  const fresh = { sections: sections || [], entries: entries || [] };
+  const changed = JSON.stringify(fresh) !== JSON.stringify({ sections: allSections, entries: allEntries });
+  allSections = fresh.sections;
+  allEntries  = fresh.entries;
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify(fresh)); } catch (e) {}
+
+  // 沒有快取（第一次開）或資料有變 → 重新渲染
+  if (!hadCache || changed) {
+    renderNav();
+    routeFromHash();
   }
 }
 
@@ -1934,12 +1942,6 @@ function renderColorPlacementPage(section, entries) {
 }
 
 function renderAccountsPage(section, entries) {
-  // 密碼從 Supabase settings 表拉，預設 5503F
-  sb.from('settings').select('value').eq('key','accounts_pw').single().then(({ data }) => {
-    window._accountsPw = data?.value || '5503F';
-  });
-  window._accountsPw = window._accountsPw || '5503F';
-
   // grid card 展開式
   const acGridId = 'ac-grid';
   const gridItems = entries.map(e => {
@@ -1968,16 +1970,16 @@ function renderAccountsPage(section, entries) {
     <div id="aclock" style="max-width:360px;margin:0 auto;padding-top:20px">
       <div class="card" style="text-align:center;padding:32px 24px">
         <div style="font-size:36px;margin-bottom:16px">🔒</div>
-        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">請輸入密碼</div>
-        <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">提示：忠孝東路</div>
-        <input id="acPwInput" type="password" placeholder="密碼"
-          style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:0.1em"
-          onkeydown="if(event.key==='Enter')checkAcPw(window._accountsPw)">
-        <div id="acPwError" style="display:none;font-size:12px;color:#b91c1c;margin-bottom:8px">密碼錯誤</div>
-        <button onclick="checkAcPw(window._accountsPw)"
-          style="width:100%;background:var(--gap-blue);color:#fff;border:none;padding:9px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
-          確認
-        </button>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px">DPC 地址是？</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${acQuizOptions().map(o => `
+            <button onclick="checkAcQuiz('${o}')"
+              style="width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.05em">
+              ${o}
+            </button>
+          `).join('')}
+        </div>
+        <div id="acPwError" style="display:none;font-size:12px;color:#b91c1c;margin-top:12px">答錯了，再想想 🤔</div>
       </div>
     </div>
     <div id="ac-content" style="display:none">
@@ -2027,15 +2029,21 @@ function collapseAcCard(entryId, gridId) {
   expandedAcCardId = null;
 }
 
-function checkAcPw(pw) {
-  const val = document.getElementById('acPwInput').value;
-  if (val === pw) {
+const AC_QUIZ_ANSWER = '550 3F';
+
+function acQuizOptions() {
+  return ['550 3F', '500 4F', '550 2F']
+    .map(v => ({ v, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .map(o => o.v);
+}
+
+function checkAcQuiz(ans) {
+  if (ans === AC_QUIZ_ANSWER) {
     document.getElementById('aclock').style.display = 'none';
     document.getElementById('ac-content').style.display = 'block';
   } else {
     document.getElementById('acPwError').style.display = 'block';
-    document.getElementById('acPwInput').value = '';
-    document.getElementById('acPwInput').focus();
   }
 }
 
@@ -2097,7 +2105,11 @@ function handleSearch(q) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
   const kws = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const hiddenIds = new Set(allSections
+    .filter(s => (s.group_name || '').startsWith('_'))
+    .map(s => s.id));
   const results = allEntries.filter(e => {
+    if (hiddenIds.has(e.section_id)) return false;
     const text = [e.title, e.content, ...(e.paths||[])].join(' ').toLowerCase();
     return kws.some(k => text.includes(k));
   });
@@ -2227,285 +2239,344 @@ async function showAccountsContent() {
   `).join('');
 }
 
-// ── 開發追蹤 ──────────────────────────────────
-let trackerSeasons = [];
-let trackerRows    = [];
-let currentSeason  = null;
-let editingRowId   = null;
+// ── 開發追蹤（Excel 匯入版）────────────────────
+const TRK_SECTION_SLUG = 'tracker-data';
+const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)'];
+const TRK_ORDER_TYPE   = '3D單';
+const TRK_COLS = ['單別','狀態','Customer','SUBGROUP','Style','需求日','3D次','類型','尺碼','客樣種類'];
 
-async function showTracker() {
+let trkRows       = [];   // 匯入的款資料
+let trkManual     = {};   // { Style: { owner, miro } } 手動欄位（重新上傳不會被洗掉）
+let trkUploadedAt = null;
+let trkSubList    = [];
+let trkEditingStyle = null;
+let trkSortCol = '需求日';
+let trkSortAsc = true;
+
+// XLSX 動態載入（用到才載，加快開頁速度）
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+    s.onload  = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error('XLSX library 載入失敗，請檢查網路'));
+    document.head.appendChild(s);
+  });
+}
+
+function trkSection() { return allSections.find(s => s.slug === TRK_SECTION_SLUG); }
+function trkEntry(title) {
+  const sec = trkSection();
+  if (!sec) return null;
+  return allEntries.find(e => e.section_id === sec.id && e.title === title) || null;
+}
+
+function loadTrackerFromEntries() {
+  trkRows = []; trkManual = {}; trkUploadedAt = null;
+  try {
+    const imp = trkEntry('import');
+    if (imp && imp.content) {
+      const j = JSON.parse(imp.content);
+      trkRows       = j.rows || [];
+      trkUploadedAt = j.uploadedAt || null;
+    }
+  } catch (e) {}
+  try {
+    const man = trkEntry('manual');
+    if (man && man.content) trkManual = JSON.parse(man.content) || {};
+  } catch (e) {}
+}
+
+function showTracker() {
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-tracker').classList.add('active');
   document.getElementById('nav-tracker').classList.add('active');
   window.location.hash = 'tracker';
-  await loadTrackerData();
+  renderTrackerAll();
 }
 
-function exportTrackerExcel() {
-  const XLSX = window.XLSX;
-  if (!XLSX) { alert('載入中，請稍後再試'); return; }
-
-  const ownerFilter  = document.getElementById('filterOwner').value;
-  const statusFilter = document.getElementById('filterStatus').value;
-  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
-  const filtered = allRows.filter(r => {
-    if (ownerFilter  && r.owner  !== ownerFilter)  return false;
-    if (statusFilter && r.status !== statusFilter) return false;
-    return true;
-  });
-
-  const season = trackerSeasons.find(s => s.id === currentSeason);
-  const data = [
-    ['品牌/Category', '3D款數', '負責人', '進單狀態', '備註', 'Miro 連結'],
-    ...filtered.map(r => [r.brand||'', r.count_3d||'', r.owner||'', r.status||'', r.note||'', r.miro_url||''])
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, season?.name || 'Sheet1');
-  XLSX.writeFile(wb, `開發追蹤_${season?.name || 'export'}.xlsx`);
+function renderTrackerAll() {
+  loadTrackerFromEntries();
+  const up = document.getElementById('trkUpdatedAt');
+  up.textContent = trkUploadedAt
+    ? '資料更新：' + new Date(trkUploadedAt).toLocaleString('zh-TW', { hour12: false })
+    : '';
+  renderTrackerSummary();
+  renderTrackerSubs();
+  renderTrackerFilters();
+  renderTrackerStyles();
 }
 
-async function loadTrackerData() {
-  const [{ data: seasons }, { data: rows }] = await Promise.all([
-    sb.from('tracker_seasons').select('*').order('sort_order'),
-    sb.from('tracker_rows').select('*').order('created_at'),
-  ]);
-  trackerSeasons = seasons || [];
-  trackerRows    = rows    || [];
-  renderSeasonTabs();
-  if (trackerSeasons.length) selectSeason(trackerSeasons[0].id);
-}
-
-function renderSeasonTabs() {
-  const tabs = document.getElementById('seasonTabs');
-  tabs.innerHTML = trackerSeasons.map((s, i) => `
-    <div style="display:flex;align-items:center;gap:2px">
-      <div id="stab-${s.id}" onclick="selectSeason('${s.id}')"
-        style="padding:8px 14px;border-radius:8px 0 0 8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};border-right:none;background:${i===0?'rgba(29,78,216,0.08)':'var(--card)'};color:${i===0?'#fff':'var(--text-dim)'}">
-        ${escHtml(s.name)}
-      </div>
-      <button onclick="editSeason('${s.id}')"
-        style="padding:8px 8px;border-radius:0 8px 8px 0;font-size:11px;cursor:pointer;border:1px solid ${i===0?'var(--official)':'var(--border)'};background:${i===0?'rgba(29,78,216,0.08)':'var(--card)'};color:var(--text-dim)">✏️</button>
-    </div>
-  `).join('');
-}
-
-function selectSeason(id) {
-  currentSeason = id;
-  const s = trackerSeasons.find(x => x.id === id);
-  document.getElementById('trackerSeasonTitle').textContent = s?.name || '';
-  trackerSeasons.forEach(x => {
-    const el = document.getElementById('stab-' + x.id);
-    if (!el) return;
-    el.style.borderColor = x.id === id ? 'var(--official)' : 'var(--border)';
-    el.style.background  = x.id === id ? 'rgba(29,78,216,0.08)' : 'var(--card)';
-    el.style.color       = x.id === id ? '#fff' : 'var(--text-dim)';
-  });
-
-  // Miro links
-  const miroLinks = document.getElementById('trackerMiroLinks');
-  if (s?.miro_url) {
-    miroLinks.innerHTML = `<a href="${escHtml(s.miro_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:6px 14px;border-radius:6px;font-size:13px;text-decoration:none">🔗 Miro Board — ${escHtml(s.name)}</a>`;
-  } else {
-    miroLinks.innerHTML = '';
-  }
-
-  renderTrackerRows();
-}
-
-const statusColors = {
-  '待確認':   { bg:'rgba(217,119,6,0.1)',   color:'#92400e'  },
-  '尚未進單': { bg:'rgba(185,28,28,0.1)',   color:'#991b1b'  },
-  '已進單':   { bg:'rgba(22,101,52,0.1)',   color:'#166534'  },
-  '確定沒有': { bg:'rgba(100,116,139,0.1)', color:'#475569'  },
-  '不需要3D': { bg:'rgba(100,116,139,0.1)', color:'#475569'  },
+// 狀態顏色：常見狀態固定色，其餘依關鍵字分類
+const TRK_STATUS_COLORS = {
+  '待進行': { bg:'rgba(148,163,184,0.15)', color:'#475569' },
+  '待製版': { bg:'rgba(217,119,6,0.1)',    color:'#92400e' },
+  '製版中': { bg:'rgba(29,78,216,0.08)',   color:'#1d4ed8' },
+  '進行中': { bg:'rgba(8,145,178,0.1)',    color:'#0e7490' },
+  '未審核': { bg:'rgba(100,116,139,0.1)',  color:'#64748b' },
 };
-
-function renderTrackerRows() {
-  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
-
-  // 更新負責人篩選選項
-  const owners = [...new Set(allRows.map(r => r.owner).filter(Boolean))];
-  const filterOwner = document.getElementById('filterOwner');
-  const currentOwner = filterOwner.value;
-  filterOwner.innerHTML = '<option value="">全部負責人</option>' +
-    owners.map(o => `<option value="${escHtml(o)}" ${currentOwner===o?'selected':''}>${escHtml(o)}</option>`).join('');
-
-  applyTrackerFilter();
+function trkStatusColor(st) {
+  st = String(st || '');
+  if (TRK_STATUS_COLORS[st]) return TRK_STATUS_COLORS[st];
+  if (st.includes('澄清')) return { bg:'rgba(185,28,28,0.08)', color:'#991b1b' };
+  if (st.includes('完成') || st.includes('結')) return { bg:'rgba(22,101,52,0.08)', color:'#166534' };
+  return { bg:'rgba(109,40,217,0.08)', color:'#5b21b6' };
 }
 
-let trackerSortCol = null;
-let trackerSortAsc = true;
-
-function sortTracker(col) {
-  if (trackerSortCol === col) {
-    trackerSortAsc = !trackerSortAsc;
-  } else {
-    trackerSortCol = col;
-    trackerSortAsc = true;
-  }
-  // update sort indicators
-  ['brand','owner','count','count_3d','status'].forEach(c => {
-    const el = document.getElementById('sort-' + c);
-    if (el) el.textContent = c === col ? (trackerSortAsc ? '↑' : '↓') : '';
-  });
-  applyTrackerFilter();
+function trkStatusCounts(rows) {
+  const c = {};
+  rows.forEach(r => { const s = r['狀態'] || '未填'; c[s] = (c[s] || 0) + 1; });
+  return Object.entries(c).sort((a, b) => b[1] - a[1]);
 }
 
-function applyTrackerFilter() {
-  const ownerFilter  = document.getElementById('filterOwner').value;
-  const statusFilter = document.getElementById('filterStatus').value;
-  const allRows = trackerRows.filter(r => r.season_id === currentSeason);
+function trkChips(counts) {
+  return counts.map(([s, n]) => {
+    const sc = trkStatusColor(s);
+    return `<span style="display:inline-flex;align-items:center;gap:5px;background:${sc.bg};color:${sc.color};border-radius:14px;padding:3px 11px;font-size:12px;font-weight:600;white-space:nowrap">${escHtml(s)} ${n}</span>`;
+  }).join(' ');
+}
 
-  let filtered = allRows.filter(r => {
-    if (ownerFilter  && r.owner  !== ownerFilter)  return false;
-    if (statusFilter && r.status !== statusFilter) return false;
-    return true;
+function renderTrackerSummary() {
+  const el = document.getElementById('trkSummary');
+  if (!trkRows.length) {
+    el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET 的 3D單）</span></div>';
+    document.getElementById('trkSubBlock').style.display   = 'none';
+    document.getElementById('trkStyleBlock').style.display = 'none';
+    return;
+  }
+  document.getElementById('trkSubBlock').style.display   = '';
+  document.getElementById('trkStyleBlock').style.display = '';
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:16px;font-weight:700;color:var(--text)">🗂 GAP / GAP OUTLET・3D單</span>
+        <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:3px 12px;font-size:13px;font-weight:700">${trkRows.length} 款</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${trkChips(trkStatusCounts(trkRows))}</div>
+    </div>`;
+}
+
+function renderTrackerSubs() {
+  const tbody = document.getElementById('trkSubBody');
+  const groups = {};
+  trkRows.forEach(r => {
+    const g = r['SUBGROUP'] || '(未填)';
+    (groups[g] = groups[g] || []).push(r);
+  });
+  trkSubList = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+  tbody.innerHTML = trkSubList.map(([g, rs], i) => `
+    <tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="trkFilterBySubIdx(${i})" title="點擊查看此 SUB 的款明細">
+      <td style="padding:11px 12px;font-weight:600;color:var(--text)">${escHtml(g)}</td>
+      <td style="padding:11px 12px;text-align:center;font-weight:700;color:var(--text)">${rs.length}</td>
+      <td style="padding:11px 12px">${trkChips(trkStatusCounts(rs))}</td>
+    </tr>`).join('');
+}
+
+function trkFilterBySubIdx(i) {
+  const g = trkSubList[i] ? trkSubList[i][0] : '';
+  const sel = document.getElementById('trkFilterSub');
+  sel.value = (g === '(未填)') ? '' : g;
+  renderTrackerStyles();
+  document.getElementById('trkStyleBlock').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderTrackerFilters() {
+  const subs  = [...new Set(trkRows.map(r => r['SUBGROUP']).filter(Boolean))].sort();
+  const stats = trkStatusCounts(trkRows).map(([s]) => s);
+  const fs = document.getElementById('trkFilterSub');
+  const cs = fs.value;
+  fs.innerHTML = '<option value="">全部 SUB</option>' +
+    subs.map(s => `<option value="${escHtml(s)}" ${cs === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
+  const ft = document.getElementById('trkFilterStatus');
+  const ct = ft.value;
+  ft.innerHTML = '<option value="">全部狀態</option>' +
+    stats.map(s => `<option value="${escHtml(s)}" ${ct === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
+}
+
+function sortTrkStyles(col) {
+  if (trkSortCol === col) trkSortAsc = !trkSortAsc;
+  else { trkSortCol = col; trkSortAsc = true; }
+  ['Style','SUBGROUP','狀態','需求日'].forEach(c => {
+    const el = document.getElementById('trksort-' + c);
+    if (el) el.textContent = c === col ? (trkSortAsc ? '↑' : '↓') : '';
+  });
+  renderTrackerStyles();
+}
+
+function trkCustShort(c) { return String(c || '').replace('(GAP)', ''); }
+
+function renderTrackerStyles() {
+  const sub = document.getElementById('trkFilterSub').value;
+  const st  = document.getElementById('trkFilterStatus').value;
+  let rows = trkRows.filter(r =>
+    (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
+
+  rows = [...rows].sort((a, b) => {
+    const av = a[trkSortCol] || '', bv = b[trkSortCol] || '';
+    const cmp = String(av).localeCompare(String(bv));
+    return trkSortAsc ? cmp : -cmp;
   });
 
-  // 排序
-  if (trackerSortCol) {
-    filtered = [...filtered].sort((a, b) => {
-      const av = a[trackerSortCol] ?? '';
-      const bv = b[trackerSortCol] ?? '';
-      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv));
-      return trackerSortAsc ? cmp : -cmp;
-    });
-  }
+  document.getElementById('trkStyleCount').textContent = `（${rows.length} 款）`;
 
-  // 加總
-  const totalCount   = filtered.reduce((s,r) => s + (r.count    || 0), 0);
-  const totalCount3d = filtered.reduce((s,r) => s + (r.count_3d || 0), 0);
-  document.getElementById('trackerSummary').innerHTML =
-    `共 <strong style="color:var(--text)">${filtered.length}</strong> 筆　3D款數合計：<strong style="color:#166534">${totalCount3d}</strong>`;
-
-  const statusColors = {
-    '待確認':   { bg:'rgba(217,119,6,0.1)',   color:'#92400e'  },
-    '尚未進單': { bg:'rgba(185,28,28,0.08)',   color:'#991b1b'  },
-    '已進單':   { bg:'rgba(22,101,52,0.08)',   color:'#166534'  },
-    '確定沒有': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
-    '不需要3D': { bg:'rgba(148,163,184,0.1)',  color:'#94a3b8'  },
-  };
-
-  const tbody = document.getElementById('trackerBody');
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>`;
+  const tbody = document.getElementById('trkStyleBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>';
     return;
   }
 
-  tbody.innerHTML = filtered.map(r => {
-    const sc = statusColors[r.status] || statusColors['待確認'];
+  tbody.innerHTML = rows.map(r => {
+    const style = r['Style'] || '';
+    const m  = trkManual[style] || {};
+    const sc = trkStatusColor(r['狀態']);
+    const enc = encodeURIComponent(style);
     return `
       <tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:12px;font-weight:600;color:var(--text)">${escHtml(r.brand||'')}</td>
-        <td style="padding:12px;text-align:center;color:var(--text)">${r.count_3d ?? '-'}</td>
-        <td style="padding:12px;color:var(--text)">${escHtml(r.owner||'')}</td>
-        <td style="padding:12px;text-align:center">
-          <select onchange="updateStatus('${r.id}',this.value)"
-            style="background:${sc.bg};color:${sc.color};border:none;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none">
-            ${['待確認','尚未進單','已進單','確定沒有','不需要3D'].map(s =>
-              `<option value="${s}" ${r.status===s?'selected':''} style="background:var(--navy-mid);color:var(--text)">${s}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td style="padding:12px;color:var(--text-dim);font-size:13px">${escHtml(r.note||'')}</td>
-        <td style="padding:12px">${r.miro_url?`<a href="${escHtml(r.miro_url)}" target="_blank" style="color:#1d4ed8;font-size:12px;text-decoration:none">🔗 Miro</a>`:'—'}</td>
-        <td style="padding:12px"><button onclick="openEditRow('${r.id}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
+        <td style="padding:10px 12px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;white-space:nowrap">${escHtml(style)}</td>
+        <td style="padding:10px 12px;color:var(--text);white-space:nowrap">${escHtml(r['SUBGROUP'] || '')}</td>
+        <td style="padding:10px 12px;text-align:center;white-space:nowrap"><span style="background:${sc.bg};color:${sc.color};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600">${escHtml(r['狀態'] || '')}</span></td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text);white-space:nowrap">${escHtml(r['需求日'] || '')}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(trkCustShort(r['Customer']))}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(r['單別'] || '')}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['3D次'] || '')}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['類型'] || '')}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['尺碼'] || '')}</td>
+        <td style="padding:10px 12px;color:var(--text)">${escHtml(r['客樣種類'] || '')}</td>
+        <td style="padding:10px 12px;color:var(--text);white-space:nowrap">${escHtml(m.owner || '')}</td>
+        <td style="padding:10px 12px;white-space:nowrap">${m.miro ? `<a href="${escHtml(m.miro)}" target="_blank" style="color:#1d4ed8;font-size:12px;text-decoration:none">🔗 Miro</a>` : '—'}</td>
+        <td style="padding:10px 12px"><button onclick="openTrkManual('${enc}')" title="編輯負責人 / Miro" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
       </tr>`;
   }).join('');
 }
 
-async function updateStatus(id, status) {
-  const { error } = await sb.from('tracker_rows').update({ status }).eq('id', id);
-  if (error) { alert('更新失敗'); return; }
-  const row = trackerRows.find(r => r.id === id);
-  if (row) row.status = status;
-  applyTrackerFilter();
+// ── 手動欄位（負責人 / Miro）────────────────────
+function openTrkManual(enc) {
+  trkEditingStyle = decodeURIComponent(enc);
+  const m = trkManual[trkEditingStyle] || {};
+  document.getElementById('trkManualStyle').textContent = trkEditingStyle;
+  document.getElementById('trkOwnerInput').value = m.owner || '';
+  document.getElementById('trkMiroInput').value  = m.miro  || '';
+  document.getElementById('trkManualModal').style.display = 'flex';
 }
 
-function openAddSeason() {
-  document.getElementById('addSeasonBox').style.display = 'flex';
-  document.getElementById('newSeasonName').focus();
+function closeTrkManual() {
+  document.getElementById('trkManualModal').style.display = 'none';
+  trkEditingStyle = null;
 }
 
-async function confirmAddSeason() {
-  const name = document.getElementById('newSeasonName').value.trim();
-  if (!name) return;
-  const { error } = await sb.from('tracker_seasons').insert({ name, sort_order: trackerSeasons.length });
-  if (error) { alert('新增失敗：' + error.message); return; }
-  document.getElementById('newSeasonName').value = '';
-  document.getElementById('addSeasonBox').style.display = 'none';
-  await loadTrackerData();
+async function saveTrkManual() {
+  if (!trkEditingStyle) return;
+  const owner = document.getElementById('trkOwnerInput').value.trim();
+  const miro  = document.getElementById('trkMiroInput').value.trim();
+  if (owner || miro) trkManual[trkEditingStyle] = { owner, miro };
+  else delete trkManual[trkEditingStyle];
+  try {
+    await saveTrkEntry('manual', trkManual);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  closeTrkManual();
+  renderTrackerStyles();
 }
 
-async function editSeason(id) {
-  const s = trackerSeasons.find(x => x.id === id);
-  if (!s) return;
-  const newName = prompt('季節名稱：', s.name);
-  if (!newName || newName === s.name) return;
-  const { error } = await sb.from('tracker_seasons').update({ name: newName }).eq('id', id);
-  if (error) { alert('更新失敗：' + error.message); return; }
-  await loadTrackerData();
-  selectSeason(id);
+// ── Supabase 存取（存在 entries 表的隱藏 section）──
+async function ensureTrkSection() {
+  let sec = trkSection();
+  if (sec) return sec;
+  const { data, error } = await sb.from('sections')
+    .insert({ slug: TRK_SECTION_SLUG, name: '開發追蹤資料', group_name: '_hidden', sort_order: 999 })
+    .select().single();
+  if (error) throw error;
+  allSections.push(data);
+  return data;
 }
 
-function openAddRow() {
-  editingRowId = null;
-  document.getElementById('rowModalTitle').textContent = '新增列';
-  document.getElementById('rowDeleteBtn').style.display = 'none';
-  ['rBrand','rOwner','rNote','rMiro'].forEach(id => document.getElementById(id).value = '');
-  ['rCount','rCount3d'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('rStatus').value = '待確認';
-  document.getElementById('rowModal').style.display = 'flex';
+async function saveTrkEntry(title, obj) {
+  const sec = await ensureTrkSection();
+  const existing = trkEntry(title);
+  const content = JSON.stringify(obj);
+  if (existing) {
+    const { error } = await sb.from('entries').update({ content }).eq('id', existing.id);
+    if (error) throw error;
+    existing.content = content;
+  } else {
+    const { data, error } = await sb.from('entries')
+      .insert({ section_id: sec.id, title, content, sort_order: 0 })
+      .select().single();
+    if (error) throw error;
+    allEntries.push(data);
+  }
+  // 同步更新快取，避免下次開頁看到舊資料
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
 }
 
-function openEditRow(id) {
-  editingRowId = id;
-  const r = trackerRows.find(x => x.id === id);
-  if (!r) return;
-  document.getElementById('rowModalTitle').textContent = '編輯列';
-  document.getElementById('rowDeleteBtn').style.display = 'block';
-  document.getElementById('rBrand').value  = r.brand  || '';
-  document.getElementById('rOwner').value  = r.owner  || '';
-  document.getElementById('rCount').value  = r.count  || '';
-  document.getElementById('rCount3d').value= r.count_3d||'';
-  document.getElementById('rStatus').value = r.status || '待確認';
-  document.getElementById('rNote').value   = r.note   || '';
-  document.getElementById('rMiro').value   = r.miro_url||'';
-  document.getElementById('rowModal').style.display = 'flex';
+// ── Excel 上傳解析 ─────────────────────────────
+function trkCell(v) {
+  if (v instanceof Date) {
+    const y = v.getFullYear(), m = String(v.getMonth() + 1).padStart(2, '0'), d = String(v.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (v === null || v === undefined) return '';
+  return String(v).trim();
 }
 
-function closeRowModal() { document.getElementById('rowModal').style.display = 'none'; }
+async function uploadTrackerExcel(file) {
+  if (!file) return;
+  const box = document.getElementById('trkUploadStatus');
+  box.style.display = 'block';
+  box.style.color = 'var(--text-dim)';
+  box.textContent = '⏳ 解析中…';
+  try {
+    const XLSX = await loadXLSX();
+    const buf = await file.arrayBuffer();
+    const wb  = XLSX.read(buf, { cellDates: true });
+    const ws  = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!raw.length) throw new Error('檔案裡讀不到資料列');
+    if (!('單別' in raw[0]) || !('Customer' in raw[0])) throw new Error('格式不符：找不到「單別」或「Customer」欄位');
 
-async function saveTrackerRow() {
-  const payload = {
-    season_id: currentSeason,
-    brand:     document.getElementById('rBrand').value.trim(),
-    owner:     document.getElementById('rOwner').value.trim(),
-    count:     parseInt(document.getElementById('rCount').value)||null,
-    count_3d:  parseInt(document.getElementById('rCount3d').value)||null,
-    status:    document.getElementById('rStatus').value,
-    note:      document.getElementById('rNote').value.trim(),
-    miro_url:  document.getElementById('rMiro').value.trim(),
-  };
-  const { error } = editingRowId
-    ? await sb.from('tracker_rows').update(payload).eq('id', editingRowId)
-    : await sb.from('tracker_rows').insert(payload);
-  if (error) { alert('儲存失敗：' + error.message); return; }
-  closeRowModal();
-  await loadTrackerData();
-  selectSeason(currentSeason);
+    const rows = raw
+      .filter(r => String(r['單別']).trim() === TRK_ORDER_TYPE
+                && TRK_CUSTOMERS.includes(String(r['Customer']).trim()))
+      .map(r => {
+        const o = {};
+        TRK_COLS.forEach(c => o[c] = trkCell(r[c]));
+        return o;
+      });
+    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET 的 3D單）');
+
+    box.textContent = `☁️ 找到 ${rows.length} 款，儲存中…`;
+    await saveTrkEntry('import', { uploadedAt: new Date().toISOString(), rows });
+    box.style.color = '#166534';
+    box.textContent = `✅ 更新完成：共 ${rows.length} 款（${file.name}）`;
+    renderTrackerAll();
+  } catch (err) {
+    box.style.color = '#b91c1c';
+    box.textContent = '❌ 上傳失敗：' + err.message;
+  }
 }
 
-async function deleteTrackerRow() {
-  if (!editingRowId || !confirm('確定要刪除？')) return;
-  await sb.from('tracker_rows').delete().eq('id', editingRowId);
-  closeRowModal();
-  await loadTrackerData();
-  selectSeason(currentSeason);
+// ── 匯出（依目前篩選）──────────────────────────
+async function exportTrackerExcel() {
+  if (!trkRows.length) { alert('沒有資料可匯出'); return; }
+  const XLSX = await loadXLSX();
+  const sub = document.getElementById('trkFilterSub').value;
+  const st  = document.getElementById('trkFilterStatus').value;
+  const rows = trkRows.filter(r =>
+    (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
+  const header = [...TRK_COLS, '負責人', 'Miro 連結'];
+  const data = [header, ...rows.map(r => {
+    const m = trkManual[r['Style']] || {};
+    return [...TRK_COLS.map(c => r[c] || ''), m.owner || '', m.miro || ''];
+  })];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'GAP 3D單');
+  XLSX.writeFile(wb, '開發追蹤_GAP_3D單.xlsx');
 }
 
 // ── Feedback / 留言板 ───────────────────────────
