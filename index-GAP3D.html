@@ -891,29 +891,37 @@ function renderCard(e) {
   const paths = (e.paths || []).map(p => {
     const hasSep = p.includes('｜');
     const label  = hasSep ? p.split('｜')[0].trim() : '';
-    const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
+    const value  = cleanPathValue(hasSep ? p.split('｜')[1] : p);
     const isUrl  = value.startsWith('http');
+    const isUNC  = value.startsWith('\\\\');
+    const shown  = label || value;   // 沒取名稱時退回顯示原始值
 
+    // 統一視覺：每個項目 = 一顆「圖示＋名稱」pill，本身就是動作
+    const pill = 'display:inline-flex;align-items:center;gap:7px;background:rgba(29,78,216,0.07);border:1px solid rgba(29,78,216,0.22);color:#1d4ed8;padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;text-decoration:none;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    const ghost = 'display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);color:var(--text-dim);padding:7px 12px;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap';
+
+    if (isUNC) {
+      // 公檔路徑：📂 名稱（開檔案總管）＋ 複製捷徑
+      return `
+        <div title="${escHtml(value)}" style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap">
+          <a href="search-ms:displayname=${encodeURIComponent(shown)}&crumb=location:${encodeURIComponent(value)}&" style="${pill}">📂 ${escHtml(shown)}</a>
+          <button class="copy-btn" data-path="${escHtml(value)}" style="${ghost}">📋 複製捷徑</button>
+        </div>`;
+    }
+    if (isUrl) {
+      // 網頁連結：🔗 名稱（開新分頁）
+      return `
+        <div title="${escHtml(value)}" style="display:flex;align-items:center;margin:8px 0">
+          <a href="${escHtml(value)}" target="_blank" style="${pill}">🔗 ${escHtml(shown)}</a>
+        </div>`;
+    }
+    // 一般文字（例如待上連結的佔位）
     return `
-      <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-        ${isUrl ? `
-          <a href="${escHtml(value)}" target="_blank"
-            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
-            🔗 開啟
-          </a>
-        ` : `
-          <button class="copy-btn" data-path="${escHtml(value)}"
-            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
-            📋 copy
-          </button>
-        `}
-        ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
-        ${isUrl
-          ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
-          : `<span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>`
-        }
-      </div>
-    `;
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap">
+        ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap">${escHtml(label)}</span>` : ''}
+        <span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>
+        <button class="copy-btn" data-path="${escHtml(value)}" style="${ghost}">📋 copy</button>
+      </div>`;
   }).join('');
 
   // 兩欄 Comments 特殊處理
@@ -2167,6 +2175,14 @@ function resetChecklist(id) {
     const cb = item.querySelector('input');
     if (cb) cb.checked = false;
   });
+}
+
+function cleanPathValue(v) {
+  return String(v || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')  // 零寬字元
+    .replace(/＼/g, '\\')                     // 全形反斜線 → 半形
+    .replace(/\u3000/g, ' ')                  // 全形空格 → 半形
+    .trim();
 }
 
 function escHtml(str) {
