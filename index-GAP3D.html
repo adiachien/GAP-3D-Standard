@@ -474,13 +474,54 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   display: flex; align-items: center; justify-content: center;
 }
 .grid-expand-close:hover { border-color: #b91c1c; color: #b91c1c; }
+
+/* ── 品牌切換器 ── */
+.brand-switch {
+  display: flex;
+  gap: 0;
+  margin: 10px 12px 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+.brand-switch button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 6px 0;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.brand-switch button.active-GAP { background: var(--gap-navy); color: #fff; }
+.brand-switch button.active-ATH { background: #6d28d9; color: #fff; }
+
+/* 品牌徽章 */
+.brand-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.brand-tag-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
+.brand-tag-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">GAP</div>
-  <h1>GAP 3D Standard</h1>
+  <div class="logo" id="appLogo">GAP</div>
+  <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
@@ -495,6 +536,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 
   <!-- SIDEBAR -->
   <aside id="sidebar">
+    <div class="brand-switch" id="brandSwitch">
+      <button id="brandBtn-GAP" onclick="setBrand('GAP')">GAP</button>
+      <button id="brandBtn-ATH" onclick="setBrand('ATH')">ATHLETA</button>
+    </div>
     <div class="search-sidebar">
       <div class="search-wrap-inner">
         <input id="searchInput" placeholder="搜尋…" oninput="handleSearch(this.value)">
@@ -525,13 +570,12 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <div class="page" id="page-tracker">
       <div class="page-header">
         <div class="page-title">📊 開發追蹤</div>
-        <div class="page-desc">GAP / GAP OUTLET・3D單 進度（上傳或直接拖曳 DPC 匯出的 Excel，整張表以最新上傳為準，大家都看得到）</div>
+        <div class="page-desc" id="trkPageDesc">3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）</div>
       </div>
 
       <!-- 更新時間 + 匯出 + 上傳 -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <div id="trkUpdatedAt" style="font-size:13px;color:var(--text-dim);flex:1"></div>
-        <button onclick="clearTrackerData()" style="background:rgba(185,28,28,0.08);border:1px solid rgba(185,28,28,0.18);color:#991b1b;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">🗑 清空</button>
         <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
         <label style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
           📤 上傳 Excel
@@ -551,7 +595,6 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
             <thead>
               <tr style="border-bottom:2px solid var(--border)">
                 <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">SUBGROUP</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">負責人</th>
                 <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">款數</th>
                 <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">狀態分佈</th>
               </tr>
@@ -683,6 +726,68 @@ let allSections = [];
 let allEntries  = [];
 let currentSlug = null;
 
+// ── 品牌切換（GAP / ATH）───────────────────────
+// entries.brands 欄位：空值 / 'ALL' = 全品牌共用，'GAP' / 'ATH' = 品牌專屬
+const BRAND_INFO = {
+  GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard' },
+  ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard' },
+};
+let currentBrand = 'GAP';
+try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {}
+if (!BRAND_INFO[currentBrand]) currentBrand = 'GAP';
+
+// entry 是否屬於目前品牌（空值＝全品牌，舊資料完全不用動）
+function brandOk(e) {
+  const b = String(e.brands || '').trim().toUpperCase();
+  return !b || b === 'ALL' || b === currentBrand;
+}
+
+// 品牌專屬徽章（共用條目不顯示）
+function brandBadge(e) {
+  const b = String(e.brands || '').trim().toUpperCase();
+  if (!b || b === 'ALL' || !BRAND_INFO[b]) return '';
+  return `<span class="brand-tag brand-tag-${b}">${BRAND_INFO[b].label}</span>`;
+}
+
+function updateBrandUI() {
+  const info = BRAND_INFO[currentBrand];
+  const logo = document.getElementById('appLogo');
+  const title = document.getElementById('appTitle');
+  if (logo)  { logo.textContent = info.logo; logo.style.background = currentBrand === 'ATH' ? '#6d28d9' : ''; }
+  if (title) title.textContent = info.title;
+  document.title = info.title;
+  Object.keys(BRAND_INFO).forEach(k => {
+    const btn = document.getElementById('brandBtn-' + k);
+    if (btn) btn.className = (k === currentBrand) ? ('active-' + k) : '';
+  });
+}
+
+function setBrand(b) {
+  if (!BRAND_INFO[b] || b === currentBrand) return;
+  currentBrand = b;
+  try { localStorage.setItem('gap3d_brand', b); } catch (e) {}
+  updateBrandUI();
+  renderNav(); // 側邊欄依品牌重繪（ATH 隱藏非正單）
+  // 依目前所在頁面重新渲染
+  const hash = window.location.hash.replace('#', '');
+  const q = document.getElementById('searchInput')?.value || '';
+  if (q.trim()) { handleSearch(q); return; }
+  if (hash === 'tracker') {
+    document.getElementById('nav-tracker')?.classList.add('active');
+    renderTrackerAll(); return;
+  }
+  if (hash === 'feedback') {
+    document.getElementById('nav-feedback')?.classList.add('active');
+    return; // 留言板不分品牌
+  }
+  // ATH 沒有非正單：若正停在非正單頁，跳回第一個可見分類
+  if (currentBrand === 'ATH' && currentSlug === 'informal') {
+    const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
+    if (first) { showSection(first.slug); return; }
+  }
+  if (currentSlug) showSection(currentSlug);
+}
+
 // ── Init ───────────────────────────────────────
 const GAP3D_CACHE = 'gap3d_cache_v1';
 
@@ -709,6 +814,7 @@ function routeFromHash() {
 }
 
 async function init() {
+  updateBrandUI();
   // Phase 0: 先用 localStorage 快取瞬間顯示（背景再更新）
   let hadCache = false;
   try {
@@ -753,19 +859,17 @@ async function loadData() {
 function renderNav() {
   const menu = document.getElementById('navMenu');
   const groups = {};
-  allSections
-    .filter(s => s.slug !== 'accounts')   // accounts 走底部固定入口，先濾掉避免產生空群組
-    .forEach(s => {
-      if (!groups[s.group_name]) groups[s.group_name] = [];
-      groups[s.group_name].push(s);
-    });
+  allSections.forEach(s => {
+    if (!groups[s.group_name]) groups[s.group_name] = [];
+    groups[s.group_name].push(s);
+  });
 
   menu.innerHTML = Object.entries(groups)
-    .filter(([group, secs]) => !group.startsWith('_') && secs.length)  // 過濾隱藏群組與空群組
+    .filter(([group]) => !group.startsWith('_'))  // 過濾掉 _hidden 等隱藏群組
     .map(([group, secs]) => `
     <div class="section-group">
       <div class="group-label">${group}</div>
-      ${secs.map(s => `
+      ${secs.filter(s => s.slug !== 'accounts' && !(currentBrand === 'ATH' && s.slug === 'informal')).map(s => `
         <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
           <span class="nav-icon">${s.icon || ''}</span>${s.name}
         </div>
@@ -803,6 +907,11 @@ function showSectionWithStage(slug, stageKey) {
 
 // ── Show Section ───────────────────────────────
 function showSection(slug) {
+  // ATH 沒有非正單流程
+  if (currentBrand === 'ATH' && slug === 'informal') {
+    const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
+    if (first) slug = first.slug; else return;
+  }
   currentSlug = slug;
 
   // 儲存 hash
@@ -824,7 +933,7 @@ function showSection(slug) {
   if (navEl) navEl.classList.add('active');
 
   const section = allSections.find(s => s.slug === slug);
-  const entries = allEntries.filter(e => e.section_id === section?.id);
+  const entries = allEntries.filter(e => e.section_id === section?.id && brandOk(e));
 
   renderSection(section, entries);
 
@@ -891,37 +1000,29 @@ function renderCard(e) {
   const paths = (e.paths || []).map(p => {
     const hasSep = p.includes('｜');
     const label  = hasSep ? p.split('｜')[0].trim() : '';
-    const value  = cleanPathValue(hasSep ? p.split('｜')[1] : p);
+    const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
     const isUrl  = value.startsWith('http');
-    const isUNC  = value.startsWith('\\\\');
-    const shown  = label || value;   // 沒取名稱時退回顯示原始值
 
-    // 統一視覺：每個項目 = 一顆「圖示＋名稱」pill，本身就是動作
-    const pill = 'display:inline-flex;align-items:center;gap:7px;background:rgba(29,78,216,0.07);border:1px solid rgba(29,78,216,0.22);color:#1d4ed8;padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;text-decoration:none;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-    const ghost = 'display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);color:var(--text-dim);padding:7px 12px;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap';
-
-    if (isUNC) {
-      // 公檔路徑：📂 名稱（開檔案總管）＋ 複製捷徑
-      return `
-        <div title="${escHtml(value)}" style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap">
-          <a href="search-ms:displayname=${encodeURIComponent(shown)}&crumb=location:${encodeURIComponent(value)}&" style="${pill}">📂 ${escHtml(shown)}</a>
-          <button class="copy-btn" data-path="${escHtml(value)}" style="${ghost}">📋 複製捷徑</button>
-        </div>`;
-    }
-    if (isUrl) {
-      // 網頁連結：🔗 名稱（開新分頁）
-      return `
-        <div title="${escHtml(value)}" style="display:flex;align-items:center;margin:8px 0">
-          <a href="${escHtml(value)}" target="_blank" style="${pill}">🔗 ${escHtml(shown)}</a>
-        </div>`;
-    }
-    // 一般文字（例如待上連結的佔位）
     return `
-      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap">
-        ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap">${escHtml(label)}</span>` : ''}
-        <span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>
-        <button class="copy-btn" data-path="${escHtml(value)}" style="${ghost}">📋 copy</button>
-      </div>`;
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+        ${isUrl ? `
+          <a href="${escHtml(value)}" target="_blank"
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
+            🔗 開啟
+          </a>
+        ` : `
+          <button class="copy-btn" data-path="${escHtml(value)}"
+            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
+            📋 copy
+          </button>
+        `}
+        ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
+        ${isUrl
+          ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
+          : `<span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>`
+        }
+      </div>
+    `;
   }).join('');
 
   // 兩欄 Comments 特殊處理
@@ -937,7 +1038,7 @@ function renderCard(e) {
     return `
       <div class="card">
         <div class="card-header">
-          <div class="card-title">${escHtml(e.title)}</div>
+          <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
           <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
@@ -964,7 +1065,7 @@ function renderCard(e) {
   return `
     <div class="card">
       <div class="card-header">
-        <div class="card-title">${escHtml(e.title)}</div>
+        <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
       </div>
       ${content}
@@ -1001,7 +1102,7 @@ function renderCardGrid(entries, groupLabel) {
     return `
       <div class="grid-card" id="gc-${e.id}" onclick="toggleCardExpand('${e.id}','${gridId}')">
         <div class="grid-card-icon" style="background:${ic.bg};color:${ic.color}">${em}</div>
-        <div class="grid-card-title">${escHtml(e.title)}</div>
+        <div class="grid-card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <div class="grid-card-preview">${escHtml(preview)}</div>
       </div>`;
   }).join('');
@@ -1077,7 +1178,7 @@ function renderStagesPage(section, entries) {
   const generalEntries = entries.filter(e => !e.stage);
   const informalSection = allSections.find(s => s.slug === 'informal');
   const informalEntries = informalSection
-    ? allEntries.filter(e => e.section_id === informalSection.id)
+    ? allEntries.filter(e => e.section_id === informalSection.id && brandOk(e))
     : [];
 
   return `
@@ -1097,7 +1198,7 @@ function renderStagesPage(section, entries) {
 
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      <button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
+      ${currentBrand !== 'ATH' ? `<button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>` : ''}
     </div>
 
     <div class="tab-panel active" id="main-formal">
@@ -1239,7 +1340,7 @@ function selectStage(key) {
   // 只抓「樣品種類」section 的 stage 資料
   const stagesSection = allSections.find(s => s.slug === 'stages');
   const stageEntries = stagesSection
-    ? allEntries.filter(e => e.section_id === stagesSection.id && e.stage === key)
+    ? allEntries.filter(e => e.section_id === stagesSection.id && e.stage === key && brandOk(e))
     : [];
 
   const relatedSection = `
@@ -1391,7 +1492,7 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
   ];
   const informalSection = allSections.find(s => s.slug === 'informal');
   const informalEntries = informalSection
-    ? allEntries.filter(e => e.section_id === informalSection.id)
+    ? allEntries.filter(e => e.section_id === informalSection.id && brandOk(e))
     : [];
   return `
     <div class="page-header">
@@ -1400,7 +1501,7 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
     </div>
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'${pageKey}main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      <button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
+      ${currentBrand !== 'ATH' ? `<button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>` : ''}
     </div>
     <div class="tab-panel active" id="${pageKey}main-formal">
       <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">點選 Stage 查看對應內容</div>
@@ -1439,7 +1540,7 @@ function selectStageTab(pageKey, stageKey) {
   const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
   const sec = allSections.find(s => s.slug === slugMap[pageKey]);
   const stageEntries = sec
-    ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey)
+    ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey && brandOk(e))
     : [];
   const container = document.getElementById(`${pageKey}stageContent`);
 
@@ -2120,8 +2221,14 @@ function handleSearch(q) {
   const hiddenIds = new Set(allSections
     .filter(s => (s.group_name || '').startsWith('_'))
     .map(s => s.id));
+  // ATH 沒有非正單：搜尋也排除該分類
+  if (currentBrand === 'ATH') {
+    const inf = allSections.find(s => s.slug === 'informal');
+    if (inf) hiddenIds.add(inf.id);
+  }
   const results = allEntries.filter(e => {
     if (hiddenIds.has(e.section_id)) return false;
+    if (!brandOk(e)) return false;
     const text = [e.title, e.content, ...(e.paths||[])].join(' ').toLowerCase();
     return kws.some(k => text.includes(k));
   });
@@ -2175,14 +2282,6 @@ function resetChecklist(id) {
     const cb = item.querySelector('input');
     if (cb) cb.checked = false;
   });
-}
-
-function cleanPathValue(v) {
-  return String(v || '')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')  // 零寬字元
-    .replace(/＼/g, '\\')                     // 全形反斜線 → 半形
-    .replace(/\u3000/g, ' ')                  // 全形空格 → 半形
-    .trim();
 }
 
 function escHtml(str) {
@@ -2261,13 +2360,20 @@ async function showAccountsContent() {
 
 // ── 開發追蹤（Excel 匯入版）────────────────────
 const TRK_SECTION_SLUG = 'tracker-data';
-const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)'];
+const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)', 'ATHLETA(GAP)'];
 const TRK_ORDER_TYPE   = '3D單';
+// 依 Customer 字串判斷品牌（進度分開追蹤）
+function trkBrandOf(r) {
+  return String(r['Customer'] || '').toUpperCase().includes('ATHLETA') ? 'ATH' : 'GAP';
+}
+// 目前品牌的款資料
+function trkBrandRows() { return trkRows.filter(r => trkBrandOf(r) === currentBrand); }
+// 品牌顯示名（tracker 標題用）
+function trkBrandLabel() { return currentBrand === 'ATH' ? 'ATHLETA' : 'GAP / GAP OUTLET'; }
 const TRK_COLS = ['單別','狀態','Customer','SUBGROUP','Style','需求日','3D次','類型','尺碼','客樣種類'];
 
 let trkRows       = [];   // 匯入的款資料
-let trkManual     = {};   // { Style: { owner, miro } } 各款手動欄位（重新上傳不會被洗掉）
-let trkSubOwners  = {};   // { SUBGROUP: 負責人 } 各 SUB 手動欄位
+let trkManual     = {};   // { Style: { owner, miro } } 手動欄位（重新上傳不會被洗掉）
 let trkUploadedAt = null;
 let trkSubList    = [];
 let trkEditingStyle = null;
@@ -2303,18 +2409,9 @@ function loadTrackerFromEntries() {
       trkUploadedAt = j.uploadedAt || null;
     }
   } catch (e) {}
-  trkSubOwners = {};
   try {
     const man = trkEntry('manual');
-    if (man && man.content) {
-      const j = JSON.parse(man.content) || {};
-      if (j.styles || j.subs) {          // 新格式
-        trkManual    = j.styles || {};
-        trkSubOwners = j.subs   || {};
-      } else {                            // 舊格式相容（純 { Style: {...} }）
-        trkManual = j;
-      }
-    }
+    if (man && man.content) trkManual = JSON.parse(man.content) || {};
   } catch (e) {}
 }
 
@@ -2371,8 +2468,17 @@ function trkChips(counts) {
 
 function renderTrackerSummary() {
   const el = document.getElementById('trkSummary');
+  const desc = document.getElementById('trkPageDesc');
+  if (desc) desc.textContent = `${trkBrandLabel()}・3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）`;
   if (!trkRows.length) {
-    el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」或直接把 DPC 匯出的原始檔拖曳進來即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET 的 3D單）</span></div>';
+    el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA 的 3D單）</span></div>';
+    document.getElementById('trkSubBlock').style.display   = 'none';
+    document.getElementById('trkStyleBlock').style.display = 'none';
+    return;
+  }
+  const rows = trkBrandRows();
+  if (!rows.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">目前上傳的資料中沒有 <strong>${trkBrandLabel()}</strong> 的 3D單<br><span style="font-size:12px">（左上切換品牌可查看其他品牌進度）</span></div>`;
     document.getElementById('trkSubBlock').style.display   = 'none';
     document.getElementById('trkStyleBlock').style.display = 'none';
     return;
@@ -2382,17 +2488,17 @@ function renderTrackerSummary() {
   el.innerHTML = `
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <span style="font-size:16px;font-weight:700;color:var(--text)">🗂 GAP / GAP OUTLET・3D單</span>
-        <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:3px 12px;font-size:13px;font-weight:700">${trkRows.length} 款</span>
+        <span style="font-size:16px;font-weight:700;color:var(--text)">🗂 ${trkBrandLabel()}・3D單</span>
+        <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:3px 12px;font-size:13px;font-weight:700">${rows.length} 款</span>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${trkChips(trkStatusCounts(trkRows))}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${trkChips(trkStatusCounts(rows))}</div>
     </div>`;
 }
 
 function renderTrackerSubs() {
   const tbody = document.getElementById('trkSubBody');
   const groups = {};
-  trkRows.forEach(r => {
+  trkBrandRows().forEach(r => {
     const g = r['SUBGROUP'] || '(未填)';
     (groups[g] = groups[g] || []).push(r);
   });
@@ -2400,10 +2506,6 @@ function renderTrackerSubs() {
   tbody.innerHTML = trkSubList.map(([g, rs], i) => `
     <tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="trkFilterBySubIdx(${i})" title="點擊查看此 SUB 的款明細">
       <td style="padding:11px 12px;font-weight:600;color:var(--text)">${escHtml(g)}</td>
-      <td onclick="event.stopPropagation();editSubOwner(${i})" title="點擊編輯負責人"
-        style="padding:11px 12px;color:var(--text);white-space:nowrap">
-        ${escHtml(trkSubOwners[g] || '')} <span style="font-size:12px;opacity:0.55">✏️</span>
-      </td>
       <td style="padding:11px 12px;text-align:center;font-weight:700;color:var(--text)">${rs.length}</td>
       <td style="padding:11px 12px">${trkChips(trkStatusCounts(rs))}</td>
     </tr>`).join('');
@@ -2418,8 +2520,8 @@ function trkFilterBySubIdx(i) {
 }
 
 function renderTrackerFilters() {
-  const subs  = [...new Set(trkRows.map(r => r['SUBGROUP']).filter(Boolean))].sort();
-  const stats = trkStatusCounts(trkRows).map(([s]) => s);
+  const subs  = [...new Set(trkBrandRows().map(r => r['SUBGROUP']).filter(Boolean))].sort();
+  const stats = trkStatusCounts(trkBrandRows()).map(([s]) => s);
   const fs = document.getElementById('trkFilterSub');
   const cs = fs.value;
   fs.innerHTML = '<option value="">全部 SUB</option>' +
@@ -2445,7 +2547,7 @@ function trkCustShort(c) { return String(c || '').replace('(GAP)', ''); }
 function renderTrackerStyles() {
   const sub = document.getElementById('trkFilterSub').value;
   const st  = document.getElementById('trkFilterStatus').value;
-  let rows = trkRows.filter(r =>
+  let rows = trkBrandRows().filter(r =>
     (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
 
   rows = [...rows].sort((a, b) => {
@@ -2508,50 +2610,13 @@ async function saveTrkManual() {
   if (owner || miro) trkManual[trkEditingStyle] = { owner, miro };
   else delete trkManual[trkEditingStyle];
   try {
-    await saveTrkManualEntry();
+    await saveTrkEntry('manual', trkManual);
   } catch (err) {
     alert('儲存失敗：' + err.message);
     return;
   }
   closeTrkManual();
   renderTrackerStyles();
-}
-
-async function editSubOwner(i) {
-  const g = trkSubList[i] ? trkSubList[i][0] : null;
-  if (!g) return;
-  const cur = trkSubOwners[g] || '';
-  const val = prompt(`「${g}」負責人：`, cur);
-  if (val === null || val.trim() === cur) return;
-  if (val.trim()) trkSubOwners[g] = val.trim();
-  else delete trkSubOwners[g];
-  try {
-    await saveTrkManualEntry();
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  renderTrackerSubs();
-}
-
-function saveTrkManualEntry() {
-  return saveTrkEntry('manual', { styles: trkManual, subs: trkSubOwners });
-}
-
-// ── 清空整張表（保留手動填的負責人 / Miro）───────
-async function clearTrackerData() {
-  if (!trkRows.length) { alert('目前沒有資料'); return; }
-  if (!confirm(`確定要清空整張表？（目前 ${trkRows.length} 款）\n手動填的負責人 / Miro 會保留，重新上傳後自動接回。`)) return;
-  const imp = trkEntry('import');
-  if (imp) {
-    const { error } = await sb.from('entries').delete().eq('id', imp.id);
-    if (error) { alert('清空失敗：' + error.message); return; }
-    allEntries = allEntries.filter(e => e.id !== imp.id);
-    try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
-  }
-  const box = document.getElementById('trkUploadStatus');
-  box.style.display = 'none';
-  renderTrackerAll();
 }
 
 // ── Supabase 存取（存在 entries 表的隱藏 section）──
@@ -2618,12 +2683,14 @@ async function uploadTrackerExcel(file) {
         TRK_COLS.forEach(c => o[c] = trkCell(r[c]));
         return o;
       });
-    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET 的 3D單）');
+    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET / ATHLETA 的 3D單）');
 
+    const nGap = rows.filter(r => trkBrandOf(r) === 'GAP').length;
+    const nAth = rows.filter(r => trkBrandOf(r) === 'ATH').length;
     box.textContent = `☁️ 找到 ${rows.length} 款，儲存中…`;
     await saveTrkEntry('import', { uploadedAt: new Date().toISOString(), rows });
     box.style.color = '#166534';
-    box.textContent = `✅ 更新完成：共 ${rows.length} 款（${file.name}）`;
+    box.textContent = `✅ 更新完成：共 ${rows.length} 款（GAP ${nGap}｜ATHLETA ${nAth}）（${file.name}）`;
     renderTrackerAll();
   } catch (err) {
     box.style.color = '#b91c1c';
@@ -2633,11 +2700,11 @@ async function uploadTrackerExcel(file) {
 
 // ── 匯出（依目前篩選）──────────────────────────
 async function exportTrackerExcel() {
-  if (!trkRows.length) { alert('沒有資料可匯出'); return; }
+  if (!trkBrandRows().length) { alert('目前品牌沒有資料可匯出'); return; }
   const XLSX = await loadXLSX();
   const sub = document.getElementById('trkFilterSub').value;
   const st  = document.getElementById('trkFilterStatus').value;
-  const rows = trkRows.filter(r =>
+  const rows = trkBrandRows().filter(r =>
     (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
   const header = [...TRK_COLS, '負責人', 'Miro 連結'];
   const data = [header, ...rows.map(r => {
@@ -2646,37 +2713,10 @@ async function exportTrackerExcel() {
   })];
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'GAP 3D單');
-  XLSX.writeFile(wb, '開發追蹤_GAP_3D單.xlsx');
+  const bn = currentBrand === 'ATH' ? 'ATHLETA' : 'GAP';
+  XLSX.utils.book_append_sheet(wb, ws, bn + ' 3D單');
+  XLSX.writeFile(wb, '開發追蹤_' + bn + '_3D單.xlsx');
 }
-
-// ── 拖曳上傳（整個開發追蹤頁都可以丟）───────────
-(function () {
-  const page = document.getElementById('page-tracker');
-  if (!page) return;
-  let dragDepth = 0;
-  page.addEventListener('dragenter', e => {
-    e.preventDefault();
-    dragDepth++;
-    page.style.outline = '2px dashed var(--gap-blue)';
-    page.style.outlineOffset = '-8px';
-  });
-  page.addEventListener('dragover', e => e.preventDefault());
-  page.addEventListener('dragleave', e => {
-    e.preventDefault();
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (!dragDepth) page.style.outline = '';
-  });
-  page.addEventListener('drop', e => {
-    e.preventDefault();
-    dragDepth = 0;
-    page.style.outline = '';
-    const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (!f) return;
-    if (/\.(xlsx|xls)$/i.test(f.name)) uploadTrackerExcel(f);
-    else alert('請丟入 Excel 檔（.xlsx / .xls）');
-  });
-})();
 
 // ── Feedback / 留言板 ───────────────────────────
 let fbImageFile = null;
