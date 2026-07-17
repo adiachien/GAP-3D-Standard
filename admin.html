@@ -9,17 +9,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --navy: #0d1b2a;
-  --navy-mid: #152535;
-  --navy-light: #1e3347;
+  --navy: #0b1622;
+  --navy-mid: #131f2e;
+  --navy-light: #1b2a3c;
   --gap-blue: #1a3fa6;
+
+  /* 品牌色（與前台一致） */
+  --gap-navy: #3b7dd8;
+  --ath-purple: #a78bfa;
+
   --official: #3b82f6;
   --internal: #f59e0b;
   --warning: #ef4444;
-  --text: #e2e8f0;
-  --text-dim: #8899aa;
-  --border: rgba(255,255,255,0.07);
-  --card: rgba(255,255,255,0.04);
+  --ok: #34d399;
+
+  --text: #e6ebf1;
+  --text-dim: #8a99ab;
+  --text-faint: #5b6b7e;
+  --border: rgba(255,255,255,0.08);
+  --card: rgba(255,255,255,0.035);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -32,9 +40,12 @@ header {
 }
 .logo { font-family:'DM Mono',monospace; font-size:12px; background:var(--gap-blue); color:#fff; padding:4px 10px; border-radius:4px; letter-spacing:0.12em; }
 header h1 { font-size:14px; font-weight:500; }
-.header-right { margin-left:auto; }
+.header-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
 
-.btn { padding:8px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; }
+.icon-btn { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.icon-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.18); }
+
+.btn { padding:8px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; white-space:nowrap; }
 .btn-primary { background:var(--gap-blue); color:#fff; }
 .btn-primary:hover { background:#1e4fc7; }
 .btn-danger { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); }
@@ -58,25 +69,43 @@ header h1 { font-size:14px; font-weight:500; }
 .admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
 .admin-title { font-size:18px; font-weight:700; }
 
-.section-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-.sec-tab { padding:6px 14px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; }
+.section-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); overflow-x:auto; }
+.sec-tab { padding:6px 14px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
 .sec-tab:hover { color:var(--text); }
 .sec-tab.active { background:var(--gap-blue); color:#fff; border-color:transparent; }
+.sec-tab .lock { font-size:10px; opacity:0.75; }
 
-.entries-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.entries-toolbar { display:flex; align-items:center; gap:10px; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; }
 .entries-title { font-size:15px; font-weight:600; }
+.entry-search { position:relative; width:230px; }
+.entry-search input {
+  width:100%; background:var(--navy-light); border:1px solid var(--border); border-radius:7px;
+  padding:7px 10px 7px 30px; font-size:12px; color:var(--text); font-family:inherit; outline:none;
+}
+.entry-search input:focus { border-color:rgba(59,130,246,0.5); }
+.entry-search .icn { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-faint); }
+
+.protected-banner {
+  display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.28);
+  color:#fcd34d; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; line-height:1.5;
+}
 
 .entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:14px; }
-.entry-info { flex:1; }
+.entry-info { flex:1; min-width:0; }
 .entry-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:4px; }
-.entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:10px; flex-wrap:wrap; }
+.entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 .entry-preview { font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
 .entry-actions { display:flex; gap:6px; flex-shrink:0; }
 
-.badge-sm { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; }
+.badge-sm { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:600; white-space:nowrap; }
 .bs-official { background:rgba(59,130,246,0.2); color:#93c5fd; }
 .bs-internal  { background:rgba(245,158,11,0.2); color:#fcd34d; }
 .bs-warning   { background:rgba(239,68,68,0.2);  color:#fca5a5; }
+.bs-gap { background:rgba(59,125,216,0.18); color:var(--gap-navy); border:1px solid rgba(59,125,216,0.3); }
+.bs-ath { background:rgba(167,139,250,0.18); color:var(--ath-purple); border:1px solid rgba(167,139,250,0.3); }
+.bs-shared { background:rgba(148,163,184,0.14); color:#94a3b8; }
+
+.brand-strip { height:3px; border-radius:3px 3px 0 0; margin:-28px -32px 20px; transition:background 0.15s; }
 
 .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; }
 .overlay.open { display:flex; }
@@ -84,6 +113,14 @@ header h1 { font-size:14px; font-weight:500; }
 .modal { background:var(--navy-mid); border:1px solid var(--border); border-radius:12px; padding:28px 32px; width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; }
 .modal h3 { font-size:16px; font-weight:700; margin-bottom:20px; }
 .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+
+.brand-warning {
+  display:none; align-items:flex-start; gap:8px; font-size:12px; padding:9px 12px; border-radius:8px; margin:-6px 0 14px; line-height:1.5;
+}
+.brand-warning.show { display:flex; }
+.brand-warning.bw-shared { background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.25); color:#cbd5e1; }
+.brand-warning.bw-gap { background:rgba(59,125,216,0.12); border:1px solid rgba(59,125,216,0.3); color:#bcd6f8; }
+.brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
 
 .path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
 .path-item { display:flex; gap:6px; }
@@ -102,14 +139,34 @@ header h1 { font-size:14px; font-weight:500; }
 
 .devtype-group { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
 .devtype-group label { display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; }
+
+/* ── 確認對話框 ── */
+.confirm-modal { width:380px; text-align:left; }
+.confirm-modal .cm-icon { font-size:22px; margin-bottom:10px; }
+.confirm-modal p { font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:4px; }
+.confirm-modal h3 { margin-bottom:10px; }
+
+/* ── 導覽 ── */
+#tourOverlay { display:none; position:fixed; inset:0; z-index:400; }
+#tourOverlay.open { display:block; }
+.tour-dim { position:fixed; inset:0; background:rgba(0,0,0,0.55); }
+.tour-highlight { position:fixed; border-radius:9px; box-shadow:0 0 0 4px rgba(59,130,246,0.55), 0 0 0 2000px rgba(0,0,0,0.55); transition:all 0.25s; pointer-events:none; z-index:401; }
+.tour-tip { position:fixed; background:var(--navy-mid); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:16px 18px; width:280px; z-index:402; box-shadow:0 12px 30px rgba(0,0,0,0.4); transition:all 0.25s; }
+.tour-tip .tt-step { font-size:10px; color:var(--official); font-weight:700; letter-spacing:0.06em; margin-bottom:6px; }
+.tour-tip h4 { font-size:13px; margin-bottom:6px; }
+.tour-tip p { font-size:12px; color:var(--text-dim); line-height:1.6; margin-bottom:12px; }
+.tour-tip-footer { display:flex; justify-content:space-between; align-items:center; }
+.tour-tip-footer .skip { font-size:11.5px; color:var(--text-faint); cursor:pointer; background:none; border:none; font-family:inherit; }
+.tour-tip-footer .next { font-size:12px; padding:5px 14px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">GAP</div>
+  <div class="logo">GAP3D</div>
   <h1>編輯後台</h1>
   <div class="header-right">
+    <button class="icon-btn" title="使用導覽" onclick="startTour(true)">？</button>
     <a href="index-GAP3D.html" class="btn btn-ghost">← 回知識庫</a>
   </div>
 </header>
@@ -118,9 +175,9 @@ header h1 { font-size:14px; font-weight:500; }
   <div class="admin-header">
     <div class="admin-title">內容管理</div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost" onclick="openAccountsManager()">🔑 帳號管理</button>
-      <button class="btn btn-ghost" onclick="openSectionManager()">⚙️ 管理分類</button>
-      <button class="btn btn-primary" onclick="openNewEntry()">＋ 新增條目</button>
+      <button class="btn btn-ghost" id="tourBtnAccounts" onclick="openAccountsManager()">🔑 帳號管理</button>
+      <button class="btn btn-ghost" id="tourBtnSections" onclick="openSectionManager()">⚙️ 管理分類</button>
+      <button class="btn btn-primary" id="tourBtnNewEntry" onclick="openNewEntry()">＋ 新增條目</button>
     </div>
   </div>
 
@@ -128,8 +185,14 @@ header h1 { font-size:14px; font-weight:500; }
     <div class="loading"><div class="spinner"></div></div>
   </div>
 
-  <div class="entries-header">
+  <div id="protectedBanner"></div>
+
+  <div class="entries-toolbar">
     <div class="entries-title" id="currentSectionName"></div>
+    <div class="entry-search">
+      <span class="icn">🔍</span>
+      <input id="entrySearchInput" placeholder="搜尋標題或內容…" oninput="setEntrySearch(this.value)">
+    </div>
   </div>
   <div id="entriesList">
     <div class="loading"><div class="spinner"></div>載入中…</div>
@@ -139,7 +202,9 @@ header h1 { font-size:14px; font-weight:500; }
 <!-- Modal -->
 <div class="overlay" id="modalOverlay">
   <div class="modal">
+    <div class="brand-strip" id="modalBrandStrip"></div>
     <h3 id="modalTitle">新增條目</h3>
+    <div id="modalProtectedWarning"></div>
     <div class="field">
       <label>所屬分類</label>
       <select id="fSection"></select>
@@ -166,12 +231,13 @@ header h1 { font-size:14px; font-weight:500; }
       </select>
     </div>
     <div class="field">
-      <label>適用品牌（共用內容請維持「全品牌」，只改一次全品牌生效）</label>
-      <select id="fBrands">
+      <label id="fBrandsLabel">適用品牌</label>
+      <select id="fBrands" onchange="updateBrandWarning()">
         <option value="">🌐 全品牌（GAP + ATH 共用）</option>
         <option value="GAP">🔵 GAP 專屬</option>
         <option value="ATH">🟣 ATHLETA 專屬</option>
       </select>
+      <div class="brand-warning" id="brandWarning"></div>
     </div>
     <div class="field">
       <label>適用開發類型</label>
@@ -204,7 +270,7 @@ header h1 { font-size:14px; font-weight:500; }
       <input id="fOrder" type="number" value="0">
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger" id="deleteBtn" onclick="deleteEntry()" style="display:none">刪除</button>
+      <button class="btn btn-danger" id="deleteBtn" onclick="confirmDeleteEntry()" style="display:none">刪除</button>
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       <button class="btn btn-primary" onclick="saveEntry()">儲存</button>
     </div>
@@ -250,7 +316,7 @@ header h1 { font-size:14px; font-weight:500; }
       <input id="acOrder" type="number" value="0">
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger" id="acDeleteBtn" onclick="deleteAccount()" style="display:none">刪除</button>
+      <button class="btn btn-danger" id="acDeleteBtn" onclick="confirmDeleteAccount()" style="display:none">刪除</button>
       <button class="btn btn-ghost" onclick="closeAccountEdit()">取消</button>
       <button class="btn btn-primary" onclick="saveAccount()">儲存</button>
     </div>
@@ -277,6 +343,7 @@ header h1 { font-size:14px; font-weight:500; }
 <div class="overlay" id="sectionEditOverlay">
   <div class="modal" style="width:500px">
     <h3 id="sectionEditTitle">新增分類</h3>
+    <div id="sectionProtectedWarning"></div>
     <div class="field">
       <label>分類名稱</label>
       <input id="seName" placeholder="例如：各色 3D 定位">
@@ -298,9 +365,37 @@ header h1 { font-size:14px; font-weight:500; }
       <input id="seOrder" type="number" value="0">
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger" id="seDeleteBtn" onclick="deleteSectionConfirm()" style="display:none">刪除</button>
+      <button class="btn btn-danger" id="seDeleteBtn" onclick="confirmDeleteSection()" style="display:none">刪除</button>
       <button class="btn btn-ghost" onclick="closeSectionEdit()">取消</button>
       <button class="btn btn-primary" onclick="saveSection()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用二次確認 Modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-modal">
+    <div class="cm-icon" id="cmIcon">⚠️</div>
+    <h3 id="cmTitle">確定要刪除嗎？</h3>
+    <p id="cmBody"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="cmConfirmBtn">刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 導覽 -->
+<div id="tourOverlay">
+  <div class="tour-dim" onclick="skipTour()"></div>
+  <div class="tour-highlight" id="tourHighlight"></div>
+  <div class="tour-tip" id="tourTip">
+    <div class="tt-step" id="tourStepLabel">STEP 1/5</div>
+    <h4 id="tourTitle"></h4>
+    <p id="tourBody"></p>
+    <div class="tour-tip-footer">
+      <button class="skip" onclick="skipTour()">跳過導覽</button>
+      <button class="btn btn-primary next" onclick="nextTourStep()" id="tourNextBtn">下一步</button>
     </div>
   </div>
 </div>
@@ -313,17 +408,18 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allSections = [], allEntries = [];
 let currentSectionId = null, editingEntryId = null;
+let entrySearchVal = '';
 
 async function init() {
   await loadData();
   renderSectionTabs();
-  // 讀取 URL 參數，自動選到對應分類
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('section');
   const targetSection = slug
     ? allSections.find(s => s.slug === slug)
     : allSections[0];
   if (targetSection) selectSection(targetSection.id);
+  if (!localStorage.getItem('gap3d_admin_onboarded')) setTimeout(() => startTour(false), 500);
 }
 
 async function loadData() {
@@ -335,30 +431,44 @@ async function loadData() {
   allEntries  = e || [];
 }
 
+function isProtectedSection(s) {
+  if (!s) return false;
+  return s.slug === 'tracker-data' || String(s.slug||'').startsWith('_');
+}
+
 function renderSectionTabs() {
   document.getElementById('sectionTabs').innerHTML = allSections.map(s =>
-    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')">${s.icon||''} ${s.name}</button>`
+    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')">${s.icon||''} ${esc(s.name)}${isProtectedSection(s)?' <span class="lock" title="系統保護分類">🔒</span>':''}</button>`
   ).join('');
   document.getElementById('fSection').innerHTML = allSections.map(s =>
-    `<option value="${s.id}">${s.name}</option>`
+    `<option value="${s.id}">${esc(s.name)}${isProtectedSection(s)?' 🔒':''}</option>`
   ).join('');
 }
 
 function selectSection(id) {
   currentSectionId = id;
+  entrySearchVal = '';
+  const input = document.getElementById('entrySearchInput');
+  if (input) input.value = '';
   document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-'+id)?.classList.add('active');
-  document.getElementById('currentSectionName').textContent = allSections.find(s=>s.id===id)?.name || '';
+  const sec = allSections.find(s=>s.id===id);
+  document.getElementById('currentSectionName').textContent = sec?.name || '';
+  const bannerEl = document.getElementById('protectedBanner');
+  bannerEl.innerHTML = isProtectedSection(sec)
+    ? `<div class="protected-banner">🔒 <div>這是<strong>系統保護分類</strong>——內容供追蹤系統或首頁邏輯讀取，修改或刪除前請確認影響範圍。</div></div>`
+    : '';
   renderEntries();
 }
 
 let brandFilterVal = '';
 function setBrandFilter(v) { brandFilterVal = v; renderEntries(); }
+function setEntrySearch(v) { entrySearchVal = v.trim().toLowerCase(); renderEntries(); }
 function brandTagAdmin(e) {
   const b = String(e.brands||'').trim().toUpperCase();
-  if (b === 'GAP') return '<span style="color:#7dd3fc;font-weight:700">🔵 GAP</span>';
-  if (b === 'ATH') return '<span style="color:#c4b5fd;font-weight:700">🟣 ATH</span>';
-  return '<span style="color:#94a3b8">🌐 全品牌</span>';
+  if (b === 'GAP') return '<span class="badge-sm bs-gap">🔵 GAP</span>';
+  if (b === 'ATH') return '<span class="badge-sm bs-ath">🟣 ATH</span>';
+  return '<span class="badge-sm bs-shared">🌐 全品牌</span>';
 }
 function renderEntries() {
   let entries = allEntries.filter(e => e.section_id === currentSectionId);
@@ -370,6 +480,12 @@ function renderEntries() {
       return brandFilterVal === 'ALL' ? (!b || b === 'ALL') : b === brandFilterVal;
     });
   }
+  if (entrySearchVal) {
+    entries = entries.filter(e =>
+      String(e.title||'').toLowerCase().includes(entrySearchVal) ||
+      String(e.content||'').toLowerCase().includes(entrySearchVal)
+    );
+  }
   const fBtn = (v, label) => `<button onclick="setBrandFilter('${v}')" style="background:${brandFilterVal===v?'rgba(59,130,246,0.25)':'none'};border:1px solid ${brandFilterVal===v?'#3b82f6':'rgba(148,163,184,0.3)'};color:inherit;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit">${label}</button>`;
   const filterBar = total ? `
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;font-size:12px;color:#94a3b8">
@@ -380,7 +496,7 @@ function renderEntries() {
     return;
   }
   if (!entries.length) {
-    el.innerHTML = filterBar + '<div class="loading" style="padding:30px">此品牌篩選下沒有條目</div>';
+    el.innerHTML = filterBar + '<div class="loading" style="padding:30px">找不到符合條件的條目</div>';
     return;
   }
   const bm = { official:'bs-official', internal:'bs-internal', warning:'bs-warning' };
@@ -405,6 +521,26 @@ function renderEntries() {
   `).join('');
 }
 
+function updateBrandWarning() {
+  const v = document.getElementById('fBrands').value;
+  const w = document.getElementById('brandWarning');
+  w.className = 'brand-warning show';
+  const strip = document.getElementById('modalBrandStrip');
+  if (v === 'GAP') {
+    w.classList.add('bw-gap');
+    w.innerHTML = '🔵 這是 <strong>GAP 專屬</strong>內容，只會出現在 GAP 前台。';
+    strip.style.background = 'var(--gap-navy)';
+  } else if (v === 'ATH') {
+    w.classList.add('bw-ath');
+    w.innerHTML = '🟣 這是 <strong>ATHLETA 專屬</strong>內容，只會出現在 ATH 前台。';
+    strip.style.background = 'var(--ath-purple)';
+  } else {
+    w.classList.add('bw-shared');
+    w.innerHTML = '🌐 這是<strong>全品牌共用</strong>內容——修改後 GAP 與 ATHLETA 前台會<strong>同時</strong>變更。';
+    strip.style.background = 'rgba(148,163,184,0.5)';
+  }
+}
+
 function openNewEntry() {
   editingEntryId = null;
   document.getElementById('modalTitle').textContent = '新增條目';
@@ -420,6 +556,8 @@ function openNewEntry() {
   document.getElementById('pathList').innerHTML = '';
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
   toggleStageField(currentSectionId);
+  renderModalProtectedWarning(currentSectionId);
+  updateBrandWarning();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -442,7 +580,16 @@ function openEditEntry(id) {
   const types = e.dev_type||['all'];
   document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
   toggleStageField(e.section_id);
+  renderModalProtectedWarning(e.section_id);
+  updateBrandWarning();
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+function renderModalProtectedWarning(sectionId) {
+  const sec = allSections.find(s => s.id === sectionId);
+  document.getElementById('modalProtectedWarning').innerHTML = isProtectedSection(sec)
+    ? `<div class="protected-banner">🔒 此分類為<strong>系統保護分類</strong>，內容可能被追蹤系統或首頁邏輯讀取，請謹慎修改。</div>`
+    : '';
 }
 
 function toggleStageField(sectionId) {
@@ -453,9 +600,9 @@ function toggleStageField(sectionId) {
   document.getElementById('stageField').style.display = show ? 'block' : 'none';
 }
 
-// 當分類改變時，動態顯示/隱藏 Stage 欄位
 document.getElementById('fSection').addEventListener('change', function() {
   toggleStageField(this.value);
+  renderModalProtectedWarning(this.value);
 });
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
@@ -504,8 +651,16 @@ async function saveEntry() {
   else { showToast('儲存成功 ✓','success'); closeModal(); await loadData(); selectSection(payload.section_id); }
 }
 
+function confirmDeleteEntry() {
+  if (!editingEntryId) return;
+  const e = allEntries.find(x=>x.id===editingEntryId);
+  openConfirm({
+    title: '確定要刪除這個條目？',
+    body: `「${e?.title||''}」刪除後無法復原，前台將立即看不到此內容。`,
+    onConfirm: deleteEntry,
+  });
+}
 async function deleteEntry() {
-  if (!editingEntryId || !confirm('確定要刪除這個條目嗎？')) return;
   const { error } = await sb.from('entries').delete().eq('id', editingEntryId);
   if (error) { showToast('刪除失敗','error'); }
   else { showToast('已刪除','success'); closeModal(); await loadData(); selectSection(currentSectionId); }
@@ -520,6 +675,24 @@ function showToast(msg, type='') {
 function esc(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── 通用二次確認 ──────────────────────────────
+let confirmCb = null;
+function openConfirm({title, body, onConfirm, icon='⚠️', confirmLabel='刪除'}) {
+  document.getElementById('cmIcon').textContent = icon;
+  document.getElementById('cmTitle').textContent = title;
+  document.getElementById('cmBody').textContent = body;
+  const btn = document.getElementById('cmConfirmBtn');
+  btn.textContent = confirmLabel;
+  confirmCb = onConfirm;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); confirmCb = null; }
+document.getElementById('cmConfirmBtn').addEventListener('click', () => {
+  const cb = confirmCb;
+  closeConfirm();
+  if (cb) cb();
+});
 
 // ── 帳號管理 ──────────────────────────────────
 let allAccounts = [];
@@ -603,8 +776,16 @@ async function saveAccount() {
   renderAccountsList();
 }
 
+function confirmDeleteAccount() {
+  if (!editingAccountId) return;
+  const a = allAccounts.find(x=>x.id===editingAccountId);
+  openConfirm({
+    title: '確定要刪除這個帳號？',
+    body: `「${a?.name||''}」刪除後此帳密將從前台的帳號頁移除。`,
+    onConfirm: deleteAccount,
+  });
+}
 async function deleteAccount() {
-  if (!editingAccountId || !confirm('確定要刪除這個帳號？')) return;
   const { error } = await sb.from('accounts').delete().eq('id', editingAccountId);
   if (error) { showToast('刪除失敗', 'error'); return; }
   showToast('已刪除', 'success');
@@ -635,7 +816,7 @@ function renderSectionList() {
     <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
       <span style="font-size:18px;width:28px;text-align:center">${s.icon||'📁'}</span>
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:#fff">${esc(s.name)}</div>
+        <div style="font-size:13px;font-weight:600;color:#fff">${esc(s.name)}${isProtectedSection(s)?' <span style="font-size:11px;color:#fcd34d">🔒 系統保護</span>':''}</div>
         <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
           slug: <span style="font-family:'DM Mono',monospace">${esc(s.slug)}</span>
           &nbsp;·&nbsp; 群組: ${esc(s.group_name)}
@@ -651,6 +832,7 @@ function openNewSection() {
   editingSectionId = null;
   document.getElementById('sectionEditTitle').textContent = '新增分類';
   document.getElementById('seDeleteBtn').style.display = 'none';
+  document.getElementById('sectionProtectedWarning').innerHTML = '';
   document.getElementById('seName').value = '';
   document.getElementById('seSlug').value = '';
   document.getElementById('seGroup').value = '';
@@ -670,6 +852,9 @@ function openEditSection(id) {
   document.getElementById('seGroup').value = s.group_name || '';
   document.getElementById('seIcon').value  = s.icon || '';
   document.getElementById('seOrder').value = s.sort_order || 0;
+  document.getElementById('sectionProtectedWarning').innerHTML = isProtectedSection(s)
+    ? `<div class="protected-banner">🔒 此分類為<strong>系統保護分類</strong>，可能被追蹤系統或前台首頁邏輯依賴，變更 slug 前請三思。</div>`
+    : '';
   document.getElementById('sectionEditOverlay').classList.add('open');
 }
 
@@ -703,14 +888,22 @@ async function saveSection() {
   renderSectionList();
 }
 
-async function deleteSectionConfirm() {
+function confirmDeleteSection() {
   if (!editingSectionId) return;
   const s = allSections.find(x => x.id === editingSectionId);
   const hasEntries = allEntries.some(e => e.section_id === editingSectionId);
   if (hasEntries) {
     showToast('此分類還有條目，請先刪除條目', 'error'); return;
   }
-  if (!confirm(`確定要刪除「${s?.name}」嗎？`)) return;
+  openConfirm({
+    title: `確定要刪除「${s?.name||''}」？`,
+    body: isProtectedSection(s)
+      ? '這是系統保護分類，刪除可能影響追蹤系統或前台首頁邏輯。請確認已與團隊確認過。'
+      : '刪除後此分類將從後台與前台選單消失。',
+    onConfirm: deleteSection,
+  });
+}
+async function deleteSection() {
   const { error } = await sb.from('sections').delete().eq('id', editingSectionId);
   if (error) { showToast('刪除失敗：' + error.message, 'error'); return; }
   showToast('已刪除', 'success');
@@ -718,6 +911,50 @@ async function deleteSectionConfirm() {
   await loadData();
   renderSectionTabs();
   renderSectionList();
+}
+
+// ── 使用導覽 ──────────────────────────────────
+const tourSteps = [
+  { sel: '#sectionTabs', title: '分類頁籤', body: '所有內容依分類分區，帶 🔒 的是系統保護分類（追蹤系統或首頁邏輯會讀取），修改前請多留意。' },
+  { sel: '#tourBtnNewEntry', title: '新增條目', body: '點這裡建立新內容。預設「適用品牌」是全品牌共用——只有品牌特規才需要另外標 GAP 或 ATH。' },
+  { sel: '.entry-search', title: '搜尋條目', body: '條目變多後，用搜尋快速定位標題或內文關鍵字。' },
+  { sel: '#tourBtnSections', title: '管理分類', body: '在這裡新增、排序、調整分類群組與 icon。' },
+  { sel: '#tourBtnAccounts', title: '帳號管理', body: '維護前台登入測驗會用到的帳號密碼，以展開式卡片呈現。' },
+];
+let tourIdx = 0;
+
+function startTour(manual) {
+  tourIdx = 0;
+  document.getElementById('tourOverlay').classList.add('open');
+  renderTourStep();
+}
+function renderTourStep() {
+  const step = tourSteps[tourIdx];
+  const target = document.querySelector(step.sel);
+  const hl = document.getElementById('tourHighlight');
+  const tip = document.getElementById('tourTip');
+  if (target) {
+    const r = target.getBoundingClientRect();
+    hl.style.left = (r.left-6)+'px'; hl.style.top = (r.top-6)+'px';
+    hl.style.width = (r.width+12)+'px'; hl.style.height = (r.height+12)+'px';
+    let top = r.bottom + 14;
+    let left = Math.min(r.left, window.innerWidth - 300);
+    if (top + 160 > window.innerHeight) top = r.top - 174;
+    tip.style.top = top+'px'; tip.style.left = left+'px';
+  }
+  document.getElementById('tourStepLabel').textContent = `STEP ${tourIdx+1}/${tourSteps.length}`;
+  document.getElementById('tourTitle').textContent = step.title;
+  document.getElementById('tourBody').textContent = step.body;
+  document.getElementById('tourNextBtn').textContent = tourIdx === tourSteps.length-1 ? '完成' : '下一步';
+}
+function nextTourStep() {
+  if (tourIdx >= tourSteps.length-1) { skipTour(); return; }
+  tourIdx++;
+  renderTourStep();
+}
+function skipTour() {
+  document.getElementById('tourOverlay').classList.remove('open');
+  localStorage.setItem('gap3d_admin_onboarded', '1');
 }
 
 // ── Start ──────────────────────────────────────
