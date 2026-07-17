@@ -516,6 +516,7 @@ function renderEntries() {
       </div>
       <div class="entry-actions">
         <button class="btn btn-ghost" onclick="openEditEntry('${e.id}')">✏️ 編輯</button>
+        <button class="btn btn-ghost" onclick="duplicateEntry('${e.id}')" title="以此條目為底建立新條目（品牌自動切到另一邊）">📄 複製</button>
       </div>
     </div>
   `).join('');
@@ -583,6 +584,19 @@ function openEditEntry(id) {
   renderModalProtectedWarning(e.section_id);
   updateBrandWarning();
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+function duplicateEntry(id) {
+  openEditEntry(id);          // 先沿用編輯的帶入邏輯填滿表單
+  editingEntryId = null;      // 但清除編輯目標 → 儲存時會 insert 成新條目
+  document.getElementById('modalTitle').textContent = '📄 複製條目（儲存後成為新條目）';
+  document.getElementById('deleteBtn').style.display = 'none';  // 複製模式不能刪（沒有目標可刪）
+  // 品牌自動翻到另一邊：GAP→ATH、ATH→GAP；共用維持共用（自行調整）
+  const bSel = document.getElementById('fBrands');
+  if (bSel.value === 'GAP') bSel.value = 'ATH';
+  else if (bSel.value === 'ATH') bSel.value = 'GAP';
+  updateBrandWarning();
+  showToast('已帶入原條目內容，請調整品牌與內容後儲存', '');
 }
 
 function renderModalProtectedWarning(sectionId) {
