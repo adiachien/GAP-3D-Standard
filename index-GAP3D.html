@@ -883,16 +883,22 @@ function renderNav() {
 
   menu.innerHTML = Object.entries(groups)
     .filter(([group]) => !group.startsWith('_'))  // 過濾掉 _hidden 等隱藏群組
-    .map(([group, secs]) => `
+    .map(([group, secs]) => {
+      // 先過濾項目，群組內沒有可見項目時整組隱藏（避免留下空標題）
+      const visible = secs.filter(s => s.slug !== 'accounts' && s.name !== '帳號密碼' && !(currentBrand === 'ATH' && s.slug === 'informal'));
+      if (!visible.length) return '';
+      const label = (currentBrand === 'ATH' && group.includes('正單')) ? '上傳 CLO-SET' : group;
+      return `
     <div class="section-group">
-      <div class="group-label">${group}</div>
-      ${secs.filter(s => s.slug !== 'accounts' && s.name !== '帳號密碼' && !(currentBrand === 'ATH' && s.slug === 'informal')).map(s => `
+      <div class="group-label">${label}</div>
+      ${visible.map(s => `
         <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
           <span class="nav-icon">${s.icon || ''}</span>${s.name}
         </div>
       `).join('')}
     </div>
-  `).join('') + `
+  `;
+    }).join('') + `
     <div class="section-group" style="margin-top:4px">
       <div class="group-label">開發追蹤</div>
       <div class="nav-item" id="nav-tracker" onclick="showTracker()">
@@ -1203,6 +1209,7 @@ function renderStagesPage(section, entries) {
       <div class="page-title">📋 ${section.name}</div>
     </div>
 
+    ${currentBrand !== 'ATH' ? `
     <div class="card" style="margin-bottom:20px;border-color:rgba(29,78,216,0.2);background:rgba(59,130,246,0.06)">
       <div style="font-size:16px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
       <div style="font-size:16px;color:var(--text);line-height:1.8">
@@ -1211,15 +1218,16 @@ function renderStagesPage(section, entries) {
         ・沒有 SPR → <strong style="color:#92400e">非正單</strong>，只需提供 3D 照片
       </div>
       <div style="font-size:17px;color:var(--text-dim);margin-top:8px">我們自己也可以去 Centric 看，但通常請業務確認 😄</div>
-    </div>
+    </div>` : ''}
 
+    ${currentBrand !== 'ATH' ? `
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      ${currentBrand !== 'ATH' ? `<button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>` : ''}
-    </div>
+      <button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
+    </div>` : ''}
 
     <div class="tab-panel active" id="main-formal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">客人有在 Centric 下 SPR，點選 Stage 查看對應規範</div>
+      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">${currentBrand === 'ATH' ? '點選 Stage 查看對應規範' : '客人有在 Centric 下 SPR，點選 Stage 查看對應規範'}</div>
       <div class="stage-flow">
         ${stages.map((s, i) => `
           <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
@@ -1516,10 +1524,11 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
       <div class="page-title">${title}</div>
       <div class="page-desc">${desc}</div>
     </div>
+    ${currentBrand !== 'ATH' ? `
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'${pageKey}main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
-      ${currentBrand !== 'ATH' ? `<button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>` : ''}
-    </div>
+      <button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
+    </div>` : ''}
     <div class="tab-panel active" id="${pageKey}main-formal">
       <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">點選 Stage 查看對應內容</div>
       <div class="stage-flow">
