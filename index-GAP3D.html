@@ -1304,6 +1304,16 @@ function selectStage(key) {
   const s = stages[key];
   if (!s) return;
 
+  // ATH 沒有 GAP 聯名款（GAP X & Collab）：過濾掉該分頁；只剩一個分頁時直接以單卡呈現
+  if (s.hasTabs && currentBrand === 'ATH') {
+    s.tabs = s.tabs.filter(t => !t.label.includes('GAP X'));
+    if (s.tabs.length <= 1) {
+      const only = s.tabs[0] || {};
+      s.hasTabs = false;
+      s.mc = only.mc; s.pose = only.pose; s.colorways = only.colorways;
+    }
+  }
+
   // highlight selected
   document.querySelectorAll('.stage-box.stage-active').forEach(b => {
     b.style.borderColor = '';
