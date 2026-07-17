@@ -200,11 +200,40 @@ header h1 { font-size:14px; font-weight:500; }
 </div>
 
 <!-- Modal -->
+<style>
+/* ── 條目編輯:左表單右預覽 ── */
+.modal.modal-entry { width: min(1120px, 96vw); }
+.entry-edit-grid { display: grid; grid-template-columns: 1fr 430px; gap: 22px; align-items: start; }
+@media (max-width: 980px) { .entry-edit-grid { grid-template-columns: 1fr; } }
+.preview-col { position: sticky; top: 0; }
+.preview-head { font-size: 12px; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+/* 亮色舞台=前台的樣子;背景刻意與後台不同,提醒這是「前台會呈現的結果」 */
+.preview-stage { background: #f8f9fb; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; min-height: 200px; }
+.pv-card { background: #fff; border: 1px solid #dde1e9; border-radius: 12px; padding: 16px 18px; color: #0f172a; font-size: 14px; }
+.pv-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.pv-title { font-weight: 700; font-size: 15.5px; flex: 1; }
+.pv-badge { font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
+.pv-official { background: rgba(29,78,216,0.08); color: #1d4ed8; border: 1px solid rgba(29,78,216,0.25); }
+.pv-internal { background: rgba(202,138,4,0.1); color: #92400e; border: 1px solid rgba(202,138,4,0.3); }
+.pv-warning  { background: rgba(185,28,28,0.08); color: #b91c1c; border: 1px solid rgba(185,28,28,0.3); }
+.pv-brand { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
+.pv-brand-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
+.pv-brand-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
+.pv-content { white-space: pre-line; line-height: 1.75; color: #1e293b; }
+.pv-paths { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.pv-path { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.pv-pill { flex-shrink: 0; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 14px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #334155; }
+.pv-path code { color: #475569; word-break: break-all; background: none; font-size: 11.5px; }
+.pv-hint { font-size: 11.5px; color: #94a3b8; margin-top: 10px; line-height: 1.6; }
+</style>
+
 <div class="overlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal modal-entry">
     <div class="brand-strip" id="modalBrandStrip"></div>
     <h3 id="modalTitle">新增條目</h3>
     <div id="modalProtectedWarning"></div>
+    <div class="entry-edit-grid">
+    <div class="form-col">
     <div class="field">
       <label>所屬分類</label>
       <select id="fSection"></select>
@@ -269,6 +298,13 @@ header h1 { font-size:14px; font-weight:500; }
       <label>排序（數字越小越前面）</label>
       <input id="fOrder" type="number" value="0">
     </div>
+    </div><!-- /form-col -->
+    <div class="preview-col">
+      <div class="preview-head">👁 前台預覽（即時）</div>
+      <div class="preview-stage"><div id="entryPreview"></div></div>
+      <div class="pv-hint">・路徑格式「標籤｜路徑或網址」，網址（http 開頭）顯示 🔗、其餘顯示 📋 copy<br>・預覽為前台卡片的近似樣式，實際以前台為準</div>
+    </div>
+    </div><!-- /entry-edit-grid -->
     <div class="modal-footer">
       <button class="btn btn-danger" id="deleteBtn" onclick="confirmDeleteEntry()" style="display:none">刪除</button>
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
@@ -559,6 +595,7 @@ function openNewEntry() {
   toggleStageField(currentSectionId);
   renderModalProtectedWarning(currentSectionId);
   updateBrandWarning();
+  renderEntryPreview();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -583,6 +620,7 @@ function openEditEntry(id) {
   toggleStageField(e.section_id);
   renderModalProtectedWarning(e.section_id);
   updateBrandWarning();
+  renderEntryPreview();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -596,6 +634,7 @@ function duplicateEntry(id) {
   if (bSel.value === 'GAP') bSel.value = 'ATH';
   else if (bSel.value === 'ATH') bSel.value = 'GAP';
   updateBrandWarning();
+  renderEntryPreview();
   showToast('已帶入原條目內容，請調整品牌與內容後儲存', '');
 }
 
@@ -624,9 +663,48 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 function addPathField(val='') {
   const div = document.createElement('div');
   div.className = 'path-item';
-  div.innerHTML = `<input type="text" placeholder="\\\\192.168.1.220\\3ddb\\..." value="${esc(val)}"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px">✕</button>`;
+  div.innerHTML = `<input type="text" placeholder="\\\\192.168.1.220\\3ddb\\..." value="${esc(val)}"><button class="btn btn-danger" onclick="this.parentElement.remove();renderEntryPreview()" style="padding:5px 10px">✕</button>`;
   document.getElementById('pathList').appendChild(div);
+  renderEntryPreview();
 }
+
+// ── 前台即時預覽(模仿 index 的 renderCard 亮色卡片) ──
+function renderEntryPreview() {
+  const box = document.getElementById('entryPreview');
+  if (!box) return;
+  const title   = document.getElementById('fTitle').value.trim();
+  const content = document.getElementById('fContent').value;
+  const source  = document.getElementById('fSource').value;
+  const brand   = document.getElementById('fBrands').value;
+  const paths   = [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean);
+
+  const badgeCls = { official:'pv-official', internal:'pv-internal', warning:'pv-warning' };
+  const badgeTxt = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
+  const brandTag = brand ? `<span class="pv-brand pv-brand-${brand}">${brand === 'ATH' ? 'ATHLETA' : 'GAP'}</span>` : '';
+
+  const pathsHtml = paths.length ? `<div class="pv-paths">${paths.map(raw => {
+    const idx = raw.indexOf('｜');
+    const label = idx > -1 ? raw.slice(0, idx) : '';
+    const val   = idx > -1 ? raw.slice(idx + 1) : raw;
+    const isUrl = /^https?:\/\//i.test(val);
+    return `<div class="pv-path"><span class="pv-pill">${isUrl ? '🔗 開啟' : '📋 copy'}</span>${label ? `<strong>${esc(label)}</strong>` : ''}<code>${esc(val)}</code></div>`;
+  }).join('')}</div>` : '';
+
+  box.innerHTML = `
+    <div class="pv-card">
+      <div class="pv-header">
+        <div class="pv-title">${title ? esc(title) : '<span style="color:#cbd5e1">（標題）</span>'} ${brandTag}</div>
+        <span class="pv-badge ${badgeCls[source] || 'pv-internal'}">${badgeTxt[source] || '內部SOP'}</span>
+      </div>
+      ${content ? `<div class="pv-content">${esc(content)}</div>` : '<div class="pv-content" style="color:#cbd5e1">（內容）</div>'}
+      ${pathsHtml}
+    </div>`;
+}
+
+// 即時更新掛線
+['fTitle','fContent'].forEach(id => document.getElementById(id).addEventListener('input', renderEntryPreview));
+['fSource','fBrands'].forEach(id => document.getElementById(id).addEventListener('change', renderEntryPreview));
+document.getElementById('pathList').addEventListener('input', renderEntryPreview);
 
 async function saveEntry() {
   const title = document.getElementById('fTitle').value.trim();
