@@ -137,8 +137,6 @@ header h1 { font-size:14px; font-weight:500; }
 .spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--official); border-radius:50%; animation:spin 0.7s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-.devtype-group { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
-.devtype-group label { display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; }
 
 /* ── 確認對話框 ── */
 .confirm-modal { width:380px; text-align:left; }
@@ -175,6 +173,7 @@ header h1 { font-size:14px; font-weight:500; }
   <div class="admin-header">
     <div class="admin-title">內容管理</div>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="openStageCfg()">🎬 Stage 設定</button>
       <button class="btn btn-ghost" id="tourBtnAccounts" onclick="openAccountsManager()">🔑 帳號管理</button>
       <button class="btn btn-ghost" id="tourBtnSections" onclick="openSectionManager()">⚙️ 管理分類</button>
       <button class="btn btn-primary" id="tourBtnNewEntry" onclick="openNewEntry()">＋ 新增條目</button>
@@ -252,6 +251,13 @@ header h1 { font-size:14px; font-weight:500; }
       <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
     </div>
     <div class="field">
+      <label>圖片（可多張，前台縮圖點擊放大）</label>
+      <div id="imgThumbList" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <input type="file" id="fImgInput" accept="image/*" multiple style="display:none" onchange="handleEntryImages(event)">
+      <button class="add-path-btn" onclick="document.getElementById('fImgInput').click()">＋ 上傳圖片</button>
+      <span id="imgUploadStatus" style="font-size:12px;color:#94a3b8;margin-left:8px"></span>
+    </div>
+    <div class="field">
       <label>來源標籤</label>
       <select id="fSource">
         <option value="internal">🟡 內部SOP</option>
@@ -268,30 +274,17 @@ header h1 { font-size:14px; font-weight:500; }
       </select>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
-    <div class="field">
-      <label>適用開發類型</label>
-      <div class="devtype-group" id="devTypeGroup">
-        <label><input type="checkbox" value="all" checked style="accent-color:var(--official)"> 全部</label>
-        <label><input type="checkbox" value="collab" style="accent-color:var(--official)"> 聯名Collab</label>
-        <label><input type="checkbox" value="proto" style="accent-color:var(--official)"> Proto</label>
-        <label><input type="checkbox" value="la" style="accent-color:var(--official)"> LA</label>
-        <label><input type="checkbox" value="fitla" style="accent-color:var(--official)"> Fit-LA</label>
-        <label><input type="checkbox" value="color" style="accent-color:var(--official)"> 各色樣</label>
-        <label><input type="checkbox" value="fit" style="accent-color:var(--official)"> Fit(非正單)</label>
-      </div>
-    </div>
-    <div class="field" style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="fIsChecklist" style="accent-color:var(--official)">
-      <label for="fIsChecklist" style="font-size:13px;cursor:pointer">這是 Checklist 項目</label>
-    </div>
     <div class="field" id="stageField" style="display:none">
       <label>所屬 Stage（僅階段總覽分類使用）</label>
       <select id="fStage">
         <option value="">— 不屬於任何 Stage —</option>
+        <option value="block">STAGE 1 — 3D Block</option>
         <option value="proto">STAGE 2 — 3D Proto</option>
         <option value="la">STAGE 3 — 3D LA</option>
         <option value="fit">STAGE 4 — 3D Fit</option>
-        <option value="reference">STAGE 6 — 3D Reference</option>
+        <option value="sizeset">STAGE 5 — 3D Size Set</option>
+        <option value="reference">STAGE 6 — 3D RS</option>
+        <option value="graphics">STAGE 7 — 3D Graphics</option>
       </select>
     </div>
     <div class="field">
@@ -408,6 +401,26 @@ header h1 { font-size:14px; font-weight:500; }
   </div>
 </div>
 
+<!-- Stage 設定 Modal -->
+<div class="overlay" id="stageCfgOverlay">
+  <div class="modal" style="width:780px;max-height:88vh;overflow-y:auto">
+    <h3>🎬 Stage 設定（樣品種類流程）</h3>
+    <div style="display:flex;gap:8px;margin:14px 0 6px">
+      <button class="btn btn-primary" id="scBrandGAP" onclick="switchStageCfgBrand('GAP')">🔵 GAP</button>
+      <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
+      兩個品牌<strong>各自獨立</strong>設定，控制前台 Stage 流程圖與各 Stage 詳細內容（尺寸表／POSE／各色）。<br>
+      ⚠️ 切換品牌前請先按「儲存」，未儲存的修改會遺失。
+    </div>
+    <div id="stageCfgList"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
+      <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
+    </div>
+  </div>
+</div>
+
 <!-- 通用二次確認 Modal -->
 <div class="overlay" id="confirmOverlay">
   <div class="modal confirm-modal">
@@ -469,7 +482,7 @@ async function loadData() {
 
 function isProtectedSection(s) {
   if (!s) return false;
-  return s.slug === 'tracker-data' || String(s.slug||'').startsWith('_');
+  return s.slug === 'tracker-data' || s.slug === 'stage-config' || String(s.slug||'').startsWith('_') || String(s.group_name||'').startsWith('_');
 }
 
 function renderSectionTabs() {
@@ -544,8 +557,7 @@ function renderEntries() {
         <div class="entry-meta">
           <span class="badge-sm ${bm[e.source]}">${sl[e.source]}</span>
           ${brandTagAdmin(e)}
-          <span>${(e.dev_type||['all']).join(', ')}</span>
-          ${e.is_checklist?'<span style="color:#6ee7b7">✓ Checklist</span>':''}
+          ${e.images?.length ? `<span>🖼️ ${e.images.length} 張圖</span>` : ''}
         </div>
         ${e.content?`<div class="entry-preview">${esc(e.content).substring(0,100)}…</div>`:''}
         ${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}
@@ -587,11 +599,11 @@ function openNewEntry() {
   document.getElementById('fSource').value = 'internal';
   document.getElementById('fBrands').value = '';
   document.getElementById('fOrder').value = 0;
-  document.getElementById('fIsChecklist').checked = false;
   document.getElementById('fStage').value = '';
   document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
   document.getElementById('pathList').innerHTML = '';
-  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = cb.value==='all'; });
+  entryImages = [];
+  renderImgThumbs();
   toggleStageField(currentSectionId);
   renderModalProtectedWarning(currentSectionId);
   updateBrandWarning();
@@ -610,13 +622,12 @@ function openEditEntry(id) {
   document.getElementById('fSource').value = e.source||'internal';
   document.getElementById('fBrands').value = (e.brands||'').toUpperCase()==='ALL' ? '' : (e.brands||'').toUpperCase();
   document.getElementById('fOrder').value = e.sort_order||0;
-  document.getElementById('fIsChecklist').checked = !!e.is_checklist;
   document.getElementById('fSection').value = e.section_id;
   document.getElementById('fStage').value = e.stage||'';
   document.getElementById('pathList').innerHTML = '';
   (e.paths||[]).forEach(p => addPathField(p));
-  const types = e.dev_type||['all'];
-  document.querySelectorAll('#devTypeGroup input').forEach(cb => { cb.checked = types.includes(cb.value); });
+  entryImages = [...(e.images||[])];
+  renderImgThumbs();
   toggleStageField(e.section_id);
   renderModalProtectedWarning(e.section_id);
   updateBrandWarning();
@@ -697,6 +708,7 @@ function renderEntryPreview() {
         <span class="pv-badge ${badgeCls[source] || 'pv-internal'}">${badgeTxt[source] || '內部SOP'}</span>
       </div>
       ${content ? `<div class="pv-content">${esc(content)}</div>` : '<div class="pv-content" style="color:#cbd5e1">（內容）</div>'}
+      ${(typeof entryImages !== 'undefined' && entryImages.length) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${entryImages.map(u => `<img src="${esc(u)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #dde1e9">`).join('')}</div>` : ''}
       ${pathsHtml}
     </div>`;
 }
@@ -721,20 +733,20 @@ async function saveEntry() {
     content:      document.getElementById('fContent').value.trim(),
     source:       document.getElementById('fSource').value,
     sort_order:   parseInt(document.getElementById('fOrder').value)||0,
-    is_checklist: document.getElementById('fIsChecklist').checked,
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
-    dev_type:     [...document.querySelectorAll('#devTypeGroup input:checked')].map(cb=>cb.value),
+    images:       entryImages,
     stage:        isStageSection ? (document.getElementById('fStage').value || null) : null,
     brands:       document.getElementById('fBrands').value || null,
   };
-  if (!payload.dev_type.length) payload.dev_type = ['all'];
 
   const { error } = editingEntryId
     ? await sb.from('entries').update(payload).eq('id', editingEntryId)
     : await sb.from('entries').insert(payload);
 
   if (error) {
-    if (String(error.message).includes('brands')) {
+    if (String(error.message).includes('images')) {
+      showToast('儲存失敗：entries 表還沒有 images 欄位，請先到 Supabase SQL Editor 執行：alter table entries add column if not exists images jsonb default \'[]\'::jsonb;','error');
+    } else if (String(error.message).includes('brands')) {
       showToast('儲存失敗：entries 表還沒有 brands 欄位，請先到 Supabase SQL Editor 執行：alter table entries add column if not exists brands text;','error');
     } else {
       showToast('儲存失敗：'+error.message,'error');
@@ -1003,6 +1015,201 @@ async function deleteSection() {
   await loadData();
   renderSectionTabs();
   renderSectionList();
+}
+
+// ── 條目圖片上傳（entry-images bucket）───────
+let entryImages = [];
+
+function renderImgThumbs() {
+  const el = document.getElementById('imgThumbList');
+  if (!el) return;
+  el.innerHTML = entryImages.map((u, i) => `
+    <div style="position:relative">
+      <img src="${esc(u)}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+      <button onclick="removeEntryImage(${i})" title="移除此圖片"
+        style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1">✕</button>
+    </div>
+  `).join('');
+  renderEntryPreview();
+}
+
+function removeEntryImage(i) {
+  entryImages.splice(i, 1);
+  renderImgThumbs();
+}
+
+async function handleEntryImages(ev) {
+  const files = [...ev.target.files];
+  ev.target.value = '';
+  if (!files.length) return;
+  const status = document.getElementById('imgUploadStatus');
+  for (let i = 0; i < files.length; i++) {
+    status.textContent = `上傳中 ${i+1}/${files.length}…`;
+    const f = files[i];
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safe}`;
+    const { error } = await sb.storage.from('entry-images').upload(path, f);
+    if (error) {
+      showToast('圖片上傳失敗：' + error.message + '（請確認 Supabase 已建立 entry-images bucket 並設為 Public、加上傳 policy）', 'error');
+      break;
+    }
+    const { data } = sb.storage.from('entry-images').getPublicUrl(path);
+    entryImages.push(data.publicUrl);
+    renderImgThumbs();
+  }
+  status.textContent = '';
+}
+
+// ── Stage 設定（樣品種類流程，GAP / ATH 各自一份）──
+const SC_MC_NOTE = '請 TD 提供 MC Link\n若無 MC Link（如 CO 款）可用尺寸表截圖替代';
+const SC_POSE_TOPS = '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台';
+const SC_DEFAULTS = [
+  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:SC_MC_NOTE, pose:SC_POSE_TOPS, colorways:'灰色',
+    collab:{ enabled:true, label:'聯名款（GAP X & Collab）', mc:true, mcNote:SC_MC_NOTE, pose:SC_POSE_TOPS, colorways:'灰色 + 各色' } },
+  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, mcNote:'',      pose:'Regular Pose，隱藏人台', colorways:'灰色 + 各色' },
+  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  mcNote:SC_MC_NOTE, pose:'Regular Pose，顯示人台', colorways:'灰色' },
+  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
+  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, mcNote:'',          pose:'Regular Pose，顯示人台', colorways:'灰色 + 各色' },
+  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
+];
+let scBrand = 'GAP';
+
+function scNormColor(c) {
+  c = String(c || '#888888').trim();
+  if (/^#[0-9a-fA-F]{3}$/.test(c)) c = '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#888888';
+}
+
+function scDefaults(brand) {
+  const d = JSON.parse(JSON.stringify(SC_DEFAULTS));
+  if (brand === 'ATH') { const pr = d.find(x => x.key === 'proto'); if (pr && pr.collab) pr.collab.enabled = false; }
+  return d;
+}
+
+function scLoad(brand) {
+  const sec = allSections.find(s => s.slug === 'stage-config');
+  let saved = null;
+  if (sec) {
+    const e = allEntries.find(x => x.section_id === sec.id && x.title === 'STAGE_CONFIG_' + brand);
+    if (e && e.content) { try { saved = JSON.parse(e.content).stages; } catch (err) {} }
+  }
+  const defs = scDefaults(brand);
+  if (!Array.isArray(saved)) return defs;
+  return defs.map(d => {
+    const s = saved.find(x => x.key === d.key) || {};
+    const m = Object.assign({}, d, s);
+    if (d.collab || s.collab) m.collab = Object.assign({}, d.collab || {}, s.collab || {});
+    return m;
+  });
+}
+
+function openStageCfg() { switchStageCfgBrand('GAP'); document.getElementById('stageCfgOverlay').classList.add('open'); }
+function closeStageCfg() { document.getElementById('stageCfgOverlay').classList.remove('open'); }
+
+function switchStageCfgBrand(b) {
+  scBrand = b;
+  document.getElementById('scBrandGAP').className = 'btn ' + (b === 'GAP' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('scBrandATH').className = 'btn ' + (b === 'ATH' ? 'btn-primary' : 'btn-ghost');
+  renderStageCfg(scLoad(b));
+}
+
+function renderStageCfg(cfg) {
+  const fld = (label, inner) => `<div style="margin-bottom:8px"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">${label}</div>${inner}</div>`;
+  const txt = (id, val) => `<input id="${id}" value="${esc(val || '')}" style="width:100%">`;
+  const ta  = (id, val) => `<textarea id="${id}" rows="2" style="width:100%">${esc(val || '')}</textarea>`;
+  const mcBox = (id, on) => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="accent-color:var(--official)"> ✅ 需要</label>`;
+  document.getElementById('stageCfgList').innerHTML = cfg.map(s => `
+    <details style="background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;padding:10px 14px" ${s.active ? '' : ''}>
+      <summary style="cursor:pointer;font-size:13px;font-weight:600">STAGE ${s.num} — ${esc(s.name)}
+        <span style="color:${s.active ? '#6ee7b7' : '#fbbf24'};font-size:11px;margin-left:6px">${s.active ? '✔ 啟用' : '灰色（尚未收過需求）'}</span>
+      </summary>
+      <div style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:12px;cursor:pointer">
+          <input type="checkbox" id="sc-${s.key}-active" ${s.active ? 'checked' : ''} style="accent-color:var(--official)">
+          啟用此 Stage（取消勾選＝前台灰色顯示「尚未收過需求」、不可點）
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:10px">
+          ${fld('Stage 名稱', txt('sc-' + s.key + '-name', s.name))}
+          ${fld('英文副標', txt('sc-' + s.key + '-subtitle', s.subtitle))}
+          ${fld('Workflow 顏色', `<input type="color" id="sc-${s.key}-tagColor" value="${scNormColor(s.tagColor)}" style="width:100%;height:32px;padding:2px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">`)}
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:10px">
+          ${fld('尺寸表', mcBox('sc-' + s.key + '-mc', s.mc))}
+          ${fld('尺寸表說明（勾「需要」時顯示）', ta('sc-' + s.key + '-mcNote', s.mcNote))}
+        </div>
+        ${fld('AVATAR POSE', ta('sc-' + s.key + '-pose', s.pose))}
+        ${fld('各色', txt('sc-' + s.key + '-colorways', s.colorways))}
+        ${s.key === 'proto' ? `
+        <div style="border-top:1px dashed var(--border);margin-top:12px;padding-top:12px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">
+            <input type="checkbox" id="sc-proto-collab-enabled" ${s.collab && s.collab.enabled ? 'checked' : ''} style="accent-color:var(--official)">
+            顯示第二分頁（聯名款）
+          </label>
+          ${fld('分頁名稱', txt('sc-proto-collab-label', (s.collab && s.collab.label) || '聯名款（GAP X & Collab）'))}
+          <div style="display:grid;grid-template-columns:110px 1fr;gap:10px">
+            ${fld('尺寸表', mcBox('sc-proto-collab-mc', s.collab && s.collab.mc))}
+            ${fld('尺寸表說明', ta('sc-proto-collab-mcNote', s.collab && s.collab.mcNote))}
+          </div>
+          ${fld('AVATAR POSE', ta('sc-proto-collab-pose', s.collab && s.collab.pose))}
+          ${fld('各色', txt('sc-proto-collab-colorways', s.collab && s.collab.colorways))}
+        </div>` : ''}
+      </div>
+    </details>
+  `).join('');
+}
+
+function collectStageCfg() {
+  const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const c = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  return scDefaults(scBrand).map(d => {
+    const k = d.key;
+    const o = {
+      key: k, num: d.num,
+      active:    c('sc-' + k + '-active'),
+      name:      v('sc-' + k + '-name').trim() || d.name,
+      subtitle:  v('sc-' + k + '-subtitle').trim(),
+      tagColor:  v('sc-' + k + '-tagColor') || d.tagColor,
+      mc:        c('sc-' + k + '-mc'),
+      mcNote:    v('sc-' + k + '-mcNote'),
+      pose:      v('sc-' + k + '-pose'),
+      colorways: v('sc-' + k + '-colorways').trim(),
+    };
+    if (k === 'proto') {
+      o.collab = {
+        enabled:   c('sc-proto-collab-enabled'),
+        label:     v('sc-proto-collab-label').trim() || '聯名款（GAP X & Collab）',
+        mc:        c('sc-proto-collab-mc'),
+        mcNote:    v('sc-proto-collab-mcNote'),
+        pose:      v('sc-proto-collab-pose'),
+        colorways: v('sc-proto-collab-colorways').trim(),
+      };
+    }
+    return o;
+  });
+}
+
+async function saveStageCfg() {
+  let sec = allSections.find(s => s.slug === 'stage-config');
+  if (!sec) {
+    const { data, error } = await sb.from('sections')
+      .insert({ slug: 'stage-config', name: 'Stage 設定資料', group_name: '_hidden', sort_order: 998 })
+      .select().single();
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return; }
+    sec = data;
+    allSections.push(sec);
+  }
+  const title = 'STAGE_CONFIG_' + scBrand;
+  const content = JSON.stringify({ stages: collectStageCfg() });
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  showToast('已儲存 ' + (scBrand === 'ATH' ? 'ATHLETA' : 'GAP') + ' 的 Stage 設定 ✓', 'success');
+  await loadData();
+  renderSectionTabs();
+  renderStageCfg(scLoad(scBrand));
 }
 
 // ── 使用導覽 ──────────────────────────────────

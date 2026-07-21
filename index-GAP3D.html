@@ -1076,6 +1076,7 @@ function renderCard(e) {
             <button class="copy-btn" data-path="${escHtml(rightBody)}" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
         </div>
+        ${renderCardImages(e)}
         ${paths}
       </div>
     `;
@@ -1092,6 +1093,7 @@ function renderCard(e) {
         <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
       </div>
       ${content}
+      ${renderCardImages(e)}
       ${paths}
     </div>
   `;
@@ -1119,9 +1121,9 @@ function renderCardGrid(entries, groupLabel) {
   const items = entries.map(e => {
     const ic = ICON_MAP[e.source] || ICON_MAP.internal;
     const em = EMOJI_MAP[e.source] || '📋';
-    const preview = e.content
+    const preview = (e.images?.length ? '🖼️ ' : '') + (e.content
       ? (e.content.startsWith('TWO_COL') ? '（點開查看兩欄對照）' : e.content.replace(/\n/g,' ').slice(0,60))
-      : (e.paths?.length ? e.paths[0].split('｜').pop().slice(0,50) : '');
+      : (e.paths?.length ? e.paths[0].split('｜').pop().slice(0,50) : ''));
     return `
       <div class="grid-card" id="gc-${e.id}" onclick="toggleCardExpand('${e.id}','${gridId}')">
         <div class="grid-card-icon" style="background:${ic.bg};color:${ic.color}">${em}</div>
@@ -1186,17 +1188,63 @@ function linkify(text) {
   );
 }
 
+// ── Stage 設定（可由後台編輯，讀不到時用預設值）──
+const STAGE_MC_NOTE = '請 TD 提供 MC Link\n若無 MC Link（如 CO 款）可用尺寸表截圖替代';
+const STAGE_DEFAULTS = [
+  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272',
+    collab:{ enabled:true, label:'\u806f\u540d\u6b3e\uff08GAP X & Collab\uff09', mc:true, mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' } },
+  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, mcNote:'',         pose:'Regular Pose\uff0c\u96b1\u85cf\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' },
+  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'Regular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272' },
+  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
+  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, mcNote:'',            pose:'Regular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' },
+  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
+];
+
+function getStageCfg() {
+  const brand = currentBrand === 'ATH' ? 'ATH' : 'GAP';
+  const defs = JSON.parse(JSON.stringify(STAGE_DEFAULTS));
+  if (brand === 'ATH') { const p = defs.find(d => d.key === 'proto'); if (p && p.collab) p.collab.enabled = false; }
+  const sec = allSections.find(s => s.slug === 'stage-config');
+  let saved = null;
+  if (sec) {
+    const e = allEntries.find(x => x.section_id === sec.id && x.title === 'STAGE_CONFIG_' + brand);
+    if (e && e.content) { try { saved = JSON.parse(e.content).stages; } catch (err) {} }
+  }
+  if (!Array.isArray(saved)) return defs;
+  return defs.map(d => {
+    const s = saved.find(x => x.key === d.key) || {};
+    const m = Object.assign({}, d, s);
+    if (d.collab || s.collab) m.collab = Object.assign({}, d.collab || {}, s.collab || {});
+    return m;
+  });
+}
+
+// ── 圖片放大（lightbox）──
+function openImgZoom(src) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:94vw;max-height:94vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5)';
+  ov.appendChild(img);
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+}
+
+// \u5361\u7247\u5716\u7247\u7e2e\u5716\u5217
+function renderCardImages(e) {
+  if (!e.images || !e.images.length) return '';
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px">${e.images.map(u => `
+    <img src="${escHtml(u)}" data-src="${escHtml(u)}" loading="lazy"
+      onclick="event.stopPropagation();openImgZoom(this.dataset.src)"
+      style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.08);cursor:zoom-in">
+  `).join('')}</div>`;
+}
+
 // ── Special Pages ──────────────────────────────
 function renderStagesPage(section, entries) {
-  const stages = [
-    { key: 'block',     num: 1, name: '3D Block',    subtitle: 'Foundational Asset',          tagColor: '#222',    active: false },
-    { key: 'proto',     num: 2, name: '3D Proto',    subtitle: 'Initial Design & Fit Review', tagColor: '#888',    active: true  },
-    { key: 'la',        num: 3, name: '3D LA',       subtitle: 'Line Adoption',               tagColor: '#f0e000', active: true  },
-    { key: 'fit',       num: 4, name: '3D Fit',      subtitle: 'Fit Validation',              tagColor: '#22c55e', active: true  },
-    { key: 'sizeset',   num: 5, name: '3D Size Set', subtitle: 'Size Validation',             tagColor: '#a855f7', active: false },
-    { key: 'reference', num: 6, name: '3D RS',       subtitle: 'Future Development',          tagColor: '#16a34a', active: true  },
-    { key: 'graphics',  num: 7, name: '3D Graphics', subtitle: 'Artwork Size Validation',     tagColor: '#22d3ee', active: false },
-  ];
+  const stages = getStageCfg();
 
   const generalEntries = entries.filter(e => !e.stage);
   const informalSection = allSections.find(s => s.slug === 'informal');
@@ -1259,59 +1307,23 @@ function renderStagesPage(section, entries) {
 
 
 function selectStage(key) {
-  const stages = {
-    proto: {
-      num: 2, name: '3D Proto', subtitle: 'Initial Design & Fit Review',
-      tagColor: '#888', hasTabs: true,
+  const cfg = getStageCfg();
+  const st = cfg.find(x => x.key === key);
+  if (!st || !st.active) return;
+
+  const mainTab = { label: 'Proto', mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
+  let s;
+  if (key === 'proto' && st.collab && st.collab.enabled) {
+    s = {
+      num: st.num, name: st.name, subtitle: st.subtitle || '', tagColor: st.tagColor, hasTabs: true,
       tabs: [
-        {
-          label: 'Proto',
-          mc: true,
-          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
-          colorways: '灰色',
-        },
-        {
-          label: '聯名款（GAP X & Collab）',
-          mc: true,
-          pose: '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台',
-          colorways: '灰色 + 各色',
-        },
+        mainTab,
+        { label: st.collab.label || '聯名款（GAP X & Collab）', mc: !!st.collab.mc, mcNote: st.collab.mcNote || '', pose: st.collab.pose || '', colorways: st.collab.colorways || '' },
       ],
-    },
-    la: {
-      num: 3, name: '3D LA', subtitle: 'Line Adoption / Adoption Validation',
-      tagColor: '#f0e000', hasTabs: false,
-      mc: false,
-      pose: 'Regular Pose，隱藏人台',
-      colorways: '灰色 + 各色',
-    },
-    fit: {
-      num: 4, name: '3D Fit', subtitle: 'Fit Validation',
-      tagColor: '#22c55e', hasTabs: false,
-      mc: true,
-      pose: 'Regular Pose，顯示人台',
-      colorways: '灰色',
-    },
-    reference: {
-      num: 6, name: '3D RS', subtitle: 'Future Development',
-      tagColor: '#16a34a', hasTabs: false,
-      mc: false,
-      pose: 'Regular Pose，顯示人台',
-      colorways: '灰色 + 各色',
-    },
-  };
-
-  const s = stages[key];
-  if (!s) return;
-
-  // ATH 沒有 GAP 聯名款（GAP X & Collab）：過濾掉該分頁；只剩一個分頁時直接以單卡呈現
-  if (s.hasTabs && currentBrand === 'ATH') {
-    s.tabs = s.tabs.filter(t => !t.label.includes('GAP X'));
-    if (s.tabs.length <= 1) {
-      const only = s.tabs[0] || {};
-      s.hasTabs = false;
-      s.mc = only.mc; s.pose = only.pose; s.colorways = only.colorways;
-    }
+    };
+  } else {
+    s = { num: st.num, name: st.name, subtitle: st.subtitle || '', tagColor: st.tagColor, hasTabs: false,
+          mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
   }
 
   // highlight selected
@@ -1325,8 +1337,6 @@ function selectStage(key) {
     box.style.background = 'var(--brand-accent-soft)';
   }
 
-  const mcNote = `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5">請 TD 提供 MC Link<br>若無 MC Link（如 CO 款）可用尺寸表截圖替代</div>`;
-
   const renderInfoCard = (tab) => `
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px">
       <div>
@@ -1336,7 +1346,7 @@ function selectStage(key) {
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">尺寸表</div>
         <div style="font-size:16px">${tab.mc ? '✅' : '🚫'}</div>
-        ${tab.mc ? mcNote : ''}
+        ${tab.mc && tab.mcNote ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5;white-space:pre-line">${escHtml(tab.mcNote)}</div>` : ''}
       </div>
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">AVATAR POSE</div>
@@ -1364,7 +1374,7 @@ function selectStage(key) {
     naming:    '🏷️ 檔案命名',
   };
 
-  const relatedHtml = (relatedLinks[key] || []).map(slug => `
+  const relatedHtml = (relatedLinks[key] || ['details','checklist','closet']).map(slug => `
     <button onclick="showSectionWithStage('${slug}','${key}')"
       style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:rgba(59,130,246,0.1);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;transition:all 0.15s"
       onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
@@ -1516,15 +1526,7 @@ function showCopyToast() {
 
 // ── 共用 Stage 流程介面 ────────────────────────
 function renderStageBasedPage(section, entries, pageKey, title, desc) {
-  const stageList = [
-    { key: 'block',     num: 1, name: '3D Block',    active: false },
-    { key: 'proto',     num: 2, name: '3D Proto',    active: true  },
-    { key: 'la',        num: 3, name: '3D LA',       active: true  },
-    { key: 'fit',       num: 4, name: '3D Fit',      active: true  },
-    { key: 'sizeset',   num: 5, name: '3D Size Set', active: false },
-    { key: 'reference', num: 6, name: '3D RS',       active: true  },
-    { key: 'graphics',  num: 7, name: '3D Graphics', active: false },
-  ];
+  const stageList = getStageCfg();
   const informalSection = allSections.find(s => s.slug === 'informal');
   const informalEntries = informalSection
     ? allEntries.filter(e => e.section_id === informalSection.id && brandOk(e))
@@ -1566,12 +1568,10 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
 }
 
 function selectStageTab(pageKey, stageKey) {
-  ['proto','la','fit','reference'].forEach(k => {
-    const box = document.getElementById(`${pageKey}box-${k}`);
-    if (box) {
-      box.style.borderColor = k === stageKey ? 'var(--brand-accent)' : '';
-      box.style.background  = k === stageKey ? 'var(--brand-accent-soft)' : '';
-    }
+  document.querySelectorAll(`[id^="${pageKey}box-"]`).forEach(box => {
+    const k = box.id.replace(`${pageKey}box-`, '');
+    box.style.borderColor = k === stageKey ? 'var(--brand-accent)' : '';
+    box.style.background  = k === stageKey ? 'var(--brand-accent-soft)' : '';
   });
   const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
   const sec = allSections.find(s => s.slug === slugMap[pageKey]);
