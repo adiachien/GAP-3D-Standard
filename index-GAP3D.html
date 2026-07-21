@@ -1195,6 +1195,14 @@ function fmtMarks(t) {
     .replace(/==([^=\n]+)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
     .replace(/!!([^!\n]+)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
 }
+// 條目所屬 Stage（相容：null / '' / 'proto' / 'proto,la' / 陣列）
+function entryStages(e) {
+  if (!e || e.stage == null || e.stage === '') return [];
+  return Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s => s.trim()).filter(Boolean);
+}
+function entryInStage(e, key) { return entryStages(e).includes(key); }
+function entryHasNoStage(e) { return entryStages(e).length === 0; }
+
 // 移除標記符號（供複製、預覽摘要、搜尋顯示用）
 function stripMarks(t) {
   return String(t || '')
@@ -1261,7 +1269,7 @@ function renderCardImages(e) {
 function renderStagesPage(section, entries) {
   const stages = getStageCfg();
 
-  const generalEntries = entries.filter(e => !e.stage);
+  const generalEntries = entries.filter(e => entryHasNoStage(e));
   const informalSection = allSections.find(s => s.slug === 'informal');
   const informalEntries = informalSection
     ? allEntries.filter(e => e.section_id === informalSection.id && brandOk(e))
@@ -1400,7 +1408,7 @@ function selectStage(key) {
   // 只抓「樣品種類」section 的 stage 資料
   const stagesSection = allSections.find(s => s.slug === 'stages');
   const stageEntries = stagesSection
-    ? allEntries.filter(e => e.section_id === stagesSection.id && e.stage === key && brandOk(e))
+    ? allEntries.filter(e => e.section_id === stagesSection.id && entryInStage(e, key) && brandOk(e))
     : [];
 
   const relatedSection = `
@@ -1591,7 +1599,7 @@ function selectStageTab(pageKey, stageKey) {
   const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
   const sec = allSections.find(s => s.slug === slugMap[pageKey]);
   const stageEntries = sec
-    ? allEntries.filter(e => e.section_id === sec.id && e.stage === stageKey && brandOk(e))
+    ? allEntries.filter(e => e.section_id === sec.id && entryInStage(e, stageKey) && brandOk(e))
     : [];
   const container = document.getElementById(`${pageKey}stageContent`);
 
