@@ -243,6 +243,12 @@ header h1 { font-size:14px; font-weight:500; }
     </div>
     <div class="field">
       <label>內容（支援換行）</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+        <button type="button" onclick="wrapSel('**','**')" title="粗體" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">B</button>
+        <button type="button" onclick="wrapSel('==','==')" title="螢光筆" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:#fde047;color:#1a1a1a;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">螢光</button>
+        <button type="button" onclick="wrapSel('!!','!!')" title="紅字" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:#f87171;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">紅字</button>
+        <span style="font-size:11px;color:#94a3b8">選取文字後點按鈕，或手打 **粗體**、==螢光==、!!紅字!!</span>
+      </div>
       <textarea id="fContent" rows="6" placeholder="詳細說明…"></textarea>
     </div>
     <div class="field">
@@ -414,9 +420,12 @@ header h1 { font-size:14px; font-weight:500; }
       ⚠️ 切換品牌前請先按「儲存」，未儲存的修改會遺失。
     </div>
     <div id="stageCfgList"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
-      <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-ghost" onclick="confirmCopyStageCfg()">📋 複製到另一品牌</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
+        <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
+      </div>
     </div>
   </div>
 </div>
@@ -679,6 +688,27 @@ function addPathField(val='') {
   renderEntryPreview();
 }
 
+// ── 格式工具列：把選取文字包上標記符號 ──
+function wrapSel(pre, post) {
+  const ta = document.getElementById('fContent');
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  const val = ta.value;
+  const sel = val.slice(s, e) || '重點文字';
+  ta.value = val.slice(0, s) + pre + sel + post + val.slice(e);
+  ta.focus();
+  ta.selectionStart = s + pre.length;
+  ta.selectionEnd = s + pre.length + sel.length;
+  renderEntryPreview();
+}
+
+// 重點標記轉 HTML（與前台相同規則，在 esc 之後套用）
+function fmtMarks(t) {
+  return String(t || '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/==([^=\n]+)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
+    .replace(/!!([^!\n]+)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
+}
+
 // ── 前台即時預覽(模仿 index 的 renderCard 亮色卡片) ──
 function renderEntryPreview() {
   const box = document.getElementById('entryPreview');
@@ -707,7 +737,7 @@ function renderEntryPreview() {
         <div class="pv-title">${title ? esc(title) : '<span style="color:#cbd5e1">（標題）</span>'} ${brandTag}</div>
         <span class="pv-badge ${badgeCls[source] || 'pv-internal'}">${badgeTxt[source] || '內部SOP'}</span>
       </div>
-      ${content ? `<div class="pv-content">${esc(content)}</div>` : '<div class="pv-content" style="color:#cbd5e1">（內容）</div>'}
+      ${content ? `<div class="pv-content">${fmtMarks(esc(content))}</div>` : '<div class="pv-content" style="color:#cbd5e1">（內容）</div>'}
       ${(typeof entryImages !== 'undefined' && entryImages.length) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${entryImages.map(u => `<img src="${esc(u)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #dde1e9">`).join('')}</div>` : ''}
       ${pathsHtml}
     </div>`;
@@ -1189,27 +1219,53 @@ function collectStageCfg() {
   });
 }
 
-async function saveStageCfg() {
+async function scSaveBrand(brand, stages) {
   let sec = allSections.find(s => s.slug === 'stage-config');
   if (!sec) {
     const { data, error } = await sb.from('sections')
       .insert({ slug: 'stage-config', name: 'Stage 設定資料', group_name: '_hidden', sort_order: 998 })
       .select().single();
-    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return; }
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return false; }
     sec = data;
     allSections.push(sec);
   }
-  const title = 'STAGE_CONFIG_' + scBrand;
-  const content = JSON.stringify({ stages: collectStageCfg() });
+  const title = 'STAGE_CONFIG_' + brand;
+  const content = JSON.stringify({ stages });
   const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
   const { error } = existing
     ? await sb.from('entries').update({ content }).eq('id', existing.id)
     : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
-  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
-  showToast('已儲存 ' + (scBrand === 'ATH' ? 'ATHLETA' : 'GAP') + ' 的 Stage 設定 ✓', 'success');
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return false; }
   await loadData();
   renderSectionTabs();
+  return true;
+}
+
+async function saveStageCfg() {
+  const ok = await scSaveBrand(scBrand, collectStageCfg());
+  if (!ok) return;
+  showToast('已儲存 ' + (scBrand === 'ATH' ? 'ATHLETA' : 'GAP') + ' 的 Stage 設定 ✓', 'success');
   renderStageCfg(scLoad(scBrand));
+}
+
+// ── 複製目前畫面設定到另一品牌（整份覆蓋）──
+function confirmCopyStageCfg() {
+  const from = scBrand === 'ATH' ? 'ATHLETA' : 'GAP';
+  const to   = scBrand === 'ATH' ? 'GAP' : 'ATHLETA';
+  openConfirm({
+    icon: '📋',
+    title: `把 ${from} 的設定複製到 ${to}？`,
+    body: `會以目前畫面上的 ${from} 設定「整份覆蓋」${to} 的 Stage 設定（含聯名款分頁開關）。${to} 原本的設定會遺失，複製後請切過去微調差異處。`,
+    confirmLabel: '複製並覆蓋',
+    onConfirm: copyStageCfg,
+  });
+}
+
+async function copyStageCfg() {
+  const target = scBrand === 'ATH' ? 'GAP' : 'ATH';
+  const ok = await scSaveBrand(target, collectStageCfg());
+  if (!ok) return;
+  showToast('已複製到 ' + (target === 'ATH' ? 'ATHLETA' : 'GAP') + ' ✓ 可切換過去微調', 'success');
 }
 
 // ── 使用導覽 ──────────────────────────────────

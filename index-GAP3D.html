@@ -1066,14 +1066,14 @@ function renderCard(e) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
-            <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${escHtml(leftTitle)}</div>
-            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(leftBody)}</pre>
-            <button class="copy-btn" data-path="${escHtml(leftBody)}" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${fmtMarks(escHtml(leftTitle))}</div>
+            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(leftBody))}</pre>
+            <button class="copy-btn" data-path="${escHtml(stripMarks(leftBody))}" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
           <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
-            <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${escHtml(rightTitle)}</div>
-            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${escHtml(rightBody)}</pre>
-            <button class="copy-btn" data-path="${escHtml(rightBody)}" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${fmtMarks(escHtml(rightTitle))}</div>
+            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(rightBody))}</pre>
+            <button class="copy-btn" data-path="${escHtml(stripMarks(rightBody))}" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
           </div>
         </div>
         ${renderCardImages(e)}
@@ -1083,7 +1083,7 @@ function renderCard(e) {
   }
 
   const content = e.content
-    ? `<div class="card-content">${linkify(escHtml(e.content))}</div>`
+    ? `<div class="card-content">${linkify(fmtMarks(escHtml(e.content)))}</div>`
     : '';
 
   return `
@@ -1122,7 +1122,7 @@ function renderCardGrid(entries, groupLabel) {
     const ic = ICON_MAP[e.source] || ICON_MAP.internal;
     const em = EMOJI_MAP[e.source] || '📋';
     const preview = (e.images?.length ? '🖼️ ' : '') + (e.content
-      ? (e.content.startsWith('TWO_COL') ? '（點開查看兩欄對照）' : e.content.replace(/\n/g,' ').slice(0,60))
+      ? (e.content.startsWith('TWO_COL') ? '（點開查看兩欄對照）' : stripMarks(e.content).replace(/\n/g,' ').slice(0,60))
       : (e.paths?.length ? e.paths[0].split('｜').pop().slice(0,50) : ''));
     return `
       <div class="grid-card" id="gc-${e.id}" onclick="toggleCardExpand('${e.id}','${gridId}')">
@@ -1186,6 +1186,21 @@ function linkify(text) {
   return text.replace(/(https?:\/\/[^\s<]+)/g, url =>
     `<a href="${url}" target="_blank" style="color:#1d4ed8;text-decoration:underline;text-underline-offset:2px">${url}</a>`
   );
+}
+
+// ── 重點標記：**粗體** ==螢光== !!紅字!!（在 escHtml 之後套用）──
+function fmtMarks(t) {
+  return String(t || '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/==([^=\n]+)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
+    .replace(/!!([^!\n]+)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
+}
+// 移除標記符號（供複製、預覽摘要、搜尋顯示用）
+function stripMarks(t) {
+  return String(t || '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/==([^=\n]+)==/g, '$1')
+    .replace(/!!([^!\n]+)!!/g, '$1');
 }
 
 // ── Stage 設定（可由後台編輯，讀不到時用預設值）──
@@ -1346,15 +1361,15 @@ function selectStage(key) {
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">尺寸表</div>
         <div style="font-size:16px">${tab.mc ? '✅' : '🚫'}</div>
-        ${tab.mc && tab.mcNote ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5;white-space:pre-line">${escHtml(tab.mcNote)}</div>` : ''}
+        ${tab.mc && tab.mcNote ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5;white-space:pre-line">${fmtMarks(escHtml(tab.mcNote))}</div>` : ''}
       </div>
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">AVATAR POSE</div>
-        <div style="font-size:18px;color:var(--text);white-space:pre-line">${tab.pose}</div>
+        <div style="font-size:18px;color:var(--text);white-space:pre-line">${fmtMarks(escHtml(tab.pose))}</div>
       </div>
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">各色</div>
-        <div style="font-size:18px;color:var(--text)">${tab.colorways}</div>
+        <div style="font-size:18px;color:var(--text)">${fmtMarks(escHtml(tab.colorways))}</div>
       </div>
     </div>
   `;
@@ -1480,7 +1495,7 @@ function renderAvatarPage(section, entries) {
             <div class="card-title">${escHtml(e.title)}</div>
             <span class="badge badge-official">官方規範</span>
           </div>
-          <div class="card-content">${escHtml(e.content||'')}</div>
+          <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
           ${(e.paths||[]).map(p=>`
             <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
               <button class="copy-btn" data-path="${escHtml(p)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
@@ -1748,7 +1763,7 @@ function selectStageTab(pageKey, stageKey) {
               <input type="checkbox" onclick="event.stopPropagation();this.parentElement.classList.toggle('done',this.checked)">
               <div style="flex:1">
                 <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
-                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(escHtml(e.content))}</div>` : ''}
+                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(fmtMarks(escHtml(e.content)))}</div>` : ''}
                 ${pathsHtml}
               </div>
             </div>`;
@@ -2222,7 +2237,7 @@ function renderQCPage(section, entries) {
         ${qcItems.map(e => `
           <div class="qc-item">
             <div class="qc-fail">❌ ${escHtml(e.title)}</div>
-            <div class="qc-body">${escHtml(e.content || '')}</div>
+            <div class="qc-body">${fmtMarks(escHtml(e.content || ''))}</div>
           </div>
         `).join('')}
       </div>
@@ -2277,7 +2292,7 @@ function handleSearch(q) {
 
   container.innerHTML = results.map(e => {
     const section = allSections.find(s => s.id === e.section_id);
-    let content = escHtml(e.content || '');
+    let content = escHtml(stripMarks(e.content || ''));
     kws.forEach(k => {
       content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
     });
