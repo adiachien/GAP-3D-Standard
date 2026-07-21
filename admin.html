@@ -283,13 +283,13 @@ header h1 { font-size:14px; font-weight:500; }
     <div class="field" id="stageField" style="display:none">
       <label>所屬 Stage（可複選；一個條目可同時掛在多個 Stage）</label>
       <div id="fStageGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px">
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="block"     style="accent-color:var(--official)"> STAGE 1 · 3D Block</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="proto"     style="accent-color:var(--official)"> STAGE 2 · 3D Proto</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="la"        style="accent-color:var(--official)"> STAGE 3 · 3D LA</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="fit"       style="accent-color:var(--official)"> STAGE 4 · 3D Fit</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="sizeset"   style="accent-color:var(--official)"> STAGE 5 · 3D Size Set</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="reference" style="accent-color:var(--official)"> STAGE 6 · 3D RS</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="graphics"  style="accent-color:var(--official)"> STAGE 7 · 3D Graphics</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="block"     style="accent-color:var(--official)"> 3D Block</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="proto"     style="accent-color:var(--official)"> 3D Proto</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="la"        style="accent-color:var(--official)"> 3D LA</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="fit"       style="accent-color:var(--official)"> 3D Fit</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="sizeset"   style="accent-color:var(--official)"> 3D Size Set</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="reference" style="accent-color:var(--official)"> 3D RS</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="graphics"  style="accent-color:var(--official)"> 3D Graphics</label>
       </div>
       <div style="font-size:11px;color:#94a3b8;margin-top:6px">不勾＝不屬於任何 Stage：只會出現在「樣品種類」總覽頁最下方；Prefit／細節／Checklist 頁請至少勾一個，否則不會顯示。</div>
     </div>
@@ -1152,7 +1152,7 @@ function renderStageCfg(cfg) {
   const mcBox = (id, on) => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="accent-color:var(--official)"> ✅ 需要</label>`;
   document.getElementById('stageCfgList').innerHTML = cfg.map(s => `
     <details style="background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;padding:10px 14px" ${s.active ? '' : ''}>
-      <summary style="cursor:pointer;font-size:13px;font-weight:600">STAGE ${s.num} — ${esc(s.name)}
+      <summary style="cursor:pointer;font-size:13px;font-weight:600">${esc(s.name)}
         <span style="color:${s.active ? '#6ee7b7' : '#fbbf24'};font-size:11px;margin-left:6px">${s.active ? '✔ 啟用' : '灰色（尚未收過需求）'}</span>
       </summary>
       <div style="margin-top:12px">
