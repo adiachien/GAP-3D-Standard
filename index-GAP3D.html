@@ -648,7 +648,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <!-- 開發追蹤頁 -->
     <div class="page" id="page-tracker">
       <div class="page-header">
-        <div class="page-title">📊 開發追蹤</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="page-title">📊 開發追蹤</div>
+          <button onclick="openTrkHelp()" title="使用說明" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1">？</button>
+        </div>
         <div class="page-desc" id="trkPageDesc">3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）</div>
       </div>
 
@@ -668,14 +671,23 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 
       <!-- 各 SUB 進單進度 -->
       <div id="trkSubBlock">
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">📦 各 SUB 進單進度</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">📦 各 SUB 進單進度</div>
+          <button onclick="openTrkOwnerMap()" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">⚙️ 業務對照表</button>
+          <button onclick="clearTrkSubManualAll()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本輪預計／備註</button>
+        </div>
         <div class="card" style="margin-bottom:24px;overflow-x:auto;padding:6px 0">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead>
               <tr style="border-bottom:2px solid var(--border)">
                 <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">SUBGROUP</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">款數</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">已進</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">業務</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">預計</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">未進</th>
+                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">備註</th>
                 <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">狀態分佈</th>
+                <th style="padding:10px 12px"></th>
               </tr>
             </thead>
             <tbody id="trkSubBody"></tbody>
@@ -730,6 +742,89 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
             <button onclick="closeTrkManual()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
             <button onclick="saveTrkManual()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB 進單資訊編輯 Modal（業務／預計款數／備註）-->
+      <div id="trkSubManualModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯 SUB 進單資訊</h3>
+          <div id="trkSubManualName" style="font-size:13px;color:var(--text-dim);margin-bottom:18px;font-family:'DM Mono',monospace"></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務（會自動帶對照表，這裡可覆蓋）</label><input id="trkSubOwnerInput" list="trkOwnerDatalist" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">預計進單款數</label><input id="trkSubExpectedInput" type="number" min="0" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">備註</label><input id="trkSubNoteInput" placeholder="例如：業務說明天補" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+            <button onclick="closeTrkSubManual()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="saveTrkSubManual()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBGROUP ↔ 業務 對照表管理 Modal -->
+      <div id="trkOwnerMapModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">⚙️ SUBGROUP ↔ 業務 對照表</h3>
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">固定用的名單，設定好之後「各SUB進單進度」會自動帶出業務名字</div>
+          <div id="trkOwnerMapList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <input id="trkOwnerMapNewSub" placeholder="SUBGROUP 名稱" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            <input id="trkOwnerMapNewOwner" placeholder="業務名字" list="trkOwnerDatalist" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            <button onclick="addTrkOwnerMapRow()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">＋新增</button>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button onclick="closeTrkOwnerMap()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">關閉</button>
+          </div>
+        </div>
+      </div>
+      <datalist id="trkOwnerDatalist"></datalist>
+
+      <!-- 使用說明 Modal -->
+      <div id="trkHelpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:640px;max-width:95vw;max-height:82vh;display:flex;flex-direction:column">
+          <h3 style="font-size:17px;font-weight:700;margin-bottom:16px">📖 開發追蹤・使用說明</h3>
+          <div style="overflow-y:auto;flex:1;font-size:13.5px;line-height:1.75;color:var(--text)">
+
+            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">① 上傳資料</div>
+            <div style="margin-bottom:16px;color:var(--text-dim)">
+              點右上「📤 上傳 Excel」，丟入 DPC 匯出的原始檔即可，系統會自動篩出 GAP／GAP OUTLET／ATHLETA 的 3D單。每次重新上傳都會<strong style="color:var(--text)">更新全部人看到的資料</strong>，「負責人／Miro」「業務對照表」「預計款數／備註」都不會被洗掉。
+            </div>
+
+            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">② 各 SUB 進單進度（追蹤誰還沒進單）</div>
+            <div style="margin-bottom:16px;color:var(--text-dim)">
+              • <strong style="color:var(--text)">已進</strong>：這個SUB在目前匯入的Excel裡有幾款，自動算，不用管。<br>
+              • <strong style="color:var(--text)">業務</strong>：自動從「業務對照表」帶出，通常不用動。<br>
+              • <strong style="color:var(--text)">預計</strong>：業務發信說「這SUB有幾款」時，點該列的 ✏️ 把數字填進去。<br>
+              • <strong style="color:var(--text)">未進</strong>：預計－已進，自動算好，紅字＝還沒補齊、綠字＝到齊了。<br>
+              • <strong style="color:var(--text)">備註</strong>：想寫什麼都可以，例如「業務說明天補」。<br>
+              點 SUBGROUP 名稱可以直接跳到下方看該SUB的款明細。
+            </div>
+
+            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">③ 業務對照表（一次設定，很少要改）</div>
+            <div style="margin-bottom:16px;color:var(--text-dim)">
+              點「⚙️ 業務對照表」，把固定的配對建好，例如 GS-WAC＝Demi、GO-MAC＝Carol。設定好之後，②的「業務」欄位會自動帶出，平常不用再手動選。
+            </div>
+
+            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">④ 清空本輪預計／備註</div>
+            <div style="margin-bottom:16px;color:var(--text-dim)">
+              一輪下單週期（例如8/10~8/15）結束、要開始追下一輪時，點「🧹 清空本輪預計／備註」。只會清掉②的預計款數跟備註，<strong style="color:var(--text)">業務對照表不會被清掉</strong>。
+            </div>
+
+            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">⑤ 各款進度（單一款式明細）</div>
+            <div style="margin-bottom:16px;color:var(--text-dim)">
+              下方表格是每一款的明細，可以用上面的下拉選單篩 SUB／狀態，點欄位標題可以排序。每一列最右邊的 ✏️ 是編輯這一款的「負責人／Miro連結」，跟②的SUB層級資料是分開的。
+            </div>
+
+            <div style="font-weight:700;color:#b91c1c;margin-bottom:6px">⚠️ 常見問題</div>
+            <div style="color:var(--text-dim)">
+              如果②的「已進」數字看起來不對，通常是業務對照表或預計款數裡打的 SUBGROUP 名稱，跟Excel裡的寫法不一致（全形／半形、多打空格）。可以先上傳一次Excel，照著實際出現的名字填。
+            </div>
+
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:18px">
+            <button onclick="closeTrkHelp()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">知道了</button>
           </div>
         </div>
       </div>
@@ -841,12 +936,32 @@ try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {
 if (!BRAND_INFO[currentBrand] || !BRAND_INFO[currentBrand].enabled) currentBrand = 'GAP';
 
 // ── 品牌選擇首頁（第一次開啟，或點 Logo 回到選擇畫面）──
+let __brandGateOrigHash = null;
 function openBrandGate() {
   document.getElementById('brandGate').style.display = 'flex';
+  if (location.hash !== '#choose-brand') {
+    __brandGateOrigHash = location.hash || '';
+    history.pushState({ brandGate: true }, '', location.pathname + '#choose-brand');
+  }
 }
 function closeBrandGate() {
   document.getElementById('brandGate').style.display = 'none';
+  if (location.hash === '#choose-brand') {
+    const target = (__brandGateOrigHash && __brandGateOrigHash !== '#choose-brand') ? __brandGateOrigHash : '';
+    history.replaceState(null, '', location.pathname + target);
+    __brandGateOrigHash = null;
+    routeFromHash();
+  }
 }
+// 網址變化時（含瀏覽器上一頁／下一頁）同步畫面：選品牌網址就顯示選擇畫面，其餘網址正常換頁
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#choose-brand') {
+    document.getElementById('brandGate').style.display = 'flex';
+  } else {
+    document.getElementById('brandGate').style.display = 'none';
+    routeFromHash();
+  }
+});
 function pickBrandFromGate(b) {
   if (!BRAND_INFO[b] || !BRAND_INFO[b].enabled) return;
   try { localStorage.setItem('gap3d_brand_chosen', '1'); } catch (e) {}
@@ -2749,9 +2864,12 @@ const TRK_COLS = ['單別','狀態','Customer','SUBGROUP','Style','需求日','3
 
 let trkRows       = [];   // 匯入的款資料
 let trkManual     = {};   // { Style: { owner, miro } } 手動欄位（重新上傳不會被洗掉）
+let trkSubManual  = {};   // { SUBGROUP: { owner, expected, note } } 本輪進單資料（手動保留，不會自動清空）
+let trkOwnerMap   = {};   // { SUBGROUP: 業務 } 固定對照表
 let trkUploadedAt = null;
 let trkSubList    = [];
 let trkEditingStyle = null;
+let trkEditingSub   = null;
 let trkSortCol = '需求日';
 let trkSortAsc = true;
 
@@ -2775,7 +2893,7 @@ function trkEntry(title) {
 }
 
 function loadTrackerFromEntries() {
-  trkRows = []; trkManual = {}; trkUploadedAt = null;
+  trkRows = []; trkManual = {}; trkSubManual = {}; trkOwnerMap = {}; trkUploadedAt = null;
   try {
     const imp = trkEntry('import');
     if (imp && imp.content) {
@@ -2787,6 +2905,14 @@ function loadTrackerFromEntries() {
   try {
     const man = trkEntry('manual');
     if (man && man.content) trkManual = JSON.parse(man.content) || {};
+  } catch (e) {}
+  try {
+    const sm = trkEntry('submanual');
+    if (sm && sm.content) trkSubManual = JSON.parse(sm.content) || {};
+  } catch (e) {}
+  try {
+    const om = trkEntry('ownermap');
+    if (om && om.content) trkOwnerMap = JSON.parse(om.content) || {};
   } catch (e) {}
 }
 
@@ -2800,6 +2926,14 @@ function showTracker() {
   renderTrackerAll();
 }
 
+function openTrkHelp() {
+  document.getElementById('trkHelpModal').style.display = 'flex';
+}
+
+function closeTrkHelp() {
+  document.getElementById('trkHelpModal').style.display = 'none';
+}
+
 function renderTrackerAll() {
   loadTrackerFromEntries();
   const up = document.getElementById('trkUpdatedAt');
@@ -2807,6 +2941,7 @@ function renderTrackerAll() {
     ? '資料更新：' + new Date(trkUploadedAt).toLocaleString('zh-TW', { hour12: false })
     : '';
   renderTrackerSummary();
+  renderTrkOwnerDatalist();
   renderTrackerSubs();
   renderTrackerFilters();
   renderTrackerStyles();
@@ -2845,16 +2980,23 @@ function renderTrackerSummary() {
   const el = document.getElementById('trkSummary');
   const desc = document.getElementById('trkPageDesc');
   if (desc) desc.textContent = `${trkBrandLabel()}・3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）`;
+  const hasPreData = Object.keys(trkOwnerMap).length > 0 || Object.keys(trkSubManual).length > 0;
   if (!trkRows.length) {
-    el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA 的 3D單）</span></div>';
-    document.getElementById('trkSubBlock').style.display   = 'none';
-    document.getElementById('trkStyleBlock').style.display = 'none';
+    if (hasPreData) {
+      el.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">📝 尚未上傳 Excel，目前是預先登記的「預計款數」，已進單數量會顯示 0，等匯入 Excel 後自動帶出實際款數</div>';
+      document.getElementById('trkSubBlock').style.display   = '';
+      document.getElementById('trkStyleBlock').style.display = 'none';
+    } else {
+      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
+      document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
+      document.getElementById('trkStyleBlock').style.display = 'none';
+    }
     return;
   }
   const rows = trkBrandRows();
   if (!rows.length) {
     el.innerHTML = `<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">目前上傳的資料中沒有 <strong>${trkBrandLabel()}</strong> 的 3D單<br><span style="font-size:12px">（左上切換品牌可查看其他品牌進度）</span></div>`;
-    document.getElementById('trkSubBlock').style.display   = 'none';
+    document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
     document.getElementById('trkStyleBlock').style.display = 'none';
     return;
   }
@@ -2877,13 +3019,32 @@ function renderTrackerSubs() {
     const g = r['SUBGROUP'] || '(未填)';
     (groups[g] = groups[g] || []).push(r);
   });
+  // 開發季剛開始、還沒匯入Excel時，讓已建好業務對照表／已填預計款數的SUB也能先顯示出來，方便先登記預計款數
+  if (!trkRows.length) {
+    new Set([...Object.keys(trkOwnerMap), ...Object.keys(trkSubManual)]).forEach(g => {
+      if (!groups[g]) groups[g] = [];
+    });
+  }
   trkSubList = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
-  tbody.innerHTML = trkSubList.map(([g, rs], i) => `
-    <tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="trkFilterBySubIdx(${i})" title="點擊查看此 SUB 的款明細">
-      <td style="padding:11px 12px;font-weight:600;color:var(--text)">${escHtml(g)}</td>
+  tbody.innerHTML = trkSubList.map(([g, rs], i) => {
+    const sm = trkSubManual[g] || {};
+    const owner = (sm.owner !== undefined && sm.owner !== '') ? sm.owner : (trkOwnerMap[g] || '');
+    const hasExpected = sm.expected !== undefined && sm.expected !== null && sm.expected !== '';
+    const remain = hasExpected ? Math.max(0, Number(sm.expected) - rs.length) : null;
+    const remainColor = remain === null ? 'var(--text-dim)' : (remain > 0 ? '#b91c1c' : '#166534');
+    const enc = encodeURIComponent(g);
+    return `
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:11px 12px;font-weight:600;color:var(--text);cursor:pointer" onclick="trkFilterBySubIdx(${i})" title="點擊查看此 SUB 的款明細">${escHtml(g)}</td>
       <td style="padding:11px 12px;text-align:center;font-weight:700;color:var(--text)">${rs.length}</td>
+      <td style="padding:11px 12px;color:var(--text-dim);white-space:nowrap">${owner ? escHtml(owner) : '—'}</td>
+      <td style="padding:11px 12px;text-align:center;color:var(--text)">${hasExpected ? escHtml(String(sm.expected)) : '—'}</td>
+      <td style="padding:11px 12px;text-align:center;font-weight:700;color:${remainColor}">${remain === null ? '—' : remain}</td>
+      <td style="padding:11px 12px;color:var(--text-dim)">${escHtml(sm.note || '')}</td>
       <td style="padding:11px 12px">${trkChips(trkStatusCounts(rs))}</td>
-    </tr>`).join('');
+      <td style="padding:11px 12px"><button onclick="openTrkSubManual('${enc}')" title="編輯業務／預計款數／備註" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
+    </tr>`;
+  }).join('');
 }
 
 function trkFilterBySubIdx(i) {
@@ -2892,6 +3053,145 @@ function trkFilterBySubIdx(i) {
   sel.value = (g === '(未填)') ? '' : g;
   renderTrackerStyles();
   document.getElementById('trkStyleBlock').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── SUB 進單資訊（業務／預計款數／備註）─────────
+function openTrkSubManual(enc) {
+  trkEditingSub = decodeURIComponent(enc);
+  const sm = trkSubManual[trkEditingSub] || {};
+  document.getElementById('trkSubManualName').textContent = trkEditingSub;
+  document.getElementById('trkSubOwnerInput').value = (sm.owner !== undefined && sm.owner !== '') ? sm.owner : (trkOwnerMap[trkEditingSub] || '');
+  document.getElementById('trkSubExpectedInput').value = (sm.expected === undefined || sm.expected === null) ? '' : sm.expected;
+  document.getElementById('trkSubNoteInput').value = sm.note || '';
+  document.getElementById('trkSubManualModal').style.display = 'flex';
+}
+
+function closeTrkSubManual() {
+  document.getElementById('trkSubManualModal').style.display = 'none';
+  trkEditingSub = null;
+}
+
+async function saveTrkSubManual() {
+  if (!trkEditingSub) return;
+  const owner    = document.getElementById('trkSubOwnerInput').value.trim();
+  const expected = document.getElementById('trkSubExpectedInput').value.trim();
+  const note     = document.getElementById('trkSubNoteInput').value.trim();
+  if (owner || expected !== '' || note) {
+    trkSubManual[trkEditingSub] = { owner, expected: expected === '' ? null : Number(expected), note };
+  } else {
+    delete trkSubManual[trkEditingSub];
+  }
+  try {
+    await saveTrkEntry('submanual', trkSubManual);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  closeTrkSubManual();
+  renderTrackerSubs();
+  renderTrkOwnerDatalist();
+}
+
+async function clearTrkSubManualAll() {
+  const subsInBrand = new Set(trkBrandRows().map(r => r['SUBGROUP'] || '(未填)'));
+  const affected = [...subsInBrand].filter(g => trkSubManual[g] && (trkSubManual[g].expected != null || trkSubManual[g].note));
+  if (!affected.length) { alert('目前品牌沒有需要清空的預計款數／備註'); return; }
+  if (!confirm(`確定要清空目前品牌 ${affected.length} 個 SUB 的「預計款數／備註」嗎？業務對照表不會受影響。`)) return;
+  affected.forEach(g => {
+    const owner = trkSubManual[g].owner;
+    if (owner) trkSubManual[g] = { owner };
+    else delete trkSubManual[g];
+  });
+  try {
+    await saveTrkEntry('submanual', trkSubManual);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  renderTrackerSubs();
+}
+
+// ── SUBGROUP ↔ 業務 對照表 ─────────────────────
+function openTrkOwnerMap() {
+  renderTrkOwnerMapList();
+  document.getElementById('trkOwnerMapModal').style.display = 'flex';
+}
+
+function closeTrkOwnerMap() {
+  document.getElementById('trkOwnerMapModal').style.display = 'none';
+}
+
+function renderTrkOwnerMapList() {
+  const box = document.getElementById('trkOwnerMapList');
+  const entries = Object.entries(trkOwnerMap).sort((a, b) => a[0].localeCompare(b[0]));
+  if (!entries.length) {
+    box.innerHTML = '<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:12px">尚未設定，於下方新增第一筆</div>';
+    return;
+  }
+  box.innerHTML = entries.map(([sub, owner]) => {
+    const encSub = encodeURIComponent(sub);
+    return `
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1;font-size:13px;color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(sub)}</div>
+      <input value="${escHtml(owner)}" list="trkOwnerDatalist" onchange="updateTrkOwnerMapRow('${encSub}', this.value)" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+      <button onclick="deleteTrkOwnerMapRow('${encSub}')" title="刪除" style="background:none;border:none;color:#b91c1c;cursor:pointer;font-size:14px">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function addTrkOwnerMapRow() {
+  const sub   = document.getElementById('trkOwnerMapNewSub').value.trim();
+  const owner = document.getElementById('trkOwnerMapNewOwner').value.trim();
+  if (!sub || !owner) { alert('請填寫 SUBGROUP 名稱和業務名字'); return; }
+  trkOwnerMap[sub] = owner;
+  try {
+    await saveTrkEntry('ownermap', trkOwnerMap);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  document.getElementById('trkOwnerMapNewSub').value = '';
+  document.getElementById('trkOwnerMapNewOwner').value = '';
+  renderTrkOwnerMapList();
+  renderTrkOwnerDatalist();
+  renderTrackerSubs();
+}
+
+async function updateTrkOwnerMapRow(encSub, newOwner) {
+  const sub = decodeURIComponent(encSub);
+  newOwner = newOwner.trim();
+  if (!newOwner) { await deleteTrkOwnerMapRow(encSub); return; }
+  trkOwnerMap[sub] = newOwner;
+  try {
+    await saveTrkEntry('ownermap', trkOwnerMap);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  renderTrkOwnerDatalist();
+  renderTrackerSubs();
+}
+
+async function deleteTrkOwnerMapRow(encSub) {
+  const sub = decodeURIComponent(encSub);
+  delete trkOwnerMap[sub];
+  try {
+    await saveTrkEntry('ownermap', trkOwnerMap);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  renderTrkOwnerMapList();
+  renderTrkOwnerDatalist();
+  renderTrackerSubs();
+}
+
+function renderTrkOwnerDatalist() {
+  const dl = document.getElementById('trkOwnerDatalist');
+  if (!dl) return;
+  const names = new Set(Object.values(trkOwnerMap).filter(Boolean));
+  Object.values(trkSubManual).forEach(sm => { if (sm && sm.owner) names.add(sm.owner); });
+  dl.innerHTML = [...names].sort().map(n => `<option value="${escHtml(n)}">`).join('');
 }
 
 function renderTrackerFilters() {
@@ -3122,6 +3422,7 @@ function showFeedback() {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-feedback').classList.add('active');
   document.getElementById('nav-feedback').classList.add('active');
+  window.location.hash = 'feedback';
 
   fbCurrentFilter = 'all';
   fbCurrentStatusFilter = 'all';
