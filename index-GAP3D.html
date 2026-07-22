@@ -1364,9 +1364,15 @@ function openImgZoom(list, idx) {
       ${list.length > 1 ? `
         <button onclick="imgZoomNav(-1)" title="上一張" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">‹</button>
         <button onclick="imgZoomNav(1)" title="下一張" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">›</button>
-        <div id="imgZoomCounter" style="position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.85);font-size:13px;font-family:'DM Mono',monospace"></div>
+        <div id="imgZoomCounter" style="position:absolute;bottom:-64px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.85);font-size:13px;font-family:'DM Mono',monospace"></div>
       ` : ''}
       <button onclick="closeImgZoom()" title="關閉" style="position:absolute;top:-16px;right:-16px;width:30px;height:30px;border-radius:50%;background:#fff;border:none;color:#111;font-size:16px;cursor:pointer;line-height:1;z-index:2">✕</button>
+      <div style="position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(20,20,20,0.75);padding:6px 16px;border-radius:20px;z-index:2" onclick="event.stopPropagation()">
+        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale-0.5)">🔍－</span>
+        <input id="imgZoomSlider" type="range" min="1" max="6" step="0.1" value="1" oninput="imgZoomSetScale(parseFloat(this.value))" style="width:140px;accent-color:#ff5a3c;cursor:pointer">
+        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale+0.5)">🔍＋</span>
+        <span id="imgZoomPct" style="color:rgba(255,255,255,0.6);font-size:12px;font-family:'DM Mono',monospace;width:38px">100%</span>
+      </div>
     </div>
   `;
   ov.onclick = () => closeImgZoom();
@@ -1384,6 +1390,16 @@ function applyImgZoomTransform() {
   if (!img) return;
   img.style.transform = `translate(${imgZoomPanX}px, ${imgZoomPanY}px) scale(${imgZoomScale})`;
   img.style.cursor = imgZoomScale > 1 ? 'grab' : 'zoom-in';
+  const slider = document.getElementById('imgZoomSlider');
+  if (slider) slider.value = imgZoomScale;
+  const pct = document.getElementById('imgZoomPct');
+  if (pct) pct.textContent = Math.round(imgZoomScale * 100) + '%';
+}
+
+function imgZoomSetScale(val) {
+  imgZoomScale = Math.min(6, Math.max(1, val));
+  if (imgZoomScale === 1) { imgZoomPanX = 0; imgZoomPanY = 0; }
+  applyImgZoomTransform();
 }
 
 function setupImgZoomPanZoom() {
@@ -1432,6 +1448,7 @@ function updateImgZoomView() {
   img.src = imgZoomList[imgZoomIdx];
   const counter = document.getElementById('imgZoomCounter');
   if (counter) counter.textContent = `圖 ${imgZoomIdx + 1} / ${imgZoomList.length}`;
+  applyImgZoomTransform();
 }
 function imgZoomNav(delta) {
   imgZoomIdx = (imgZoomIdx + delta + imgZoomList.length) % imgZoomList.length;
