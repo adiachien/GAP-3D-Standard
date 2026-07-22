@@ -1356,10 +1356,11 @@ function openImgZoom(list, idx) {
   imgZoomIdx = idx;
   const ov = document.createElement('div');
   ov.id = 'imgZoomOverlay';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:center;justify-content:center;padding:8px;overflow:auto';
   ov.innerHTML = `
-    <div style="position:relative;max-width:94vw;max-height:94vh;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation()">
-      <img id="imgZoomImg" style="max-width:94vw;max-height:88vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block">
+    <div style="position:relative;max-width:99vw;max-height:99vh;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation()">
+      <img id="imgZoomImg" onclick="toggleImgZoomNative(event)" title="點擊看原始尺寸" style="max-width:99vw;max-height:96vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block;cursor:zoom-in">
+      <div style="position:absolute;top:-30px;left:0;color:rgba(255,255,255,0.75);font-size:12px;font-family:'DM Mono',monospace">點圖片可切換「原始尺寸」逐字看清楚</div>
       ${list.length > 1 ? `
         <button onclick="imgZoomNav(-1)" title="上一張" style="position:absolute;left:-52px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
         <button onclick="imgZoomNav(1)" title="下一張" style="position:absolute;right:-52px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
@@ -1374,9 +1375,33 @@ function openImgZoom(list, idx) {
   updateImgZoomView();
 }
 
+function toggleImgZoomNative(ev) {
+  ev.stopPropagation();
+  const img = document.getElementById('imgZoomImg');
+  const native = img.dataset.native === '1';
+  if (native) {
+    img.style.maxWidth = '99vw';
+    img.style.maxHeight = '96vh';
+    img.style.width = '';
+    img.style.cursor = 'zoom-in';
+    img.dataset.native = '0';
+  } else {
+    img.style.maxWidth = 'none';
+    img.style.maxHeight = 'none';
+    img.style.width = 'auto';
+    img.style.cursor = 'zoom-out';
+    img.dataset.native = '1';
+  }
+}
+
 function updateImgZoomView() {
   const img = document.getElementById('imgZoomImg');
   if (!img) return;
+  img.dataset.native = '0';
+  img.style.maxWidth = '99vw';
+  img.style.maxHeight = '96vh';
+  img.style.width = '';
+  img.style.cursor = 'zoom-in';
   img.src = imgZoomList[imgZoomIdx];
   const counter = document.getElementById('imgZoomCounter');
   if (counter) counter.textContent = `圖 ${imgZoomIdx + 1} / ${imgZoomList.length}`;
