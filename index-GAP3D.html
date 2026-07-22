@@ -1694,6 +1694,7 @@ function renderAvatarPage(section, entries) {
             </div>
           `).join('')}
           <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
+          ${renderCardImages(e)}
         </div>
       </div>
     `).join('')}
