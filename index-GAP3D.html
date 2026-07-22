@@ -757,7 +757,14 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
 
       <!-- 篩選 Tab -->
-      <div id="fbFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div id="fbFilters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <button onclick="exportFeedbackExcel()" id="fbExportBtn"
+          style="background:#166534;color:#fff;border:none;padding:6px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">
+          📊 匯出 Excel
+        </button>
+      </div>
+      <div id="fbStatusFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
 
       <!-- 留言列表 -->
       <div id="fbList">
@@ -766,6 +773,22 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     </div>
 
   </main>
+</div>
+
+<!-- 路徑／連結 前台編輯 Modal（全站共用）-->
+<div id="pathEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:480px;max-width:95vw">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯路徑／連結</h3>
+    <div id="pathEditEntryTitle" style="font-size:13px;color:var(--text-dim);margin-bottom:18px"></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">標籤（選填）</label><input id="pathEditLabelInput" placeholder="例如：Women" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
+      <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結</label><textarea id="pathEditValueInput" rows="3" placeholder="\\192.168.1.220\... 或 https://..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button onclick="closePathEdit()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+      <button onclick="savePathEdit()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -852,7 +875,8 @@ function setBrand(b) {
   }
   if (hash === 'feedback') {
     document.getElementById('nav-feedback')?.classList.add('active');
-    return; // 留言板不分品牌
+    loadFeedback(); // 留言板依品牌分開，切換品牌要重新載入
+    return;
   }
   // ATH 沒有非正單：若正停在非正單頁，跳回第一個可見分類
   if (currentBrand === 'ATH' && currentSlug === 'informal') {
@@ -867,7 +891,8 @@ const GAP3D_CACHE = 'gap3d_cache_v1';
 
 function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
-  const stageSlugs = ['prefit','details','checklist'];
+  const stageSlugs = ['prefit','details','checklist','closet'];
+  const stagePageKeyMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
   if (hash === 'feedback') {
     showFeedback();
   } else if (hash === 'tracker') {
@@ -876,7 +901,7 @@ function routeFromHash() {
     if (stageSlugs.includes(hash)) {
       showSection(hash);
       setTimeout(() => selectStageTab(
-        hash === 'prefit' ? 'pf' : hash === 'details' ? 'dt' : 'cl',
+        stagePageKeyMap[hash],
         currentStageKey
       ), 100);
     } else {
@@ -979,7 +1004,7 @@ function renderNav() {
 function showSectionWithStage(slug, stageKey) {
   showSection(slug);
   setTimeout(() => {
-    const pageKeyMap = { prefit:'pf', details:'dt', checklist:'cl' };
+    const pageKeyMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
     const pageKey = pageKeyMap[slug];
     if (pageKey) selectStageTab(pageKey, stageKey);
   }, 100);
@@ -1018,10 +1043,10 @@ function showSection(slug) {
   renderSection(section, entries);
 
   // 自動選目前 Stage（樣品種類 / Prefit / 細節 / Checklist 共享同一個 Stage）
-  const stageSlugs = ['prefit','details','checklist'];
+  const stageSlugs = ['prefit','details','checklist','closet'];
   if (stageSlugs.includes(slug)) {
     setTimeout(() => {
-      const pkMap = { prefit:'pf', details:'dt', checklist:'cl' };
+      const pkMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
       selectStageTab(pkMap[slug], currentStageKey);
     }, 50);
   } else if (slug === 'stages') {
@@ -1045,6 +1070,7 @@ function renderSection(section, entries) {
     prefit:       renderPrefitPage,
     details:      renderDetailsPage,
     checklist:    renderChecklistPage,
+    closet:       renderClosetPage,
     informal:     renderInformalPage,
     qc:           renderQCPage,
     accounts:     renderAccountsPage,
@@ -1079,7 +1105,7 @@ function renderCard(e) {
   };
   const badgeClass = { official:'badge-official', internal:'badge-internal', warning:'badge-warning' };
 
-  const paths = (e.paths || []).map(p => {
+  const paths = (e.paths || []).map((p, idx) => {
     const hasSep = p.includes('｜');
     const label  = hasSep ? p.split('｜')[0].trim() : '';
     const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
@@ -1103,6 +1129,9 @@ function renderCard(e) {
           ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
           : `<span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>`
         }
+        <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結"
+          style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px"
+          onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
       </div>
     `;
   }).join('');
@@ -1123,6 +1152,7 @@ function renderCard(e) {
           <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
           <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
         </div>
+        ${paths}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${fmtMarks(escHtml(leftTitle))}</div>
@@ -1136,7 +1166,6 @@ function renderCard(e) {
           </div>
         </div>
         ${renderCardImages(e)}
-        ${paths}
       </div>
     `;
   }
@@ -1151,9 +1180,9 @@ function renderCard(e) {
         <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
       </div>
+      ${paths}
       ${content}
       ${renderCardImages(e)}
-      ${paths}
     </div>
   `;
 }
@@ -1477,6 +1506,99 @@ function selectStage(key) {
     </div>
   `;
 
+  const laFlowchartHtml = key !== 'la' ? '' : `
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px">LA 作業流程</div>
+      <svg width="70%" viewBox="0 0 660 500" role="img" style="display:block;margin:0 auto">
+        <title>3D LA 流程圖</title>
+        <defs>
+          <marker id="la-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+        <style>
+          .la-node { fill:#ffffff; stroke:#d1d5db; stroke-width:1; }
+          .la-amber { fill:#fffbeb; stroke:#f59e0b; stroke-width:1.5; }
+          .la-teal  { fill:#ccfbf1; stroke:#0d9488; stroke-width:1.5; }
+          .la-purple{ fill:#ede9fe; stroke:#7c3aed; stroke-width:1.5; }
+          .la-coral { fill:#ffe4e6; stroke:#e11d48; stroke-width:1.5; }
+          .la-blue  { fill:#dbeafe; stroke:#2563eb; stroke-width:1.5; }
+          .la-t  { font-family:'Noto Sans TC',sans-serif; font-size:13px; font-weight:700; fill:#111827; }
+          .la-ts { font-family:'Noto Sans TC',sans-serif; font-size:11px; fill:#6b7280; }
+          .la-arr { stroke:#9ca3af; stroke-width:1.2; fill:none; }
+          .la-dash { stroke:#9ca3af; stroke-width:1; fill:none; stroke-dasharray:4 3; }
+        </style>
+
+        <!-- START -->
+        <rect x="230" y="14" width="180" height="36" rx="18" class="la-node"/>
+        <text class="la-t" x="320" y="32" text-anchor="middle" dominant-baseline="central">收到 LA 需求</text>
+        <line x1="320" y1="50" x2="320" y2="76" class="la-arr" marker-end="url(#la-arrow)"/>
+
+        <!-- 客評菱形 -->
+        <polygon points="320,76 426,114 320,152 214,114" class="la-node"/>
+        <text class="la-t" x="320" y="108" text-anchor="middle" dominant-baseline="central">客評</text>
+
+        <!-- 有 → 左下 -->
+        <line x1="248" y1="142" x2="152" y2="174" class="la-arr" marker-end="url(#la-arrow)"/>
+        <text class="la-ts" x="192" y="152" text-anchor="middle">有</text>
+
+        <!-- 沒有 → 右 -->
+        <line x1="426" y1="114" x2="488" y2="114" class="la-arr" marker-end="url(#la-arrow)"/>
+        <text class="la-ts" x="457" y="106" text-anchor="middle">沒有</text>
+
+        <!-- ══ LEFT ══ -->
+        <!-- 難易度菱形 -->
+        <polygon points="100,174 166,208 100,242 34,208" class="la-node"/>
+        <text class="la-t"  x="100" y="201" text-anchor="middle" dominant-baseline="central">客評調版</text>
+        <text class="la-ts" x="100" y="217" text-anchor="middle" dominant-baseline="central">難易度（Adia審）</text>
+
+        <line x1="56"  y1="228" x2="44"  y2="260" class="la-arr" marker-end="url(#la-arrow)"/>
+        <text class="la-ts" x="26" y="250" text-anchor="middle">簡單</text>
+        <line x1="148" y1="228" x2="160" y2="260" class="la-arr" marker-end="url(#la-arrow)"/>
+        <text class="la-ts" x="180" y="250" text-anchor="middle">難</text>
+
+        <rect x="4"   y="260" width="84" height="36" rx="8" class="la-teal"/>
+        <text class="la-t" x="46" y="278" text-anchor="middle" dominant-baseline="central">3D 調版</text>
+
+        <rect x="112" y="260" width="92" height="36" rx="8" class="la-purple"/>
+        <text class="la-t" x="158" y="278" text-anchor="middle" dominant-baseline="central">版師打版</text>
+
+        <!-- 合流 -->
+        <path d="M46 296 L46 318 L100 318" class="la-arr"/>
+        <path d="M158 296 L158 318 L100 318" class="la-arr"/>
+        <line x1="100" y1="318" x2="112" y2="318" class="la-arr" marker-end="url(#la-arrow)"/>
+
+        <!-- 回信TD+疊版 -->
+        <rect x="6" y="328" width="212" height="58" rx="9" class="la-amber"/>
+        <text class="la-t"  x="112" y="346" text-anchor="middle" dominant-baseline="central">回信 TD ＋ 疊版</text>
+        <text class="la-ts" x="112" y="362" text-anchor="middle" dominant-baseline="central">附疊版圖</text>
+
+        <line x1="112" y1="386" x2="112" y2="412" class="la-arr" marker-end="url(#la-arrow)"/>
+
+        <!-- 掛待細節 -->
+        <rect x="6" y="412" width="212" height="36" rx="9" class="la-coral"/>
+        <text class="la-t" x="112" y="430" text-anchor="middle" dominant-baseline="central">掛「待細節」</text>
+
+        <!-- 退回虛線 -->
+        <path d="M218 357 L244 357 L244 278 L206 278" class="la-dash" marker-end="url(#la-arrow)"/>
+        <text class="la-ts" x="248" y="310" text-anchor="start" font-style="italic">TD 退回</text>
+        <text class="la-ts" x="248" y="323" text-anchor="start" font-style="italic">（少見）</text>
+
+        <!-- ══ RIGHT ══ -->
+        <rect x="488" y="96" width="148" height="38" rx="8" class="la-teal"/>
+        <text class="la-t"  x="562" y="111" text-anchor="middle" dominant-baseline="central">換色</text>
+        <text class="la-ts" x="562" y="126" text-anchor="middle" dominant-baseline="central">CC Naming plugin</text>
+
+        <line x1="562" y1="134" x2="562" y2="162" class="la-arr" marker-end="url(#la-arrow)"/>
+
+        <rect x="480" y="162" width="164" height="54" rx="8" class="la-blue"/>
+        <text class="la-t"  x="562" y="180" text-anchor="middle" dominant-baseline="central">請見細節規範</text>
+        <text class="la-ts" x="562" y="196" text-anchor="middle" dominant-baseline="central">double check</text>
+        <text class="la-ts" x="562" y="209" text-anchor="middle" dominant-baseline="central">AW 確認、待完成檢查</text>
+      </svg>
+    </div>
+  `;
+
   const container = document.getElementById('stageContent');
 
   if (s.hasTabs) {
@@ -1505,6 +1627,7 @@ function selectStage(key) {
         ? stageEntries.map(e => renderCard(e)).join('')
         : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
       }
+      ${laFlowchartHtml}
     `;
   } else {
     container.innerHTML = `
@@ -1521,6 +1644,7 @@ function selectStage(key) {
         ? stageEntries.map(e => renderCard(e)).join('')
         : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
       }
+      ${laFlowchartHtml}
     `;
   }
 }
@@ -1562,13 +1686,14 @@ function renderAvatarPage(section, entries) {
             <div class="card-title">${escHtml(e.title)}</div>
             <span class="badge badge-official">官方規範</span>
           </div>
-          <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
-          ${(e.paths||[]).map(p=>`
+          ${(e.paths||[]).map((p,idx)=>`
             <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
               <button class="copy-btn" data-path="${escHtml(p)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
               <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
+              <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
             </div>
           `).join('')}
+          <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
         </div>
       </div>
     `).join('')}
@@ -1581,6 +1706,56 @@ function switchAvatarTab(btn, panelId) {
   btn.classList.add('active');
   document.querySelectorAll('[id^="avp-"]').forEach(p => p.classList.remove('active'));
   document.getElementById(panelId)?.classList.add('active');
+}
+
+// ── 路徑／連結 前台編輯（登入即可編輯，全站通用）──
+let pathEditCtx = null; // { entryId, index }
+
+function openPathEdit(entryId, index) {
+  const e = allEntries.find(x => String(x.id) === String(entryId));
+  if (!e) return;
+  const raw = (e.paths || [])[index] || '';
+  const hasSep = raw.includes('｜');
+  const label = hasSep ? raw.split('｜')[0].trim() : '';
+  const value = hasSep ? raw.split('｜').slice(1).join('｜').trim() : raw.trim();
+  pathEditCtx = { entryId, index };
+  document.getElementById('pathEditEntryTitle').textContent = e.title || '';
+  document.getElementById('pathEditLabelInput').value = label;
+  document.getElementById('pathEditValueInput').value = value;
+  document.getElementById('pathEditModal').style.display = 'flex';
+}
+
+function closePathEdit() {
+  document.getElementById('pathEditModal').style.display = 'none';
+  pathEditCtx = null;
+}
+
+async function savePathEdit() {
+  if (!pathEditCtx) return;
+  const { entryId, index } = pathEditCtx;
+  const e = allEntries.find(x => String(x.id) === String(entryId));
+  if (!e) return;
+  const label = document.getElementById('pathEditLabelInput').value.trim();
+  const value = document.getElementById('pathEditValueInput').value.trim();
+  if (!value) { alert('路徑／連結不能空白'); return; }
+  const newRaw = label ? `${label}｜${value}` : value;
+  const paths = [...(e.paths || [])];
+  paths[index] = newRaw;
+
+  const { error } = await sb.from('entries').update({ paths }).eq('id', entryId);
+  if (error) { alert('儲存失敗：' + error.message); return; }
+
+  e.paths = paths;
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (err) {}
+  closePathEdit();
+  refreshCurrentView();
+}
+
+// 儲存路徑後重新渲染目前所在頁面
+function refreshCurrentView() {
+  if (currentSlug) {
+    showSection(currentSlug);
+  }
 }
 
 function copyPath(path) {
@@ -1655,132 +1830,12 @@ function selectStageTab(pageKey, stageKey) {
     box.style.borderColor = k === stageKey ? 'var(--brand-accent)' : '';
     box.style.background  = k === stageKey ? 'var(--brand-accent-soft)' : '';
   });
-  const slugMap = { pf:'prefit', dt:'details', cl:'checklist' };
+  const slugMap = { pf:'prefit', dt:'details', cl:'checklist', cs:'closet' };
   const sec = allSections.find(s => s.slug === slugMap[pageKey]);
   const stageEntries = sec
     ? allEntries.filter(e => e.section_id === sec.id && entryInStage(e, stageKey) && brandOk(e))
     : [];
   const container = document.getElementById(`${pageKey}stageContent`);
-
-  // Prefit LA：流程圖 + 展開 entries
-  if (pageKey === 'pf' && stageKey === 'la') {
-    const entriesHtml = stageEntries.length
-      ? stageEntries.map(e => renderCard(e)).join('')
-      : '<div style="color:var(--text-dim);font-size:15px;padding:12px 0">尚無內容，請至後台新增</div>';
-    container.innerHTML = `
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px">LA 作業流程</div>
-        <svg width="70%" viewBox="0 0 660 500" role="img" style="display:block;margin:0 auto">
-          <title>3D LA 流程圖</title>
-          <defs>
-            <marker id="la-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </marker>
-          </defs>
-          <style>
-            .la-node { fill:#ffffff; stroke:#d1d5db; stroke-width:1; }
-            .la-amber { fill:#fffbeb; stroke:#f59e0b; stroke-width:1.5; cursor:pointer; }
-            .la-teal  { fill:#ccfbf1; stroke:#0d9488; stroke-width:1.5; }
-            .la-purple{ fill:#ede9fe; stroke:#7c3aed; stroke-width:1.5; }
-            .la-coral { fill:#ffe4e6; stroke:#e11d48; stroke-width:1.5; }
-            .la-blue  { fill:#dbeafe; stroke:#2563eb; stroke-width:1.5; }
-            .la-t  { font-family:'Noto Sans TC',sans-serif; font-size:13px; font-weight:700; fill:#111827; }
-            .la-ts { font-family:'Noto Sans TC',sans-serif; font-size:11px; fill:#6b7280; }
-            .la-hint { font-family:'Noto Sans TC',sans-serif; font-size:11px; fill:#b45309; }
-            .la-arr { stroke:#9ca3af; stroke-width:1.2; fill:none; }
-            .la-dash { stroke:#9ca3af; stroke-width:1; fill:none; stroke-dasharray:4 3; }
-          </style>
-
-          <!-- START -->
-          <rect x="230" y="14" width="180" height="36" rx="18" class="la-node"/>
-          <text class="la-t" x="320" y="32" text-anchor="middle" dominant-baseline="central">收到 LA 需求</text>
-          <line x1="320" y1="50" x2="320" y2="76" class="la-arr" marker-end="url(#la-arrow)"/>
-
-          <!-- 客評菱形 -->
-          <polygon points="320,76 426,114 320,152 214,114" class="la-node"/>
-          <text class="la-t" x="320" y="108" text-anchor="middle" dominant-baseline="central">客評</text>
-
-          <!-- 有 → 左下 -->
-          <line x1="248" y1="142" x2="152" y2="174" class="la-arr" marker-end="url(#la-arrow)"/>
-          <text class="la-ts" x="192" y="152" text-anchor="middle">有</text>
-
-          <!-- 沒有 → 右 -->
-          <line x1="426" y1="114" x2="488" y2="114" class="la-arr" marker-end="url(#la-arrow)"/>
-          <text class="la-ts" x="457" y="106" text-anchor="middle">沒有</text>
-
-          <!-- ══ LEFT ══ -->
-          <!-- 難易度菱形 -->
-          <polygon points="100,174 166,208 100,242 34,208" class="la-node"/>
-          <text class="la-t"  x="100" y="201" text-anchor="middle" dominant-baseline="central">客評調版</text>
-          <text class="la-ts" x="100" y="217" text-anchor="middle" dominant-baseline="central">難易度（Adia審）</text>
-
-          <line x1="56"  y1="228" x2="44"  y2="260" class="la-arr" marker-end="url(#la-arrow)"/>
-          <text class="la-ts" x="26" y="250" text-anchor="middle">簡單</text>
-          <line x1="148" y1="228" x2="160" y2="260" class="la-arr" marker-end="url(#la-arrow)"/>
-          <text class="la-ts" x="180" y="250" text-anchor="middle">難</text>
-
-          <rect x="4"   y="260" width="84" height="36" rx="8" class="la-teal"/>
-          <text class="la-t" x="46" y="278" text-anchor="middle" dominant-baseline="central">3D 調版</text>
-
-          <rect x="112" y="260" width="92" height="36" rx="8" class="la-purple"/>
-          <text class="la-t" x="158" y="278" text-anchor="middle" dominant-baseline="central">版師打版</text>
-
-          <!-- 合流 -->
-          <path d="M46 296 L46 318 L100 318" class="la-arr"/>
-          <path d="M158 296 L158 318 L100 318" class="la-arr"/>
-          <line x1="100" y1="318" x2="112" y2="318" class="la-arr" marker-end="url(#la-arrow)"/>
-
-          <!-- 回信TD+疊版（可展開） -->
-          <rect x="6" y="328" width="212" height="58" rx="9" class="la-amber" id="la-overlay-box" onclick="toggleLaOverlay()"/>
-          <text class="la-t"    x="112" y="346" text-anchor="middle" dominant-baseline="central" style="pointer-events:none">回信 TD ＋ 疊版</text>
-          <text class="la-ts"   x="112" y="362" text-anchor="middle" dominant-baseline="central" style="pointer-events:none">附疊版圖</text>
-          <text class="la-hint" x="112" y="378" text-anchor="middle" dominant-baseline="central" style="pointer-events:none">▼ 點開查看注意事項</text>
-
-          <line x1="112" y1="386" x2="112" y2="412" class="la-arr" marker-end="url(#la-arrow)"/>
-
-          <!-- 掛待細節 -->
-          <rect x="6" y="412" width="212" height="36" rx="9" class="la-coral"/>
-          <text class="la-t" x="112" y="430" text-anchor="middle" dominant-baseline="central">掛「待細節」</text>
-
-          <!-- 退回虛線 -->
-          <path d="M218 357 L244 357 L244 278 L206 278" class="la-dash" marker-end="url(#la-arrow)"/>
-          <text class="la-ts" x="248" y="310" text-anchor="start" font-style="italic">TD 退回</text>
-          <text class="la-ts" x="248" y="323" text-anchor="start" font-style="italic">（少見）</text>
-
-          <!-- ══ RIGHT ══ -->
-          <rect x="488" y="96" width="148" height="38" rx="8" class="la-teal"/>
-          <text class="la-t"  x="562" y="111" text-anchor="middle" dominant-baseline="central">換色</text>
-          <text class="la-ts" x="562" y="126" text-anchor="middle" dominant-baseline="central">CC Naming plugin</text>
-
-          <line x1="562" y1="134" x2="562" y2="162" class="la-arr" marker-end="url(#la-arrow)"/>
-
-          <rect x="480" y="162" width="164" height="54" rx="8" class="la-blue"/>
-          <text class="la-t"  x="562" y="180" text-anchor="middle" dominant-baseline="central">請見細節規範</text>
-          <text class="la-ts" x="562" y="196" text-anchor="middle" dominant-baseline="central">double check</text>
-          <text class="la-ts" x="562" y="209" text-anchor="middle" dominant-baseline="central">AW 確認、待完成檢查</text>
-        </svg>
-      </div>
-      <!-- 展開區塊 -->
-      <div id="la-overlay-expand" style="display:none;margin-bottom:14px">
-        <div class="card" style="border-color:#d97706;border-left:3px solid #d97706">
-          <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:12px">回信 TD ＋ 疊版 — 注意事項</div>
-          ${entriesHtml}
-        </div>
-      </div>
-    `;
-    // 綁定展開函式
-    window.toggleLaOverlay = function() {
-      const el = document.getElementById('la-overlay-expand');
-      const box = document.getElementById('la-overlay-box');
-      const open = el.style.display === 'none';
-      el.style.display = open ? 'block' : 'none';
-      // 更新提示文字
-      const hint = box.parentElement.querySelector('text:last-of-type') ||
-        box.closest('svg').querySelector('[dominant-baseline="central"]:last-of-type');
-      box.style.stroke = open ? '#b45309' : '#d97706';
-    };
-    return;
-  }
 
   // Stage 2 Proto：直接顯示所有內容，不切 tab
   if (stageKey === 'proto' && pageKey !== 'cl') {
@@ -1806,7 +1861,7 @@ function selectStageTab(pageKey, stageKey) {
       <div class="checklist" id="${id}">
         ${stageEntries.map(e => {
           const hasSep = (p) => p.includes('｜');
-          const pathsHtml = (e.paths||[]).map(p => {
+          const pathsHtml = (e.paths||[]).map((p, idx) => {
             const label = hasSep(p) ? p.split('｜')[0].trim() : '';
             const value = hasSep(p) ? p.split('｜')[1].trim() : p.trim();
             const isUrl = value.startsWith('http');
@@ -1822,6 +1877,7 @@ function selectStageTab(pageKey, stageKey) {
                   ? `<span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>`
                   : `<span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>`
                 }
+                <button onclick="event.stopPropagation();openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
               </div>`;
           }).join('');
 
@@ -1830,8 +1886,8 @@ function selectStageTab(pageKey, stageKey) {
               <input type="checkbox" onclick="event.stopPropagation();this.parentElement.classList.toggle('done',this.checked)">
               <div style="flex:1">
                 <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
-                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(fmtMarks(escHtml(e.content)))}</div>` : ''}
                 ${pathsHtml}
+                ${e.content ? `<div style="font-size:15px;color:var(--text);margin-top:4px;line-height:1.7;white-space:pre-wrap">${linkify(fmtMarks(escHtml(e.content)))}</div>` : ''}
               </div>
             </div>`;
         }).join('')}
@@ -1876,6 +1932,9 @@ function renderDetailsPage(section, entries) {
 }
 function renderChecklistPage(section, entries) {
   return renderStageBasedPage(section, entries, 'cl', '✅ Checklist', '點選 Stage 查看對應的提交前確認清單');
+}
+function renderClosetPage(section, entries) {
+  return renderStageBasedPage(section, entries, 'cs', '☁️ CLO-SET 上傳', '點選 Stage 查看對應的 CLO-SET 上傳規範');
 }
 
 function renderInformalPage(section, entries) {
@@ -2130,7 +2189,8 @@ function renderColorPlacementPage(section, entries) {
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em">AI 拍照腳本路徑</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 12px">
       <button class="copy-btn" data-path="${escHtml(scriptPath)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all">${escHtml(scriptPath)}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all;flex:1">${escHtml(scriptPath)}</span>
+      ${pathEntry ? `<button onclick="openPathEdit('${pathEntry.id}',0)" title="編輯路徑／連結" style="flex-shrink:0;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>` : ''}
     </div>
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">拍照角度</div>
     <table style="border-collapse:collapse;font-size:14px;width:100%">
@@ -2838,7 +2898,9 @@ async function exportTrackerExcel() {
 
 // ── Feedback / 留言板 ───────────────────────────
 let fbImageFile = null;
-let fbCurrentFilter = 'all';
+let fbCurrentFilter = 'all';        // 分類篩選
+let fbCurrentStatusFilter = 'all';  // 狀態篩選：all / 待改善 / 已改善
+let allFeedbackData = [];
 
 const fbCatColors = {
   '開發處內部': { bg:'rgba(29,78,216,0.08)',  color:'#1d4ed8',  border:'rgba(29,78,216,0.2)'  },
@@ -2846,6 +2908,11 @@ const fbCatColors = {
   'DPC':        { bg:'rgba(22,101,52,0.08)',   color:'#166534',  border:'rgba(22,101,52,0.2)'   },
   '客人':       { bg:'rgba(109,40,217,0.08)',  color:'#5b21b6',  border:'rgba(109,40,217,0.2)'  },
   '其他':       { bg:'rgba(148,163,184,0.15)', color:'#cbd5e1',  border:'rgba(148,163,184,0.3)' },
+};
+
+const fbStatusColors = {
+  '待改善': { bg:'rgba(217,119,6,0.1)',  color:'#92400e', border:'rgba(217,119,6,0.3)'  },
+  '已改善': { bg:'rgba(22,101,52,0.1)',  color:'#166534', border:'rgba(22,101,52,0.3)'  },
 };
 
 function fbCatIcon(cat) {
@@ -2859,7 +2926,10 @@ function showFeedback() {
   document.getElementById('page-feedback').classList.add('active');
   document.getElementById('nav-feedback').classList.add('active');
 
-  // 渲染篩選按鈕
+  fbCurrentFilter = 'all';
+  fbCurrentStatusFilter = 'all';
+
+  // 渲染分類篩選按鈕
   const filtersEl = document.getElementById('fbFilters');
   const cats = ['開發處內部','業務','DPC','客人','其他'];
   filtersEl.innerHTML = `
@@ -2875,38 +2945,66 @@ function showFeedback() {
     `).join('')}
   `;
 
+  // 渲染狀態篩選按鈕
+  const statusEl = document.getElementById('fbStatusFilters');
+  const statuses = ['待改善','已改善'];
+  statusEl.innerHTML = `
+    <button class="fb-status-filter" id="fbsf-all" onclick="filterFeedbackStatus(this,'all')"
+      style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--official);background:rgba(29,78,216,0.08);color:#1d4ed8">
+      狀態：全部
+    </button>
+    ${statuses.map(st => `
+      <button class="fb-status-filter" id="fbsf-${st}" onclick="filterFeedbackStatus(this,'${st}')"
+        style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--card);color:var(--text-dim)">
+        ${st === '已改善' ? '✅' : '🕐'} ${st}
+      </button>
+    `).join('')}
+  `;
+
   loadFeedback();
 }
 
 async function loadFeedback() {
+  const list = document.getElementById('fbList');
+  if (list) list.innerHTML = '<div class="loading"><div class="spinner"></div>載入中…</div>';
+
+  // 留言板依品牌完全分開
   const { data, error } = await sb
     .from('feedback')
     .select('*')
+    .eq('brand', currentBrand)
     .order('created_at', { ascending: false });
 
-  const list = document.getElementById('fbList');
-  if (error || !data?.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:16px">還沒有留言，來第一個留言吧！</div>';
+  if (error) {
+    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:#991b1b;font-size:16px">載入失敗，請重新整理</div>';
     return;
   }
+  allFeedbackData = data || [];
+  renderFeedbackList(allFeedbackData);
+}
 
-  renderFeedbackList(data);
+function fbFilteredData() {
+  return allFeedbackData
+    .filter(f => fbCurrentFilter === 'all' || f.category === fbCurrentFilter)
+    .filter(f => fbCurrentStatusFilter === 'all' || (f.status || '待改善') === fbCurrentStatusFilter);
 }
 
 function renderFeedbackList(data) {
   const list = document.getElementById('fbList');
-  const filtered = fbCurrentFilter === 'all'
-    ? data
-    : data.filter(f => f.category === fbCurrentFilter);
+  const filtered = data
+    .filter(f => fbCurrentFilter === 'all' || f.category === fbCurrentFilter)
+    .filter(f => fbCurrentStatusFilter === 'all' || (f.status || '待改善') === fbCurrentStatusFilter);
 
   if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:16px">這個分類還沒有留言</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:16px">這個篩選條件下還沒有留言</div>';
     return;
   }
 
   list.innerHTML = filtered.map(f => {
     const cat = f.category || '其他';
     const c = fbCatColors[cat] || fbCatColors['其他'];
+    const status = f.status || '待改善';
+    const sc = fbStatusColors[status] || fbStatusColors['待改善'];
     return `
       <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2921,6 +3019,10 @@ function renderFeedbackList(data) {
             <span style="font-size:13px;font-weight:600;padding:2px 8px;border-radius:10px;background:${c.bg};color:${c.color};border:1px solid ${c.border}">
               ${fbCatIcon(cat)} ${cat}
             </span>
+            <button onclick="toggleFeedbackStatus('${f.id}')" title="點一下切換狀態"
+              style="font-size:13px;font-weight:600;padding:2px 8px;border-radius:10px;background:${sc.bg};color:${sc.color};border:1px solid ${sc.border};cursor:pointer;font-family:inherit">
+              ${status === '已改善' ? '✅' : '🕐'} ${status}
+            </button>
           </div>
           <div style="display:flex;gap:4px">
             <button onclick="editFeedback('${f.id}')"
@@ -2959,23 +3061,6 @@ function renderFeedbackList(data) {
   }).join('');
 }
 
-let allFeedbackData = [];
-
-async function loadFeedback() {
-  const { data, error } = await sb
-    .from('feedback')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  const list = document.getElementById('fbList');
-  if (error) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#991b1b;font-size:16px">載入失敗，請重新整理</div>';
-    return;
-  }
-  allFeedbackData = data || [];
-  renderFeedbackList(allFeedbackData);
-}
-
 function filterFeedback(btn, cat) {
   fbCurrentFilter = cat;
   document.querySelectorAll('.fb-filter').forEach(b => {
@@ -2986,6 +3071,29 @@ function filterFeedback(btn, cat) {
   btn.style.background = 'rgba(29,78,216,0.08)';
   btn.style.color = '#1d4ed8';
   btn.style.borderColor = 'var(--official)';
+  renderFeedbackList(allFeedbackData);
+}
+
+function filterFeedbackStatus(btn, status) {
+  fbCurrentStatusFilter = status;
+  document.querySelectorAll('.fb-status-filter').forEach(b => {
+    b.style.background = 'var(--card)';
+    b.style.color = 'var(--text-dim)';
+    b.style.borderColor = 'var(--border)';
+  });
+  btn.style.background = 'rgba(29,78,216,0.08)';
+  btn.style.color = '#1d4ed8';
+  btn.style.borderColor = 'var(--official)';
+  renderFeedbackList(allFeedbackData);
+}
+
+async function toggleFeedbackStatus(id) {
+  const f = allFeedbackData.find(x => String(x.id) === String(id));
+  if (!f) return;
+  const newStatus = (f.status || '待改善') === '已改善' ? '待改善' : '已改善';
+  const { error } = await sb.from('feedback').update({ status: newStatus }).eq('id', id);
+  if (error) { alert('更新狀態失敗：' + error.message); return; }
+  f.status = newStatus;
   renderFeedbackList(allFeedbackData);
 }
 
@@ -3011,7 +3119,11 @@ async function submitFeedback() {
     image_url = urlData.publicUrl;
   }
 
-  const { error } = await sb.from('feedback').insert({ author, content, image_url, category });
+  const { error } = await sb.from('feedback').insert({
+    author, content, image_url, category,
+    brand: currentBrand,
+    status: '待改善',
+  });
   if (error) { alert('發布失敗：' + error.message); return; }
 
   document.getElementById('fbContent').value = '';
@@ -3025,6 +3137,100 @@ async function deleteFeedback(id) {
   await sb.from('feedback').delete().eq('id', id);
   allFeedbackData = allFeedbackData.filter(f => f.id !== id);
   renderFeedbackList(allFeedbackData);
+}
+
+// ── 留言板匯出 Excel（含嵌入圖片）───────────────
+function loadExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+    s.onload  = () => resolve(window.ExcelJS);
+    s.onerror = () => reject(new Error('ExcelJS library 載入失敗，請檢查網路'));
+    document.head.appendChild(s);
+  });
+}
+
+async function urlToBase64(url) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result); // data:image/png;base64,...
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function exportFeedbackExcel() {
+  const btn = document.getElementById('fbExportBtn');
+  const data = fbFilteredData();
+  if (!data.length) { alert('目前篩選結果沒有留言可以匯出'); return; }
+
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 匯出中…';
+  btn.disabled = true;
+
+  try {
+    const ExcelJS = await loadExcelJS();
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('留言彙整');
+
+    ws.columns = [
+      { header: '時間',   key: 'time',    width: 18 },
+      { header: '名字',   key: 'author',  width: 12 },
+      { header: '分類',   key: 'cat',     width: 12 },
+      { header: '狀態',   key: 'status',  width: 10 },
+      { header: '內容',   key: 'content', width: 50 },
+      { header: '圖片',   key: 'image',   width: 30 },
+    ];
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
+
+    for (let i = 0; i < data.length; i++) {
+      const f = data[i];
+      const rowIdx = i + 2;
+      ws.addRow({
+        time: formatDate(f.created_at),
+        author: f.author || '匿名',
+        cat: f.category || '其他',
+        status: f.status || '待改善',
+        content: f.content || '',
+      });
+      ws.getRow(rowIdx).alignment = { vertical: 'top', wrapText: true };
+
+      if (f.image_url) {
+        try {
+          const base64 = await urlToBase64(f.image_url);
+          const ext = (base64.match(/^data:image\/(\w+);/) || [,'png'])[1].toLowerCase();
+          const imgExt = ['png','jpeg','jpg','gif'].includes(ext) ? (ext === 'jpg' ? 'jpeg' : ext) : 'png';
+          const imgId = wb.addImage({ base64, extension: imgExt });
+          ws.addImage(imgId, {
+            tl: { col: 5, row: rowIdx - 1 },
+            ext: { width: 180, height: 180 },
+          });
+          ws.getRow(rowIdx).height = 140;
+        } catch (imgErr) {
+          ws.getCell(`F${rowIdx}`).value = f.image_url; // 圖片抓取失敗時退回連結
+        }
+      }
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/octet-stream' });
+    const a = document.createElement('a');
+    const brandLabel = BRAND_INFO[currentBrand]?.label || currentBrand;
+    a.href = URL.createObjectURL(blob);
+    a.download = `留言板彙整_${brandLabel}_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (err) {
+    alert('匯出失敗：' + err.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
 }
 
 function handlePaste(e) {

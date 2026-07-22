@@ -857,7 +857,7 @@ function renderModalProtectedWarning(sectionId) {
 
 function toggleStageField(sectionId) {
   const stageSections = allSections.filter(s =>
-    ['stages','prefit','details','checklist'].includes(s.slug)
+    ['stages','prefit','details','checklist','closet'].includes(s.slug)
   );
   const show = stageSections.some(s => s.id === sectionId);
   document.getElementById('stageField').style.display = show ? 'block' : 'none';
@@ -952,7 +952,7 @@ async function saveEntry() {
   if (!title) { showToast('請填寫標題','error'); return; }
   const section_id = document.getElementById('fSection').value;
   const stageSections = allSections.filter(s =>
-    ['stages','prefit','details','checklist'].includes(s.slug)
+    ['stages','prefit','details','checklist','closet'].includes(s.slug)
   );
   const isStageSection = stageSections.some(s => s.id === section_id);
 
