@@ -64,13 +64,24 @@ header h1 { font-size:14px; font-weight:500; }
 .field textarea { resize:vertical; min-height:90px; line-height:1.6; }
 .field select option { background:var(--navy-mid); }
 
-#adminWrap { padding:28px 36px; max-width:1100px; margin:0 auto; }
+#adminWrap { padding:28px 36px; max-width:1400px; margin:0 auto; }
+.admin-body { display:flex; align-items:flex-start; gap:0; }
+.admin-sidebar { width:190px; flex-shrink:0; border-right:1px solid var(--border); padding-right:16px; margin-right:24px; transition:width 0.18s ease; }
+.admin-sidebar.collapsed { width:92px; }
+.sidebar-toggle { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; margin-bottom:14px; }
+.sidebar-toggle:hover { color:var(--text); }
+.admin-main { flex:1; min-width:0; }
 
 .admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
 .admin-title { font-size:18px; font-weight:700; }
 
-.section-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border); overflow-x:auto; }
-.sec-tab { padding:6px 14px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+.section-tabs { display:flex; flex-direction:column; gap:6px; margin-bottom:0; padding-bottom:0; border-bottom:none; overflow-y:auto; max-height:calc(100vh - 220px); }
+.sec-tab { padding:7px 12px; font-size:12px; font-weight:500; border-radius:6px; cursor:pointer; color:var(--text-dim); border:1px solid var(--border); background:var(--card); font-family:inherit; transition:all 0.12s; display:flex; align-items:center; gap:7px; white-space:nowrap; width:100%; text-align:left; overflow:hidden; }
+.sec-tab .sec-tab-label { overflow:hidden; text-overflow:ellipsis; }
+.admin-sidebar.collapsed .sec-tab { flex-direction:column; justify-content:center; padding:9px 4px; gap:5px; overflow:visible; min-height:48px; height:auto; }
+.admin-sidebar.collapsed .sec-tab-icon { font-size:13px; }
+.admin-sidebar.collapsed .sec-tab .sec-tab-label { display:block; font-size:11px; line-height:1.35; white-space:normal; text-align:center; overflow:visible; word-break:break-word; color:var(--text); }
+.admin-sidebar.collapsed .sec-tab .lock { display:none; }
 .sec-tab:hover { color:var(--text); }
 .sec-tab.active { background:var(--gap-blue); color:#fff; border-color:transparent; }
 .sec-tab .lock { font-size:10px; opacity:0.75; }
@@ -128,6 +139,24 @@ header h1 { font-size:14px; font-weight:500; }
 .add-path-btn { font-size:12px; padding:5px 10px; border-radius:5px; border:1px dashed var(--border); background:none; color:var(--text-dim); cursor:pointer; font-family:inherit; }
 .add-path-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.15); }
 
+.global-search { position:relative; width:260px; }
+.global-search input { width:100%; background:var(--navy-light); border:1px solid var(--border); border-radius:7px; padding:6px 10px 6px 30px; font-size:12px; color:var(--text); font-family:inherit; outline:none; }
+.global-search input:focus { border-color:rgba(59,130,246,0.5); }
+.global-search .icn { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-faint); pointer-events:none; }
+.global-search-results { display:none; position:absolute; top:calc(100% + 6px); left:0; width:340px; max-height:360px; overflow-y:auto; background:var(--navy-mid); border:1px solid var(--border); border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,0.4); z-index:100; }
+.global-search-results.open { display:block; }
+.gsr-item { padding:9px 12px; cursor:pointer; border-bottom:1px solid var(--border); }
+.gsr-item:last-child { border-bottom:none; }
+.gsr-item:hover { background:rgba(255,255,255,0.04); }
+.gsr-title { font-size:12.5px; font-weight:600; color:#fff; }
+.gsr-sec { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.gsr-empty { padding:14px; font-size:12px; color:var(--text-dim); text-align:center; }
+.gsr-kbd { font-family:'DM Mono',monospace; font-size:10px; color:var(--text-faint); border:1px solid var(--border); border-radius:4px; padding:1px 5px; margin-left:6px; }
+
+.batch-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:12.5px; }
+.batch-toolbar select { background:var(--navy-light); border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:12px; color:var(--text); font-family:inherit; }
+.select-all-wrap { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); cursor:pointer; }
+
 .toast { position:fixed; bottom:24px; right:24px; background:var(--navy-mid); border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:13px; color:var(--text); z-index:300; transform:translateY(10px); opacity:0; transition:all 0.2s; }
 .toast.show { transform:translateY(0); opacity:1; }
 .toast.success { border-color:rgba(16,185,129,0.3); color:#6ee7b7; }
@@ -162,8 +191,13 @@ header h1 { font-size:14px; font-weight:500; }
 
 <header>
   <div class="logo">GAP3D</div>
-  <h1>編輯後台</h1>
+  <h1>GAP INC</h1>
   <div class="header-right">
+    <div class="global-search" id="globalSearchWrap">
+      <span class="icn">🔍</span>
+      <input id="globalSearchInput" placeholder="全域搜尋所有分類… (Ctrl+K)" oninput="onGlobalSearchInput(this.value)" onfocus="onGlobalSearchInput(this.value)">
+      <div class="global-search-results" id="globalSearchResults"></div>
+    </div>
     <button class="icon-btn" title="使用導覽" onclick="startTour(true)">？</button>
     <a href="index-GAP3D.html" class="btn btn-ghost">← 回知識庫</a>
   </div>
@@ -180,21 +214,26 @@ header h1 { font-size:14px; font-weight:500; }
     </div>
   </div>
 
-  <div class="section-tabs" id="sectionTabs">
-    <div class="loading"><div class="spinner"></div></div>
-  </div>
-
-  <div id="protectedBanner"></div>
-
-  <div class="entries-toolbar">
-    <div class="entries-title" id="currentSectionName"></div>
-    <div class="entry-search">
-      <span class="icn">🔍</span>
-      <input id="entrySearchInput" placeholder="搜尋標題或內容…" oninput="setEntrySearch(this.value)">
+  <div class="admin-body">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="收合/展開側邊欄">☰</button>
+      <div class="section-tabs" id="sectionTabs">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <div id="protectedBanner"></div>
+      <div class="entries-toolbar">
+        <div class="entries-title" id="currentSectionName"></div>
+        <div class="entry-search">
+          <span class="icn">🔍</span>
+          <input id="entrySearchInput" placeholder="搜尋標題或內容…" oninput="setEntrySearch(this.value)">
+        </div>
+      </div>
+      <div id="entriesList" style="max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px">
+        <div class="loading"><div class="spinner"></div>載入中…</div>
+      </div>
     </div>
-  </div>
-  <div id="entriesList">
-    <div class="loading"><div class="spinner"></div>載入中…</div>
   </div>
 </div>
 
@@ -205,6 +244,8 @@ header h1 { font-size:14px; font-weight:500; }
 .entry-edit-grid { display: grid; grid-template-columns: 1fr 430px; gap: 22px; align-items: start; }
 @media (max-width: 980px) { .entry-edit-grid { grid-template-columns: 1fr; } }
 .preview-col { position: sticky; top: 0; }
+.entry-edit-grid.preview-hidden { grid-template-columns: 1fr; }
+.entry-edit-grid.preview-hidden .preview-col { display: none; }
 .preview-head { font-size: 12px; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
 /* 亮色舞台=前台的樣子;背景刻意與後台不同,提醒這是「前台會呈現的結果」 */
 .preview-stage { background: #f8f9fb; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; min-height: 200px; }
@@ -229,7 +270,10 @@ header h1 { font-size:14px; font-weight:500; }
 <div class="overlay" id="modalOverlay">
   <div class="modal modal-entry">
     <div class="brand-strip" id="modalBrandStrip"></div>
-    <h3 id="modalTitle">新增條目</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h3 id="modalTitle">新增條目</h3>
+      <button class="icon-btn" id="previewToggleBtn" onclick="togglePreviewPane()" title="隱藏/顯示前台預覽">👁</button>
+    </div>
     <div id="modalProtectedWarning"></div>
     <div class="entry-edit-grid">
     <div class="form-col">
@@ -467,6 +511,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let allSections = [], allEntries = [];
 let currentSectionId = null, editingEntryId = null;
 let entrySearchVal = '';
+let selectedEntryIds = new Set();
+let lastRenderedEntries = [];
 
 async function init() {
   await loadData();
@@ -494,18 +540,31 @@ function isProtectedSection(s) {
   return s.slug === 'tracker-data' || s.slug === 'stage-config' || String(s.slug||'').startsWith('_') || String(s.group_name||'').startsWith('_');
 }
 
+function stripLeadingEmoji(name) {
+  return String(name||'').replace(/^[\u{1F1E6}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}]+\s*/u, '');
+}
 function renderSectionTabs() {
   document.getElementById('sectionTabs').innerHTML = allSections.map(s =>
-    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')">${s.icon||''} ${esc(s.name)}${isProtectedSection(s)?' <span class="lock" title="系統保護分類">🔒</span>':''}</button>`
+    `<button class="sec-tab" id="tab-${s.id}" onclick="selectSection('${s.id}')" title="${esc(s.name)}"><span class="sec-tab-icon">${s.icon||'📁'}</span><span class="sec-tab-label">${esc(stripLeadingEmoji(s.name))}${isProtectedSection(s)?' <span class="lock" title="系統保護分類">🔒</span>':''}</span></button>`
   ).join('');
   document.getElementById('fSection').innerHTML = allSections.map(s =>
     `<option value="${s.id}">${esc(s.name)}${isProtectedSection(s)?' 🔒':''}</option>`
   ).join('');
 }
 
+function toggleSidebar() {
+  const sb = document.getElementById('adminSidebar');
+  sb.classList.toggle('collapsed');
+  localStorage.setItem('gap3d_admin_sidebar_collapsed', sb.classList.contains('collapsed') ? '1' : '0');
+}
+if (localStorage.getItem('gap3d_admin_sidebar_collapsed') === '1') {
+  document.getElementById('adminSidebar')?.classList.add('collapsed');
+}
+
 function selectSection(id) {
   currentSectionId = id;
   entrySearchVal = '';
+  selectedEntryIds.clear();
   const input = document.getElementById('entrySearchInput');
   if (input) input.value = '';
   document.querySelectorAll('.sec-tab').forEach(t => t.classList.remove('active'));
@@ -522,6 +581,130 @@ function selectSection(id) {
 let brandFilterVal = '';
 function setBrandFilter(v) { brandFilterVal = v; renderEntries(); }
 function setEntrySearch(v) { entrySearchVal = v.trim().toLowerCase(); renderEntries(); }
+
+// ── 全域搜尋(跨分類) ──────────────────────────
+function onGlobalSearchInput(v) {
+  const q = v.trim().toLowerCase();
+  const box = document.getElementById('globalSearchResults');
+  if (!q) { box.classList.remove('open'); box.innerHTML = ''; return; }
+  const matches = allEntries.filter(e =>
+    String(e.title||'').toLowerCase().includes(q) || String(e.content||'').toLowerCase().includes(q)
+  ).slice(0, 20);
+  if (!matches.length) {
+    box.innerHTML = '<div class="gsr-empty">找不到符合的條目</div>';
+  } else {
+    box.innerHTML = matches.map(e => {
+      const sec = allSections.find(s => s.id === e.section_id);
+      return `<div class="gsr-item" onclick="jumpToEntry('${e.id}')">
+        <div class="gsr-title">${esc(e.title)}</div>
+        <div class="gsr-sec">${sec ? esc(sec.icon||'') + ' ' + esc(sec.name) : ''}</div>
+      </div>`;
+    }).join('');
+  }
+  box.classList.add('open');
+}
+function jumpToEntry(id) {
+  const e = allEntries.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('globalSearchResults').classList.remove('open');
+  document.getElementById('globalSearchInput').value = '';
+  selectSection(e.section_id);
+  setTimeout(() => openEditEntry(id), 50);
+}
+document.addEventListener('click', (ev) => {
+  if (!ev.target.closest('#globalSearchWrap')) document.getElementById('globalSearchResults')?.classList.remove('open');
+});
+
+// ── 鍵盤捷徑 ──────────────────────────────────
+document.addEventListener('keydown', (ev) => {
+  const tag = (ev.target.tagName || '').toLowerCase();
+  const typing = tag === 'input' || tag === 'textarea' || ev.target.isContentEditable;
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'k') {
+    ev.preventDefault(); document.getElementById('globalSearchInput').focus(); return;
+  }
+  if (ev.key === '/' && !typing) {
+    ev.preventDefault(); document.getElementById('globalSearchInput').focus(); return;
+  }
+  if (ev.key.toLowerCase() === 'n' && !typing) {
+    ev.preventDefault(); openNewEntry(); return;
+  }
+  if (ev.key === 'Escape') {
+    const gsr = document.getElementById('globalSearchResults');
+    if (gsr.classList.contains('open')) { gsr.classList.remove('open'); return; }
+    ['modalOverlay','accountsModalOverlay','accountEditOverlay','sectionModalOverlay','sectionEditOverlay','stageCfgOverlay','confirmOverlay'].forEach(id => {
+      document.getElementById(id)?.classList.remove('open');
+    });
+  }
+});
+
+// ── 批次操作 ──────────────────────────────────
+function toggleEntrySelect(id, checked) {
+  if (checked) selectedEntryIds.add(id); else selectedEntryIds.delete(id);
+  renderEntries();
+}
+function clearSelection() { selectedEntryIds.clear(); renderEntries(); }
+function toggleSelectAll(checked) {
+  lastRenderedEntries.forEach(e => checked ? selectedEntryIds.add(e.id) : selectedEntryIds.delete(e.id));
+  renderEntries();
+}
+function batchToolbarHtml() {
+  if (!selectedEntryIds.size) return '';
+  return `<div class="batch-toolbar">
+    <strong>${selectedEntryIds.size} 項已選取</strong>
+    <select id="batchBrandSel"><option value="">套用品牌…</option><option value="__shared__">🌐 全品牌</option><option value="GAP">🔵 GAP 專屬</option><option value="ATH">🟣 ATHLETA 專屬</option></select>
+    <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchBrand()">套用品牌</button>
+    <select id="batchSectionSel">${allSections.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+    <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchMove()">移動到此分類</button>
+    <button class="btn btn-danger" style="padding:5px 10px" onclick="confirmBatchDelete()">🗑 刪除選取</button>
+    <button class="btn btn-ghost" style="padding:5px 10px" onclick="clearSelection()">取消選取</button>
+  </div>`;
+}
+function applyBatchBrand() {
+  const v = document.getElementById('batchBrandSel').value;
+  if (!v) { showToast('請選擇要套用的品牌', 'error'); return; }
+  const brandVal = v === '__shared__' ? null : v;
+  const ids = [...selectedEntryIds];
+  openConfirm({
+    icon: '🔀', title: `套用品牌到 ${ids.length} 個條目？`,
+    body: '此操作會覆蓋這些條目目前的「適用品牌」設定。', confirmLabel: '套用',
+    onConfirm: async () => {
+      const { error } = await sb.from('entries').update({ brands: brandVal }).in('id', ids);
+      if (error) { showToast('批次更新失敗：' + error.message, 'error'); return; }
+      showToast('已更新 ' + ids.length + ' 個條目 ✓', 'success');
+      clearSelection(); await loadData(); selectSection(currentSectionId);
+    },
+  });
+}
+function applyBatchMove() {
+  const sectionId = document.getElementById('batchSectionSel').value;
+  if (!sectionId) return;
+  const ids = [...selectedEntryIds];
+  const secName = allSections.find(s => s.id === sectionId)?.name || '';
+  openConfirm({
+    icon: '📦', title: `移動 ${ids.length} 個條目到「${secName}」？`,
+    body: '移動後這些條目將從目前分類消失，改在目標分類顯示。', confirmLabel: '移動',
+    onConfirm: async () => {
+      const { error } = await sb.from('entries').update({ section_id: sectionId }).in('id', ids);
+      if (error) { showToast('批次移動失敗：' + error.message, 'error'); return; }
+      showToast('已移動 ' + ids.length + ' 個條目 ✓', 'success');
+      clearSelection(); await loadData(); selectSection(currentSectionId);
+    },
+  });
+}
+function confirmBatchDelete() {
+  const ids = [...selectedEntryIds];
+  if (!ids.length) return;
+  openConfirm({
+    title: `確定要刪除這 ${ids.length} 個條目？`,
+    body: '刪除後無法復原，前台將立即看不到這些內容。',
+    onConfirm: async () => {
+      const { error } = await sb.from('entries').delete().in('id', ids);
+      if (error) { showToast('批次刪除失敗：' + error.message, 'error'); return; }
+      showToast('已刪除 ' + ids.length + ' 個條目', 'success');
+      clearSelection(); await loadData(); selectSection(currentSectionId);
+    },
+  });
+}
 function brandTagAdmin(e) {
   const b = String(e.brands||'').trim().toUpperCase();
   if (b === 'GAP') return '<span class="badge-sm bs-gap">🔵 GAP</span>';
@@ -545,10 +728,13 @@ function renderEntries() {
     );
   }
   const fBtn = (v, label) => `<button onclick="setBrandFilter('${v}')" style="background:${brandFilterVal===v?'rgba(59,130,246,0.25)':'none'};border:1px solid ${brandFilterVal===v?'#3b82f6':'rgba(148,163,184,0.3)'};color:inherit;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit">${label}</button>`;
+  const allSelected = entries.length > 0 && entries.every(e => selectedEntryIds.has(e.id));
   const filterBar = total ? `
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;font-size:12px;color:#94a3b8">
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:12px;color:#94a3b8;flex-wrap:wrap">
+      <label class="select-all-wrap"><input type="checkbox" ${allSelected?'checked':''} onchange="toggleSelectAll(this.checked)" style="accent-color:var(--official)">全選</label>
       品牌篩選：${fBtn('','全部')} ${fBtn('ALL','🌐 共用')} ${fBtn('GAP','🔵 GAP')} ${fBtn('ATH','🟣 ATH')}
     </div>` : '';
+  lastRenderedEntries = entries;
   if (!total) {
     el.innerHTML = '<div class="loading" style="padding:30px">此分類尚無條目，點擊右上角「新增條目」開始</div>';
     return;
@@ -559,8 +745,9 @@ function renderEntries() {
   }
   const bm = { official:'bs-official', internal:'bs-internal', warning:'bs-warning' };
   const sl = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
-  el.innerHTML = filterBar + entries.map(e => `
+  el.innerHTML = batchToolbarHtml() + filterBar + entries.map(e => `
     <div class="entry-row">
+      <input type="checkbox" class="entry-cb" ${selectedEntryIds.has(e.id)?'checked':''} onclick="toggleEntrySelect('${e.id}', this.checked)" style="margin-top:3px;accent-color:var(--official);flex-shrink:0">
       <div class="entry-info">
         <div class="entry-title">${esc(e.title)}</div>
         <div class="entry-meta">
@@ -617,6 +804,7 @@ function openNewEntry() {
   renderModalProtectedWarning(currentSectionId);
   updateBrandWarning();
   renderEntryPreview();
+  applyPreviewPanePref();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -642,6 +830,7 @@ function openEditEntry(id) {
   renderModalProtectedWarning(e.section_id);
   updateBrandWarning();
   renderEntryPreview();
+  applyPreviewPanePref();
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -680,6 +869,15 @@ document.getElementById('fSection').addEventListener('change', function() {
 });
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function togglePreviewPane() {
+  const grid = document.querySelector('.entry-edit-grid');
+  grid.classList.toggle('preview-hidden');
+  localStorage.setItem('gap3d_admin_preview_hidden', grid.classList.contains('preview-hidden') ? '1' : '0');
+}
+function applyPreviewPanePref() {
+  document.querySelector('.entry-edit-grid').classList.toggle('preview-hidden', localStorage.getItem('gap3d_admin_preview_hidden') === '1');
+}
 
 function addPathField(val='') {
   const div = document.createElement('div');
