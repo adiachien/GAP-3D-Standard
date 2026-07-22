@@ -572,8 +572,33 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 </head>
 <body>
 
+<div id="brandGate" style="display:none;position:fixed;inset:0;z-index:2000;background:#0b1220;align-items:center;justify-content:center;flex-direction:column;padding:20px">
+  <div style="color:#fff;font-size:26px;font-weight:700;margin-bottom:6px">選擇品牌</div>
+  <div style="color:rgba(255,255,255,0.55);font-size:14px;margin-bottom:32px">選擇要查看的 3D 規範文件</div>
+  <div style="display:grid;grid-template-columns:repeat(2,220px);gap:16px">
+    <button onclick="pickBrandFromGate('GAP')" style="cursor:pointer;background:#12203a;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#1d4ed8'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+      <div style="width:56px;height:56px;border-radius:10px;background:#002A5C;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:0.05em">GAP</div>
+      <div style="font-size:16px;font-weight:600">GAP</div>
+    </button>
+    <button onclick="pickBrandFromGate('ATH')" style="cursor:pointer;background:#1a1330;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#6d28d9'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+      <div style="width:56px;height:56px;border-radius:10px;background:#6d28d9;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;letter-spacing:0.05em">ATH</div>
+      <div style="font-size:16px;font-weight:600">ATHLETA</div>
+    </button>
+    <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
+      <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:0.05em">ON</div>
+      <div style="font-size:16px;font-weight:600">OLD NAVY</div>
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
+    </button>
+    <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
+      <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:0.03em">BR</div>
+      <div style="font-size:16px;font-weight:600">BANANA REPUBLIC</div>
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
+    </button>
+  </div>
+</div>
+
 <header>
-  <div class="logo" id="appLogo">GAP</div>
+  <div class="logo" id="appLogo" onclick="openBrandGate()" style="cursor:pointer" title="切換品牌">GAP</div>
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
     <div class="stage-indicator" id="stageIndicator" onclick="jumpToCurrentStage()" title="回到目前 Stage 的樣品種類頁面"></div>
@@ -806,12 +831,30 @@ let currentSlug = null;
 // ── 品牌切換（GAP / ATH）───────────────────────
 // entries.brands 欄位：空值 / 'ALL' = 全品牌共用，'GAP' / 'ATH' = 品牌專屬
 const BRAND_INFO = {
-  GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard' },
-  ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard' },
+  GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard', enabled: true },
+  ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard', enabled: true },
+  ON:  { label: 'OLD NAVY', logo: 'ON', title: 'OLD NAVY 3D Standard', enabled: false },
+  BR:  { label: 'BANANA REPUBLIC', logo: 'BR', title: 'BANANA REPUBLIC 3D Standard', enabled: false },
 };
 let currentBrand = 'GAP';
 try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {}
-if (!BRAND_INFO[currentBrand]) currentBrand = 'GAP';
+if (!BRAND_INFO[currentBrand] || !BRAND_INFO[currentBrand].enabled) currentBrand = 'GAP';
+
+// ── 品牌選擇首頁（第一次開啟，或點 Logo 回到選擇畫面）──
+function openBrandGate() {
+  document.getElementById('brandGate').style.display = 'flex';
+}
+function closeBrandGate() {
+  document.getElementById('brandGate').style.display = 'none';
+}
+function pickBrandFromGate(b) {
+  if (!BRAND_INFO[b] || !BRAND_INFO[b].enabled) return;
+  try { localStorage.setItem('gap3d_brand_chosen', '1'); } catch (e) {}
+  if (b !== currentBrand) setBrand(b); else updateBrandUI();
+  closeBrandGate();
+}
+let __brandChosenBefore = false;
+try { __brandChosenBefore = localStorage.getItem('gap3d_brand_chosen') === '1'; } catch (e) {}
 
 // ── 全域「目前 Stage」狀態（跨 樣品種類/Prefit/細節/Checklist 保持一致，不隨頁面切換而重置）
 let currentStageKey = 'proto';
@@ -913,6 +956,7 @@ function routeFromHash() {
 }
 
 async function init() {
+  if (!__brandChosenBefore) openBrandGate();
   updateBrandUI();
   // Phase 0: 先用 localStorage 快取瞬間顯示（背景再更新）
   let hadCache = false;
