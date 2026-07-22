@@ -1686,13 +1686,26 @@ function renderAvatarPage(section, entries) {
             <div class="card-title">${escHtml(e.title)}</div>
             <span class="badge badge-official">官方規範</span>
           </div>
-          ${(e.paths||[]).map((p,idx)=>`
-            <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
-              <button class="copy-btn" data-path="${escHtml(p)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 複製</button>
-              <span class="path-block" style="flex:1;margin:0">${escHtml(p)}</span>
-              <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
+          ${(e.paths||[]).map((p,idx)=>{
+            const hasSep = p.includes('｜');
+            const label  = hasSep ? p.split('｜')[0].trim() : '';
+            const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
+            const isUrl  = value.startsWith('http');
+            return `
+            <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+              ${isUrl ? `
+                <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">🔗 開啟</a>
+              ` : `
+                <button class="copy-btn" data-path="${escHtml(value)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 copy</button>
+              `}
+              ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
+              ${isUrl
+                ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
+                : `<span class="path-block" style="flex:1;margin:0">${escHtml(value)}</span>`
+              }
+              <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
             </div>
-          `).join('')}
+          `;}).join('')}
           <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
           ${renderCardImages(e)}
         </div>
