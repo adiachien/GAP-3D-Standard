@@ -113,6 +113,23 @@ header h1 { font-size: 18px; font-weight: 500; }
 .legend-item { display:flex; align-items:center; gap:5px; }
 .legend-dot { width:8px; height:8px; border-radius:2px; }
 
+.stage-indicator {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent);
+  border: 1px solid var(--brand-border-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.stage-indicator:hover { filter: brightness(0.95); }
+
 .btn-admin {
   font-size: 12px;
   padding: 5px 12px;
@@ -559,6 +576,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   <div class="logo" id="appLogo">GAP</div>
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
+    <div class="stage-indicator" id="stageIndicator" onclick="jumpToCurrentStage()" title="回到目前 Stage 的樣品種類頁面"></div>
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
       <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
@@ -772,6 +790,24 @@ let currentBrand = 'GAP';
 try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {}
 if (!BRAND_INFO[currentBrand]) currentBrand = 'GAP';
 
+// ── 全域「目前 Stage」狀態（跨 樣品種類/Prefit/細節/Checklist 保持一致，不隨頁面切換而重置）
+let currentStageKey = 'proto';
+try { currentStageKey = localStorage.getItem('gap3d_stage_key') || 'proto'; } catch (e) {}
+function setCurrentStage(key) {
+  currentStageKey = key;
+  try { localStorage.setItem('gap3d_stage_key', key); } catch (e) {}
+  updateStageIndicator();
+}
+function updateStageIndicator() {
+  const el = document.getElementById('stageIndicator');
+  if (!el) return;
+  const st = getStageCfg().find(s => s.key === currentStageKey);
+  if (!st) { el.style.display = 'none'; return; }
+  el.style.display = 'inline-flex';
+  el.textContent = '🎬 目前 Stage：' + st.name;
+}
+function jumpToCurrentStage() { showSectionWithStage('stages', currentStageKey); }
+
 // entry 是否屬於目前品牌（空值＝全品牌，舊資料完全不用動）
 function brandOk(e) {
   const b = String(e.brands || '').trim().toUpperCase();
@@ -797,6 +833,7 @@ function updateBrandUI() {
     const btn = document.getElementById('brandBtn-' + k);
     if (btn) btn.className = (k === currentBrand) ? ('active-' + k) : '';
   });
+  updateStageIndicator();
 }
 
 function setBrand(b) {
@@ -840,7 +877,7 @@ function routeFromHash() {
       showSection(hash);
       setTimeout(() => selectStageTab(
         hash === 'prefit' ? 'pf' : hash === 'details' ? 'dt' : 'cl',
-        'proto'
+        currentStageKey
       ), 100);
     } else {
       showSection(hash);
@@ -980,13 +1017,15 @@ function showSection(slug) {
 
   renderSection(section, entries);
 
-  // 自動選正單 + Stage 2（prefit / details / checklist）
+  // 自動選目前 Stage（樣品種類 / Prefit / 細節 / Checklist 共享同一個 Stage）
   const stageSlugs = ['prefit','details','checklist'];
   if (stageSlugs.includes(slug)) {
     setTimeout(() => {
       const pkMap = { prefit:'pf', details:'dt', checklist:'cl' };
-      selectStageTab(pkMap[slug], 'proto');
+      selectStageTab(pkMap[slug], currentStageKey);
     }, 50);
+  } else if (slug === 'stages') {
+    setTimeout(() => selectStage(currentStageKey), 50);
   }
 }
 
@@ -1352,6 +1391,7 @@ function selectStage(key) {
   const cfg = getStageCfg();
   const st = cfg.find(x => x.key === key);
   if (!st || !st.active) return;
+  setCurrentStage(key);
 
   const mainTab = { label: 'Proto', mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
   let s;
@@ -1609,6 +1649,7 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
 }
 
 function selectStageTab(pageKey, stageKey) {
+  setCurrentStage(stageKey);
   document.querySelectorAll(`[id^="${pageKey}box-"]`).forEach(box => {
     const k = box.id.replace(`${pageKey}box-`, '');
     box.style.borderColor = k === stageKey ? 'var(--brand-accent)' : '';
