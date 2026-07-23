@@ -1759,6 +1759,7 @@ function renderStageOverviewTable(stages) {
             ${stages.map(s => `
               <th id="stagecol-${s.key}" data-stagecol="${s.key}" ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
                 style="text-align:center;padding:10px 8px;border-radius:8px 8px 0 0;transition:background .12s;
+                       width:${s.active ? 'auto' : '70px'};
                        cursor:${s.active ? 'pointer' : 'default'};
                        background:${s.active ? 'var(--brand-accent)' : '#f9fafb'};
                        color:${s.active ? '#fff' : '#9ca3af'};">
