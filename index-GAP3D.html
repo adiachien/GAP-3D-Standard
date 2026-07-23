@@ -1071,24 +1071,14 @@ const GAP3D_CACHE = 'gap3d_cache_v1';
 
 function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
-  const stageSlugs = ['prefit','details','checklist','closet'];
-  const stagePageKeyMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
   if (hash === 'feedback') {
     showFeedback();
   } else if (hash === 'tracker') {
     showTracker();
   } else if (hash && allSections.find(s => s.slug === hash)) {
-    if (stageSlugs.includes(hash)) {
-      showSection(hash);
-      setTimeout(() => selectStageTab(
-        stagePageKeyMap[hash],
-        currentStageKey
-      ), 100);
-    } else {
-      showSection(hash);
-    }
+    showSection(hash, false);
   } else if (allSections.length) {
-    showSection(allSections[0].slug);
+    showSection(allSections[0].slug, false);
   }
 }
 
@@ -1192,7 +1182,7 @@ function showSectionWithStage(slug, stageKey) {
 }
 
 // ── Show Section ───────────────────────────────
-function showSection(slug) {
+function showSection(slug, applyStageMemory = true) {
   // ATHLETA / OLD NAVY 沒有非正單流程
   if (!hasInformal() && slug === 'informal') {
     const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
@@ -1224,13 +1214,14 @@ function showSection(slug) {
   renderSection(section, entries);
 
   // 自動選目前 Stage（樣品種類 / Prefit / 細節 / Checklist 共享同一個 Stage）
+  // applyStageMemory=false：重整／直接開網址落地時，維持該頁原始（中性）畫面，不強制跳去上次的 Stage
   const stageSlugs = ['prefit','details','checklist','closet'];
-  if (stageSlugs.includes(slug)) {
+  if (applyStageMemory && stageSlugs.includes(slug)) {
     setTimeout(() => {
       const pkMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
       selectStageTab(pkMap[slug], currentStageKey);
     }, 50);
-  } else if (slug === 'stages') {
+  } else if (applyStageMemory && slug === 'stages') {
     setTimeout(() => selectStage(currentStageKey), 50);
   }
 }
