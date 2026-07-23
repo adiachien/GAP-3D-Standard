@@ -535,32 +535,39 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 }
 .grid-expand-close:hover { border-color: #b91c1c; color: #b91c1c; }
 
-/* ── 品牌切換器 ── */
-.brand-switch {
-  display: flex;
-  gap: 0;
-  margin: 10px 12px 2px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 3px;
+/* ── 品牌切換器（下拉式，可容納 4+ 品牌不擁擠） ── */
+.brand-switcher { position: relative; margin: 10px 12px 6px; }
+.brand-switcher-trigger {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 10px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700;
+  color: var(--text); transition: border-color 0.15s;
 }
-.brand-switch button {
-  flex: 1;
-  border: none;
-  background: none;
-  padding: 6px 0;
-  border-radius: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
+.brand-switcher-trigger:hover { border-color: var(--brand-accent); }
+.bst-dot { width: 9px; height: 9px; border-radius: 3px; background: var(--brand-accent); flex-shrink: 0; transition: background 0.2s; }
+.bst-label { flex: 1; text-align: left; letter-spacing: 0.03em; }
+.bst-chev { color: var(--text-muted); font-size: 11px; transition: transform 0.15s; }
+.brand-switcher.open .bst-chev { transform: rotate(180deg); }
+.brand-dropdown {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.14); padding: 5px; z-index: 60;
 }
-.brand-switch button.active-GAP { background: var(--gap-navy); color: #fff; }
-.brand-switch button.active-ATH { background: #6d28d9; color: #fff; }
+.brand-switcher.open .brand-dropdown { display: block; }
+.bd-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 7px;
+  font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; transition: background 0.12s;
+}
+.bd-item:hover { background: var(--bg-sidebar); }
+.bd-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.bd-check { margin-left: auto; color: var(--brand-accent); font-size: 12px; opacity: 0; }
+.bd-item.bd-active .bd-check { opacity: 1; }
+.bd-item.bd-disabled { cursor: not-allowed; color: var(--text-muted); }
+.bd-item.bd-disabled:hover { background: none; }
+.bd-soon {
+  margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+  background: rgba(148,163,184,0.18); color: var(--text-muted); padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+}
 
 /* 品牌徽章 */
 .brand-tag {
@@ -577,6 +584,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 .brand-tag-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .brand-tag-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
 .brand-tag-ON  { background: rgba(0,87,184,0.08);  color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
+.brand-tag-SHARED { background: rgba(100,116,139,0.08); color: #475569; border: 1px solid rgba(100,116,139,0.25); }
 </style>
 </head>
 <body>
@@ -627,10 +635,18 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 
   <!-- SIDEBAR -->
   <aside id="sidebar">
-    <div class="brand-switch" id="brandSwitch">
-      <button id="brandBtn-GAP" onclick="setBrand('GAP')">GAP</button>
-      <button id="brandBtn-ATH" onclick="setBrand('ATH')">ATHLETA</button>
-      <button id="brandBtn-ON" onclick="setBrand('ON')">OLD NAVY</button>
+    <div class="brand-switcher" id="brandSwitcher">
+      <button class="brand-switcher-trigger" id="brandSwitcherTrigger" onclick="toggleBrandDropdown()">
+        <span class="bst-dot"></span>
+        <span class="bst-label" id="bstLabel">GAP</span>
+        <span class="bst-chev">▾</span>
+      </button>
+      <div class="brand-dropdown" id="brandDropdown">
+        <div class="bd-item" data-brand="GAP" onclick="setBrand('GAP')"><span class="bd-dot" style="background:#002A5C"></span>GAP<span class="bd-check">✓</span></div>
+        <div class="bd-item" data-brand="ATH" onclick="setBrand('ATH')"><span class="bd-dot" style="background:#6d28d9"></span>ATHLETA<span class="bd-check">✓</span></div>
+        <div class="bd-item" data-brand="ON" onclick="setBrand('ON')"><span class="bd-dot" style="background:#0057B8"></span>OLD NAVY<span class="bd-check">✓</span></div>
+        <div class="bd-item bd-disabled" title="即將推出"><span class="bd-dot" style="background:#9ca3af"></span>BANANA REPUBLIC<span class="bd-soon">即將推出</span></div>
+      </div>
     </div>
     <div class="search-sidebar">
       <div class="search-wrap-inner">
@@ -1019,7 +1035,7 @@ function brandOk(e) {
 // 品牌專屬徽章（共用條目不顯示；多品牌條目顯示多個獨立徽章並排）
 function brandBadge(e) {
   const list = brandList(e).filter(b => b !== 'ALL' && BRAND_INFO[b]);
-  if (!list.length) return '';
+  if (!list.length) return '<span class="brand-tag brand-tag-SHARED">🌐 全品牌共用</span>';
   return list.map(b => `<span class="brand-tag brand-tag-${b}">${BRAND_INFO[b].label}</span>`).join(' ');
 }
 
@@ -1032,14 +1048,25 @@ function updateBrandUI() {
   if (logo)  logo.textContent = info.logo;
   if (title) title.textContent = info.title;
   document.title = info.title;
-  Object.keys(BRAND_INFO).forEach(k => {
-    const btn = document.getElementById('brandBtn-' + k);
-    if (btn) btn.className = (k === currentBrand) ? ('active-' + k) : '';
+  document.getElementById('bstLabel').textContent = info.label;
+  document.querySelectorAll('.bd-item[data-brand]').forEach(el => {
+    el.classList.toggle('bd-active', el.dataset.brand === currentBrand);
   });
   updateStageIndicator();
 }
 
+function toggleBrandDropdown() {
+  document.getElementById('brandSwitcher')?.classList.toggle('open');
+}
+function closeBrandDropdown() {
+  document.getElementById('brandSwitcher')?.classList.remove('open');
+}
+document.addEventListener('click', (ev) => {
+  if (!ev.target.closest('#brandSwitcher')) closeBrandDropdown();
+});
+
 function setBrand(b) {
+  closeBrandDropdown();
   if (!BRAND_INFO[b] || b === currentBrand) return;
   currentBrand = b;
   try { localStorage.setItem('gap3d_brand', b); } catch (e) {}
@@ -1071,24 +1098,14 @@ const GAP3D_CACHE = 'gap3d_cache_v1';
 
 function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
-  const stageSlugs = ['prefit','details','checklist','closet'];
-  const stagePageKeyMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
   if (hash === 'feedback') {
     showFeedback();
   } else if (hash === 'tracker') {
     showTracker();
   } else if (hash && allSections.find(s => s.slug === hash)) {
-    if (stageSlugs.includes(hash)) {
-      showSection(hash);
-      setTimeout(() => selectStageTab(
-        stagePageKeyMap[hash],
-        currentStageKey
-      ), 100);
-    } else {
-      showSection(hash);
-    }
+    showSection(hash, false);
   } else if (allSections.length) {
-    showSection(allSections[0].slug);
+    showSection(allSections[0].slug, false);
   }
 }
 
@@ -1192,7 +1209,7 @@ function showSectionWithStage(slug, stageKey) {
 }
 
 // ── Show Section ───────────────────────────────
-function showSection(slug) {
+function showSection(slug, applyStageMemory = true) {
   // ATHLETA / OLD NAVY 沒有非正單流程
   if (!hasInformal() && slug === 'informal') {
     const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
@@ -1224,13 +1241,14 @@ function showSection(slug) {
   renderSection(section, entries);
 
   // 自動選目前 Stage（樣品種類 / Prefit / 細節 / Checklist 共享同一個 Stage）
+  // applyStageMemory=false：重整／直接開網址落地時，維持該頁原始（中性）畫面，不強制跳去上次的 Stage
   const stageSlugs = ['prefit','details','checklist','closet'];
-  if (stageSlugs.includes(slug)) {
+  if (applyStageMemory && stageSlugs.includes(slug)) {
     setTimeout(() => {
       const pkMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
       selectStageTab(pkMap[slug], currentStageKey);
     }, 50);
-  } else if (slug === 'stages') {
+  } else if (applyStageMemory && slug === 'stages') {
     setTimeout(() => selectStage(currentStageKey), 50);
   }
 }

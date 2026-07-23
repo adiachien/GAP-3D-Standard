@@ -135,6 +135,17 @@ header h1 { font-size:14px; font-weight:500; }
 .brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
 .brand-warning.bw-on  { background:rgba(0,87,184,0.14); border:1px solid rgba(0,87,184,0.35); color:#bfdcff; }
 
+.brand-chip-group { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
+.brand-chip { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; transition:all 0.12s; }
+.brand-chip input { display:none; }
+.brand-chip .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.brand-chip:has(input:checked) { color:#fff; border-color:transparent; }
+.brand-chip:has(input:checked)[data-brand="GAP"] { background:var(--gap-navy); }
+.brand-chip:has(input:checked)[data-brand="ATH"] { background:var(--ath-purple); color:#1a1a1a; }
+.brand-chip:has(input:checked)[data-brand="ON"] { background:#0057B8; }
+.brand-chip.disabled { opacity:0.55; cursor:not-allowed; }
+.brand-chip.disabled .soon { font-size:10px; font-weight:700; background:rgba(255,255,255,0.08); padding:1px 7px; border-radius:8px; margin-left:2px; white-space:nowrap; }
+
 .path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
 .path-item { display:flex; gap:6px; }
 .path-item input { flex:1; font-family:'DM Mono',monospace; font-size:12px; }
@@ -320,10 +331,11 @@ header h1 { font-size:14px; font-weight:500; }
     </div>
     <div class="field">
       <label id="fBrandsLabel">適用品牌（不勾＝全品牌共用；可複選）</label>
-      <div id="fBrandGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0">
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🔵 GAP</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🟣 ATHLETA</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="ON"  onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🔷 OLD NAVY</label>
+      <div class="brand-chip-group" id="fBrandGroup">
+        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
+        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
+        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
+        <label class="brand-chip disabled" title="即將推出，尚未開放勾選"><span class="dot" style="background:#6b7280"></span>BANANA REPUBLIC<span class="soon">即將推出</span></label>
       </div>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
@@ -458,10 +470,11 @@ header h1 { font-size:14px; font-weight:500; }
 <div class="overlay" id="stageCfgOverlay">
   <div class="modal" style="width:780px;max-height:88vh;overflow-y:auto">
     <h3>🎬 Stage 設定（樣品種類流程）</h3>
-    <div style="display:flex;gap:8px;margin:14px 0 6px">
+    <div style="display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap">
       <button class="btn btn-primary" id="scBrandGAP" onclick="switchStageCfgBrand('GAP')">🔵 GAP</button>
       <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
       <button class="btn btn-ghost" id="scBrandON" onclick="switchStageCfgBrand('ON')">🔷 OLD NAVY</button>
+      <button class="btn btn-ghost" disabled title="即將推出" style="opacity:0.45;cursor:not-allowed">⬜ BANANA REPUBLIC <span style="font-size:10px;margin-left:4px">即將推出</span></button>
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
       各品牌<strong>各自獨立</strong>設定，控制前台 Stage 流程圖與各 Stage 詳細內容（尺寸表／POSE／各色）。<br>
