@@ -572,6 +572,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   border-radius: 4px;
   white-space: nowrap;
   vertical-align: middle;
+  margin-right: 3px;
 }
 .brand-tag-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .brand-tag-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
@@ -936,7 +937,7 @@ let allEntries  = [];
 let currentSlug = null;
 
 // ── 品牌切換（GAP / ATH）───────────────────────
-// entries.brands 欄位：空值 / 'ALL' = 全品牌共用，'GAP' / 'ATH' = 品牌專屬
+// entries.brands 欄位：空值 / 'ALL' = 全品牌共用，'GAP' / 'ATH' / 'ON' = 品牌專屬，逗號分隔可複選（如 'GAP,ON'）
 const BRAND_INFO = {
   GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard', enabled: true },
   ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard', enabled: true },
@@ -1004,17 +1005,22 @@ function jumpToCurrentStage() { showSectionWithStage('stages', currentStageKey);
 // 目前品牌有沒有「非正單」流程（只有 GAP 有；ATHLETA / OLD NAVY 全部上傳 CLO-SET）
 function hasInformal() { return currentBrand === 'GAP'; }
 
-// entry 是否屬於目前品牌（空值＝全品牌，舊資料完全不用動）
-function brandOk(e) {
-  const b = String(e.brands || '').trim().toUpperCase();
-  return !b || b === 'ALL' || b === currentBrand;
+// entries.brands 支援逗號複選（如 'GAP,ON'＝GAP 與 ON 適用、ATH 不適用），比照 stage 欄位的寫法
+function brandList(e) {
+  return String(e.brands || '').trim().toUpperCase().split(',').map(s => s.trim()).filter(Boolean);
 }
 
-// 品牌專屬徽章（共用條目不顯示）
+// entry 是否屬於目前品牌（空值／ALL＝全品牌，舊資料完全不用動）
+function brandOk(e) {
+  const list = brandList(e);
+  return !list.length || list.includes('ALL') || list.includes(currentBrand);
+}
+
+// 品牌專屬徽章（共用條目不顯示；多品牌條目顯示多個獨立徽章並排）
 function brandBadge(e) {
-  const b = String(e.brands || '').trim().toUpperCase();
-  if (!b || b === 'ALL' || !BRAND_INFO[b]) return '';
-  return `<span class="brand-tag brand-tag-${b}">${BRAND_INFO[b].label}</span>`;
+  const list = brandList(e).filter(b => b !== 'ALL' && BRAND_INFO[b]);
+  if (!list.length) return '';
+  return list.map(b => `<span class="brand-tag brand-tag-${b}">${BRAND_INFO[b].label}</span>`).join(' ');
 }
 
 function updateBrandUI() {

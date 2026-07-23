@@ -258,7 +258,7 @@ header h1 { font-size:14px; font-weight:500; }
 .pv-official { background: rgba(29,78,216,0.08); color: #1d4ed8; border: 1px solid rgba(29,78,216,0.25); }
 .pv-internal { background: rgba(202,138,4,0.1); color: #92400e; border: 1px solid rgba(202,138,4,0.3); }
 .pv-warning  { background: rgba(185,28,28,0.08); color: #b91c1c; border: 1px solid rgba(185,28,28,0.3); }
-.pv-brand { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
+.pv-brand { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; vertical-align: middle; margin-right: 3px; }
 .pv-brand-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .pv-brand-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
 .pv-brand-ON  { background: rgba(0,87,184,0.08); color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
@@ -319,13 +319,12 @@ header h1 { font-size:14px; font-weight:500; }
       </select>
     </div>
     <div class="field">
-      <label id="fBrandsLabel">適用品牌</label>
-      <select id="fBrands" onchange="updateBrandWarning()">
-        <option value="">🌐 全品牌（GAP + ATH + ON 共用）</option>
-        <option value="GAP">🔵 GAP 專屬</option>
-        <option value="ATH">🟣 ATHLETA 專屬</option>
-        <option value="ON">🔷 OLD NAVY 專屬</option>
-      </select>
+      <label id="fBrandsLabel">適用品牌（不勾＝全品牌共用；可複選）</label>
+      <div id="fBrandGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0">
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🔵 GAP</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🟣 ATHLETA</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="brand-cb" value="ON"  onchange="updateBrandWarning()" style="accent-color:var(--official)"> 🔷 OLD NAVY</label>
+      </div>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
     <div class="field" id="stageField" style="display:none">
@@ -659,7 +658,7 @@ function batchToolbarHtml() {
   if (!selectedEntryIds.size) return '';
   return `<div class="batch-toolbar">
     <strong>${selectedEntryIds.size} 項已選取</strong>
-    <select id="batchBrandSel"><option value="">套用品牌…</option><option value="__shared__">🌐 全品牌</option><option value="GAP">🔵 GAP 專屬</option><option value="ATH">🟣 ATHLETA 專屬</option></select>
+    <select id="batchBrandSel"><option value="">套用品牌…</option><option value="__shared__">🌐 全品牌</option><option value="GAP">🔵 GAP 專屬</option><option value="ATH">🟣 ATHLETA 專屬</option><option value="ON">🔷 OLD NAVY 專屬</option></select>
     <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchBrand()">套用品牌</button>
     <select id="batchSectionSel">${allSections.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
     <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchMove()">移動到此分類</button>
@@ -713,12 +712,14 @@ function confirmBatchDelete() {
     },
   });
 }
+function entryBrandList(e) {
+  return String(e.brands||'').trim().toUpperCase().split(',').map(s=>s.trim()).filter(Boolean);
+}
 function brandTagAdmin(e) {
-  const b = String(e.brands||'').trim().toUpperCase();
-  if (b === 'GAP') return '<span class="badge-sm bs-gap">🔵 GAP</span>';
-  if (b === 'ATH') return '<span class="badge-sm bs-ath">🟣 ATH</span>';
-  if (b === 'ON')  return '<span class="badge-sm bs-on">🔷 ON</span>';
-  return '<span class="badge-sm bs-shared">🌐 全品牌</span>';
+  const list = entryBrandList(e).filter(b => b !== 'ALL');
+  if (!list.length) return '<span class="badge-sm bs-shared">🌐 全品牌</span>';
+  const tags = { GAP: '<span class="badge-sm bs-gap">🔵 GAP</span>', ATH: '<span class="badge-sm bs-ath">🟣 ATH</span>', ON: '<span class="badge-sm bs-on">🔷 ON</span>' };
+  return list.map(b => tags[b] || '').join(' ');
 }
 function renderEntries() {
   let entries = allEntries.filter(e => e.section_id === currentSectionId);
@@ -726,8 +727,8 @@ function renderEntries() {
   const total = entries.length;
   if (brandFilterVal) {
     entries = entries.filter(e => {
-      const b = String(e.brands||'').trim().toUpperCase();
-      return brandFilterVal === 'ALL' ? (!b || b === 'ALL') : b === brandFilterVal;
+      const list = entryBrandList(e);
+      return brandFilterVal === 'ALL' ? (!list.length || list.includes('ALL')) : list.includes(brandFilterVal);
     });
   }
   if (entrySearchVal) {
@@ -775,28 +776,38 @@ function renderEntries() {
   `).join('');
 }
 
+function getCheckedBrands() {
+  return [...document.querySelectorAll('#fBrandGroup .brand-cb:checked')].map(cb => cb.value);
+}
+const BRAND_META = {
+  GAP: { icon: '🔵', label: 'GAP',       color: 'var(--gap-navy)' },
+  ATH: { icon: '🟣', label: 'ATHLETA',   color: 'var(--ath-purple)' },
+  ON:  { icon: '🔷', label: 'OLD NAVY',  color: '#0057B8' },
+};
 function updateBrandWarning() {
-  const v = document.getElementById('fBrands').value;
+  const brands = getCheckedBrands();
   const w = document.getElementById('brandWarning');
   w.className = 'brand-warning show';
   const strip = document.getElementById('modalBrandStrip');
-  if (v === 'GAP') {
-    w.classList.add('bw-gap');
-    w.innerHTML = '🔵 這是 <strong>GAP 專屬</strong>內容，只會出現在 GAP 前台。';
-    strip.style.background = 'var(--gap-navy)';
-  } else if (v === 'ON') {
-    w.classList.add('bw-on');
-    w.innerHTML = '🔷 這是 <strong>OLD NAVY 專屬</strong>內容，只會出現在 ON 前台。';
-    strip.style.background = '#0057B8';
-  } else if (v === 'ATH') {
-    w.classList.add('bw-ath');
-    w.innerHTML = '🟣 這是 <strong>ATHLETA 專屬</strong>內容，只會出現在 ATH 前台。';
-    strip.style.background = 'var(--ath-purple)';
-  } else {
+  if (!brands.length) {
     w.classList.add('bw-shared');
-    w.innerHTML = '🌐 這是<strong>全品牌共用</strong>內容——修改後 GAP 與 ATHLETA 前台會<strong>同時</strong>變更。';
+    w.innerHTML = '🌐 這是<strong>全品牌共用</strong>內容——修改後 GAP、ATHLETA、OLD NAVY 前台會<strong>同時</strong>變更。';
     strip.style.background = 'rgba(148,163,184,0.5)';
+    return;
   }
+  if (brands.length === 1) {
+    const m = BRAND_META[brands[0]];
+    w.classList.add('bw-' + brands[0].toLowerCase());
+    w.innerHTML = `${m.icon} 這是 <strong>${m.label} 專屬</strong>內容，只會出現在 ${m.label} 前台。`;
+    strip.style.background = m.color;
+    return;
+  }
+  // 複選品牌：組合訊息
+  const metas = brands.map(b => BRAND_META[b]);
+  const allBrands = Object.keys(BRAND_META);
+  const excluded = allBrands.filter(b => !brands.includes(b)).map(b => BRAND_META[b].label);
+  w.innerHTML = `${metas.map(m => m.icon).join('')} 這是 <strong>${metas.map(m => m.label).join(' + ')}</strong> 適用內容${excluded.length ? `（${excluded.join('、')} 前台不會顯示）` : ''}。`;
+  strip.style.background = `linear-gradient(90deg, ${metas.map(m => m.color).join(', ')})`;
 }
 
 function openNewEntry() {
@@ -806,7 +817,7 @@ function openNewEntry() {
   document.getElementById('fTitle').value = '';
   document.getElementById('fContent').value = '';
   document.getElementById('fSource').value = 'internal';
-  document.getElementById('fBrands').value = '';
+  document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
   document.getElementById('fOrder').value = 0;
   document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = false);
   document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
@@ -830,7 +841,8 @@ function openEditEntry(id) {
   document.getElementById('fTitle').value = e.title||'';
   document.getElementById('fContent').value = e.content||'';
   document.getElementById('fSource').value = e.source||'internal';
-  document.getElementById('fBrands').value = (e.brands||'').toUpperCase()==='ALL' ? '' : (e.brands||'').toUpperCase();
+  { const bArr = entryBrandList(e).filter(b => b !== 'ALL');
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value)); }
   document.getElementById('fOrder').value = e.sort_order||0;
   document.getElementById('fSection').value = e.section_id;
   { const arr = e.stage == null || e.stage === '' ? [] : (Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s=>s.trim()).filter(Boolean));
@@ -852,10 +864,12 @@ function duplicateEntry(id) {
   editingEntryId = null;      // 但清除編輯目標 → 儲存時會 insert 成新條目
   document.getElementById('modalTitle').textContent = '📄 複製條目（儲存後成為新條目）';
   document.getElementById('deleteBtn').style.display = 'none';  // 複製模式不能刪（沒有目標可刪）
-  // 品牌自動輪替：GAP→ATH→ON→GAP；共用維持共用（自行調整）
-  const bSel = document.getElementById('fBrands');
+  // 品牌自動輪替：GAP→ATH→ON→GAP；共用／多品牌維持原樣（自行調整）
   const rot = { GAP: 'ATH', ATH: 'ON', ON: 'GAP' };
-  if (rot[bSel.value]) bSel.value = rot[bSel.value];
+  const checked = getCheckedBrands();
+  if (checked.length === 1 && rot[checked[0]]) {
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = (cb.value === rot[checked[0]]));
+  }
   updateBrandWarning();
   renderEntryPreview();
   showToast('已帶入原條目內容，請調整品牌與內容後儲存', '');
@@ -928,13 +942,12 @@ function renderEntryPreview() {
   const title   = document.getElementById('fTitle').value.trim();
   const content = document.getElementById('fContent').value;
   const source  = document.getElementById('fSource').value;
-  const brand   = document.getElementById('fBrands').value;
+  const brands  = getCheckedBrands();
   const paths   = [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean);
 
   const badgeCls = { official:'pv-official', internal:'pv-internal', warning:'pv-warning' };
   const badgeTxt = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
-  const SC_BRAND_LABEL = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY' };
-  const brandTag = brand ? `<span class="pv-brand pv-brand-${brand}">${SC_BRAND_LABEL[brand] || brand}</span>` : '';
+  const brandTag = brands.map(b => `<span class="pv-brand pv-brand-${b}">${BRAND_META[b]?.label || b}</span>`).join(' ');
 
   const pathsHtml = paths.length ? `<div class="pv-paths">${paths.map(raw => {
     const idx = raw.indexOf('｜');
@@ -958,7 +971,8 @@ function renderEntryPreview() {
 
 // 即時更新掛線
 ['fTitle','fContent'].forEach(id => document.getElementById(id).addEventListener('input', renderEntryPreview));
-['fSource','fBrands'].forEach(id => document.getElementById(id).addEventListener('change', renderEntryPreview));
+document.getElementById('fSource').addEventListener('change', renderEntryPreview);
+document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.addEventListener('change', renderEntryPreview));
 document.getElementById('pathList').addEventListener('input', renderEntryPreview);
 
 async function saveEntry() {
@@ -979,7 +993,7 @@ async function saveEntry() {
     paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
     images:       entryImages,
     stage:        isStageSection ? ([...document.querySelectorAll('#fStageGroup .stage-cb:checked')].map(cb=>cb.value).join(',') || null) : null,
-    brands:       document.getElementById('fBrands').value || null,
+    brands:       getCheckedBrands().join(',') || null,
   };
 
   const { error } = editingEntryId
@@ -1521,7 +1535,7 @@ async function copyStageCfg() {
 // ── 使用導覽 ──────────────────────────────────
 const tourSteps = [
   { sel: '#sectionTabs', title: '分類頁籤', body: '所有內容依分類分區，帶 🔒 的是系統保護分類（追蹤系統或首頁邏輯會讀取），修改前請多留意。' },
-  { sel: '#tourBtnNewEntry', title: '新增條目', body: '點這裡建立新內容。預設「適用品牌」是全品牌共用——只有品牌特規才需要另外標 GAP 或 ATH。' },
+  { sel: '#tourBtnNewEntry', title: '新增條目', body: '點這裡建立新內容。預設「適用品牌」是全品牌共用——只有品牌特規才需要另外勾 GAP／ATH／OLD NAVY（可複選多個）。' },
   { sel: '.entry-search', title: '搜尋條目', body: '條目變多後，用搜尋快速定位標題或內文關鍵字。' },
   { sel: '#tourBtnSections', title: '管理分類', body: '在這裡新增、排序、調整分類群組與 icon。' },
   { sel: '#tourBtnAccounts', title: '帳號管理', body: '維護前台登入測驗會用到的帳號密碼，以展開式卡片呈現。' },
