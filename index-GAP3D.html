@@ -1722,6 +1722,59 @@ function renderCardImages(e, mode) {
   return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px">${items}</div>`;
 }
 
+// ── Stage 總覽比較表（一眼看完 7 個 Stage 差異；含內部限定的「需求狀態」列）──
+function splitPoseAvatar(poseText) {
+  if (!poseText) return { pose: '', avatar: '' };
+  const avatarSet = new Set();
+  const poseLines = poseText.split('\n').map(line => {
+    const m = line.match(/[，,]\s*(顯示人台|隱藏人台)\s*$/);
+    if (m) { avatarSet.add(m[1]); return line.replace(m[0], '').trim(); }
+    return line;
+  });
+  const avatar = Array.from(avatarSet).map(a => a.replace('人台','')).join(' / ');
+  return { pose: poseLines.join('\n'), avatar };
+}
+
+function renderStageOverviewTable(stages) {
+  const cell = (label, inner) => `<td style="text-align:center;padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top">${inner}</td>`;
+  const row = (label, fn) => `
+    <tr>
+      <td style="font-size:12px;font-weight:600;color:var(--text-dim);padding:10px 10px 10px 4px;white-space:nowrap;border-bottom:1px solid var(--border)">${label}</td>
+      ${stages.map(s => cell(label, fn(s))).join('')}
+    </tr>`;
+  const dash = '<span style="color:#cbd5e1;font-size:12px">－</span>';
+  return `
+    <div class="card" style="margin-bottom:20px;overflow-x:auto;padding:16px 18px">
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:12px">📊 全 Stage 總覽比較　<span style="font-size:11.5px;color:var(--text-muted)">點欄位標題查看完整規範與注意事項</span></div>
+      <table style="border-collapse:collapse;width:100%;min-width:1000px">
+        <thead>
+          <tr>
+            <th style="width:120px"></th>
+            ${stages.map(s => `
+              <th id="stagecol-${s.key}" ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
+                style="text-align:center;padding:10px 8px;border-radius:8px 8px 0 0;transition:background .12s;
+                       cursor:${s.active ? 'pointer' : 'default'};
+                       background:${s.active ? 'var(--brand-accent)' : '#f9fafb'};
+                       color:${s.active ? '#fff' : '#9ca3af'};">
+                <div style="font-size:14px;font-weight:700">${escHtml(s.name)}</div>
+              </th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${row('WORKFLOW TAG', s => s.active ? `<div style="width:44px;height:15px;background:${s.tagColor};border-radius:3px;margin:0 auto;border:1px solid rgba(0,0,0,0.08)"></div>` : dash)}
+          ${row('人台姿勢', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(splitPoseAvatar(s.pose).pose||'－'))}</div>` : dash)}
+          ${row('顯示／隱藏', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${escHtml(splitPoseAvatar(s.pose).avatar||'－')}</div>` : dash)}
+          ${row('各色 COLORWAYS', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${fmtMarks(escHtml(s.colorways||'－'))}</div>` : dash)}
+          ${row('尺寸表 MC', s => s.active ? (s.mc ? '✅' : '🚫') : dash)}
+          ${row('🔒 需求狀態<div style="font-weight:400;font-size:9.5px;color:var(--text-muted);margin-top:2px">（內部才看得到）</div>', s => s.active
+            ? '<span style="color:#166534;font-size:12.5px;font-weight:600">✅ 已收過需求</span>'
+            : '<span style="color:#9ca3af;font-size:12.5px;font-weight:600">⛔ 尚未收過需求</span>')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 // ── Special Pages ──────────────────────────────
 function renderStagesPage(section, entries) {
   const stages = getStageCfg();
@@ -1755,19 +1808,8 @@ function renderStagesPage(section, entries) {
     </div>` : ''}
 
     <div class="tab-panel active" id="main-formal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">${!hasInformal() ? '點選 Stage 查看對應規範' : '客人有在 Centric 下 SPR，點選 Stage 查看對應規範'}</div>
-      <div class="stage-flow">
-        ${stages.map((s, i) => `
-          <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
-            id="stagebox-${s.key}"
-            ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
-            style="${s.active ? 'cursor:pointer' : 'opacity:0.6;cursor:default'}">
-            <div class="stage-name">${s.name}</div>
-            ${!s.active ? '<div class="stage-sub">尚未收過需求</div>' : ''}
-          </div>
-          ${i < stages.length-1 ? '<span class="stage-arrow">→</span>' : ''}
-        `).join('')}
-      </div>
+      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">${!hasInformal() ? '點選欄位標題查看完整規範' : '客人有在 Centric 下 SPR，點選欄位標題查看完整規範'}</div>
+      ${renderStageOverviewTable(stages)}
       <div id="stageContent" style="margin-top:16px"></div>
       ${generalEntries.map(e => renderCard(e)).join('')}
     </div>
@@ -1806,31 +1848,25 @@ function selectStage(key) {
           mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
   }
 
-  // highlight selected
-  document.querySelectorAll('.stage-box.stage-active').forEach(b => {
-    b.style.borderColor = '';
-    b.style.background = '';
+  // highlight selected column in overview table
+  document.querySelectorAll('[id^="stagecol-"]').forEach(th => {
+    const k = th.id.replace('stagecol-', '');
+    const st2 = cfg.find(x => x.key === k);
+    th.style.background = k === key ? '#0f3a6e' : (st2 && st2.active ? 'var(--brand-accent)' : '#f9fafb');
+    th.style.boxShadow = k === key ? 'inset 0 0 0 2px rgba(255,255,255,0.6)' : '';
   });
-  const box = document.getElementById('stagebox-' + key);
-  if (box) {
-    box.style.borderColor = 'var(--brand-accent)';
-    box.style.background = 'var(--brand-accent-soft)';
-  }
 
-  const renderInfoCard = (tab) => `
+  const renderInfoCard = (tab) => {
+    const { pose, avatar } = splitPoseAvatar(tab.pose);
+    return `
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px">
       <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">WORKFLOW</div>
-        <div style="width:40px;height:16px;background:${s.tagColor};border-radius:3px;border:1px solid rgba(255,255,255,0.1)"></div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">人台姿勢</div>
+        <div style="font-size:18px;color:var(--text);white-space:pre-line">${fmtMarks(escHtml(pose))}</div>
       </div>
       <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">尺寸表</div>
-        <div style="font-size:16px">${tab.mc ? '✅' : '🚫'}</div>
-        ${tab.mc && tab.mcNote ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.5;white-space:pre-line">${fmtMarks(escHtml(tab.mcNote))}</div>` : ''}
-      </div>
-      <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">AVATAR POSE</div>
-        <div style="font-size:18px;color:var(--text);white-space:pre-line">${fmtMarks(escHtml(tab.pose))}</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">顯示／隱藏</div>
+        <div style="font-size:18px;color:var(--text)">${escHtml((avatar || '－').replace('人台',''))}</div>
       </div>
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">各色</div>
@@ -1838,6 +1874,7 @@ function selectStage(key) {
       </div>
     </div>
   `;
+  };
 
   const relatedLinks = {
     proto:     ['prefit','details','checklist','closet'],
@@ -1978,18 +2015,6 @@ function selectStage(key) {
           <span style="font-size:13px;color:var(--text-dim)">${s.subtitle}</span>
           <span class="badge badge-official" style="margin-left:auto">官方規範</span>
         </div>
-        <div style="display:flex;gap:8px;margin-top:12px;margin-bottom:4px">
-          ${s.tabs.map((t,i) => `
-            <button onclick="switchStageTab(this,'stab-${i}')"
-              style="padding:8px 18px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;${i===0 ? 'background:var(--gap-navy);color:#fff;border:2px solid var(--gap-navy)' : 'background:var(--bg-card);color:var(--text-dim);border:2px solid var(--border)'}"
-              class="stage-proto-tab ${i===0?'stab-active':''}">${t.label}</button>
-          `).join('')}
-        </div>
-        ${s.tabs.map((t,i) => `
-          <div id="stab-${i}" class="tab-panel ${i===0?'active':''}">
-            ${renderInfoCard(t)}
-          </div>
-        `).join('')}
         ${relatedSection}
       </div>
       ${stageEntries.length
@@ -2006,7 +2031,6 @@ function selectStage(key) {
           <span style="font-size:13px;color:var(--text-dim)">${s.subtitle}</span>
           <span class="badge badge-official" style="margin-left:auto">官方規範</span>
         </div>
-        ${renderInfoCard(s)}
         ${relatedSection}
       </div>
       ${stageEntries.length
