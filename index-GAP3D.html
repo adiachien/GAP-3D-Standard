@@ -579,19 +579,23 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <button onclick="pickBrandFromGate('GAP')" style="cursor:pointer;background:#12203a;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#1d4ed8'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
       <div style="width:56px;height:56px;border-radius:10px;background:#002A5C;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:0.05em">GAP</div>
       <div style="font-size:16px;font-weight:600">GAP</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">GS・GO</div>
     </button>
     <button onclick="pickBrandFromGate('ATH')" style="cursor:pointer;background:#1a1330;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#6d28d9'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
       <div style="width:56px;height:56px;border-radius:10px;background:#6d28d9;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;letter-spacing:0.05em">ATH</div>
       <div style="font-size:16px;font-weight:600">ATHLETA</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">A</div>
     </button>
     <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
       <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:0.05em">ON</div>
       <div style="font-size:16px;font-weight:600">OLD NAVY</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.03em">ON</div>
       <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
     </button>
     <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
       <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:0.03em">BR</div>
       <div style="font-size:16px;font-weight:600">BANANA REPUBLIC</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.03em">BR・BRFS</div>
       <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
     </button>
   </div>
@@ -3503,6 +3507,8 @@ function renderFeedbackList(data) {
     const c = fbCatColors[cat] || fbCatColors['其他'];
     const status = f.status || '待改善';
     const sc = fbStatusColors[status] || fbStatusColors['待改善'];
+    // 留言板圖片沿用全站共用的縮放檢視器（滾輪縮放／拖曳／雙擊重置），與其他頁面的圖片操作一致
+    if (f.image_url) __imgLists['fb-' + f.id] = [f.image_url];
     return `
       <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -3534,9 +3540,9 @@ function renderFeedbackList(data) {
         <div id="fb-view-${f.id}">
           <div style="display:flex;gap:14px;align-items:flex-start">
             ${f.image_url ? `
-              <div style="flex-shrink:0">
-                <img src="${f.image_url}" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"
-                  onclick="window.open('${f.image_url}','_blank')">
+              <div style="flex-shrink:0;position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],0)" title="點擊放大">
+                <img src="${escHtml(f.image_url)}" loading="lazy" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
+                <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
               </div>
             ` : ''}
             ${f.content ? `
