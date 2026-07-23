@@ -56,6 +56,13 @@ body.brand-ATH {
   --bg-page:    #faf9fc;
   --bg-sidebar: #f5f2fa;
 }
+body.brand-ON {
+  --brand-accent:      #0057B8;
+  --brand-accent-soft: rgba(0,87,184,0.07);
+  --brand-border-soft: rgba(0,87,184,0.3);
+  --bg-page:    #f8fafd;
+  --bg-sidebar: #eef4fb;
+}
 
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; overflow:hidden; }
@@ -568,6 +575,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 }
 .brand-tag-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .brand-tag-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
+.brand-tag-ON  { background: rgba(0,87,184,0.08);  color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
 </style>
 </head>
 <body>
@@ -586,11 +594,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       <div style="font-size:16px;font-weight:600">ATHLETA</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">A</div>
     </button>
-    <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
-      <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:0.05em">ON</div>
+    <button onclick="pickBrandFromGate('ON')" style="cursor:pointer;background:#0d1b2e;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#0057B8'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+      <div style="width:56px;height:56px;border-radius:10px;background:#0057B8;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:0.05em">ON</div>
       <div style="font-size:16px;font-weight:600">OLD NAVY</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.03em">ON</div>
-      <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">ON</div>
     </button>
     <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
       <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:0.03em">BR</div>
@@ -622,6 +629,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <div class="brand-switch" id="brandSwitch">
       <button id="brandBtn-GAP" onclick="setBrand('GAP')">GAP</button>
       <button id="brandBtn-ATH" onclick="setBrand('ATH')">ATHLETA</button>
+      <button id="brandBtn-ON" onclick="setBrand('ON')">OLD NAVY</button>
     </div>
     <div class="search-sidebar">
       <div class="search-wrap-inner">
@@ -793,7 +801,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 
             <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">① 上傳資料</div>
             <div style="margin-bottom:16px;color:var(--text-dim)">
-              點右上「📤 上傳 Excel」，丟入 DPC 匯出的原始檔即可，系統會自動篩出 GAP／GAP OUTLET／ATHLETA 的 3D單。每次重新上傳都會<strong style="color:var(--text)">更新全部人看到的資料</strong>，「負責人／Miro」「業務對照表」「預計款數／備註」都不會被洗掉。
+              點右上「📤 上傳 Excel」，丟入 DPC 匯出的原始檔即可，系統會自動篩出 GAP／GAP OUTLET／ATHLETA／OLD NAVY 的 3D單。每次重新上傳都會<strong style="color:var(--text)">更新全部人看到的資料</strong>，「負責人／Miro」「業務對照表」「預計款數／備註」都不會被洗掉。
             </div>
 
             <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">② 各 SUB 進單進度（追蹤誰還沒進單）</div>
@@ -932,7 +940,7 @@ let currentSlug = null;
 const BRAND_INFO = {
   GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard', enabled: true },
   ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard', enabled: true },
-  ON:  { label: 'OLD NAVY', logo: 'ON', title: 'OLD NAVY 3D Standard', enabled: false },
+  ON:  { label: 'OLD NAVY', logo: 'ON', title: 'OLD NAVY 3D Standard', enabled: true },
   BR:  { label: 'BANANA REPUBLIC', logo: 'BR', title: 'BANANA REPUBLIC 3D Standard', enabled: false },
 };
 let currentBrand = 'GAP';
@@ -993,6 +1001,9 @@ function updateStageIndicator() {
 }
 function jumpToCurrentStage() { showSectionWithStage('stages', currentStageKey); }
 
+// 目前品牌有沒有「非正單」流程（只有 GAP 有；ATHLETA / OLD NAVY 全部上傳 CLO-SET）
+function hasInformal() { return currentBrand === 'GAP'; }
+
 // entry 是否屬於目前品牌（空值＝全品牌，舊資料完全不用動）
 function brandOk(e) {
   const b = String(e.brands || '').trim().toUpperCase();
@@ -1009,6 +1020,7 @@ function brandBadge(e) {
 function updateBrandUI() {
   const info = BRAND_INFO[currentBrand];
   document.body.classList.toggle('brand-ATH', currentBrand === 'ATH');
+  document.body.classList.toggle('brand-ON',  currentBrand === 'ON');
   const logo = document.getElementById('appLogo');
   const title = document.getElementById('appTitle');
   if (logo)  logo.textContent = info.logo;
@@ -1040,8 +1052,8 @@ function setBrand(b) {
     loadFeedback(); // 留言板依品牌分開，切換品牌要重新載入
     return;
   }
-  // ATH 沒有非正單：若正停在非正單頁，跳回第一個可見分類
-  if (currentBrand === 'ATH' && currentSlug === 'informal') {
+  // ATHLETA / OLD NAVY 沒有非正單：若正停在非正單頁，跳回第一個可見分類
+  if (!hasInformal() && currentSlug === 'informal') {
     const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
     if (first) { showSection(first.slug); return; }
   }
@@ -1130,9 +1142,9 @@ function renderNav() {
     .filter(([group]) => !group.startsWith('_'))  // 過濾掉 _hidden 等隱藏群組
     .map(([group, secs]) => {
       // 先過濾項目，群組內沒有可見項目時整組隱藏（避免留下空標題）
-      const visible = secs.filter(s => s.slug !== 'accounts' && s.name !== '帳號密碼' && !(currentBrand === 'ATH' && s.slug === 'informal'));
+      const visible = secs.filter(s => s.slug !== 'accounts' && s.name !== '帳號密碼' && !(!hasInformal() && s.slug === 'informal'));
       if (!visible.length) return '';
-      const label = (currentBrand === 'ATH' && group.includes('正單')) ? '上傳 CLO-SET' : group;
+      const label = (!hasInformal() && group.includes('正單')) ? '上傳 CLO-SET' : group;
       return `
     <div class="section-group">
       <div class="group-label">${label}</div>
@@ -1175,8 +1187,8 @@ function showSectionWithStage(slug, stageKey) {
 
 // ── Show Section ───────────────────────────────
 function showSection(slug) {
-  // ATH 沒有非正單流程
-  if (currentBrand === 'ATH' && slug === 'informal') {
+  // ATHLETA / OLD NAVY 沒有非正單流程
+  if (!hasInformal() && slug === 'informal') {
     const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
     if (first) slug = first.slug; else return;
   }
@@ -1491,10 +1503,41 @@ const STAGE_DEFAULTS = [
   { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
 ];
 
+// ── 各品牌的 Stage 差異（疊在預設值之上；後台「Stage 設定」可再覆寫這裡）──
+const ON_MC_NOTE = 'Critical Measurement 貼 MC Link 到 CLO-SET comment（不是截圖）\n' +
+  'Base 路徑：\\\\Nt_pdc\\開發技術處本部\\外部使用檔\\12.V7\n（內分季節／季度，每季貼當季連結）';
+const BRAND_STAGE_OVERRIDES = {
+  ATH: {
+    proto: { collab: { enabled: false } },
+  },
+  ON: {
+    block:     { active: true, pose: '顯示人台（同 Proto）', colorways: '灰階，需 base layer' },
+    proto:     { active: true, mc: true, mcNote: ON_MC_NOTE,
+                 pose: 'Regular Pose，顯示人台\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
+                 colorways: '灰色', collab: { enabled: false } },
+    la:        { active: true },
+    fit:       { active: true, mc: true, mcNote: ON_MC_NOTE },
+    sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
+    reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
+    graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
+  },
+};
+
+function applyBrandStageOverrides(defs, brand) {
+  const ov = BRAND_STAGE_OVERRIDES[brand];
+  if (!ov) return defs;
+  return defs.map(d => {
+    const o = ov[d.key];
+    if (!o) return d;
+    const m = Object.assign({}, d, o);
+    if (d.collab || o.collab) m.collab = Object.assign({}, d.collab || {}, o.collab || {});
+    return m;
+  });
+}
+
 function getStageCfg() {
-  const brand = currentBrand === 'ATH' ? 'ATH' : 'GAP';
-  const defs = JSON.parse(JSON.stringify(STAGE_DEFAULTS));
-  if (brand === 'ATH') { const p = defs.find(d => d.key === 'proto'); if (p && p.collab) p.collab.enabled = false; }
+  const brand = BRAND_INFO[currentBrand] ? currentBrand : 'GAP';
+  const defs = applyBrandStageOverrides(JSON.parse(JSON.stringify(STAGE_DEFAULTS)), brand);
   const sec = allSections.find(s => s.slug === 'stage-config');
   let saved = null;
   if (sec) {
@@ -1670,7 +1713,7 @@ function renderStagesPage(section, entries) {
       <div class="page-title">📋 ${section.name}</div>
     </div>
 
-    ${currentBrand !== 'ATH' ? `
+    ${hasInformal() ? `
     <div class="card" style="margin-bottom:20px;border-color:rgba(29,78,216,0.2);background:rgba(59,130,246,0.06)">
       <div style="font-size:16px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 如何判斷正單或非正單？</div>
       <div style="font-size:16px;color:var(--text);line-height:1.8">
@@ -1681,14 +1724,14 @@ function renderStagesPage(section, entries) {
       <div style="font-size:17px;color:var(--text-dim);margin-top:8px">我們自己也可以去 Centric 看，但通常請業務確認 😄</div>
     </div>` : ''}
 
-    ${currentBrand !== 'ATH' ? `
+    ${hasInformal() ? `
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
       <button class="type-tab" onclick="switchTab(this,'main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
     </div>` : ''}
 
     <div class="tab-panel active" id="main-formal">
-      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">${currentBrand === 'ATH' ? '點選 Stage 查看對應規範' : '客人有在 Centric 下 SPR，點選 Stage 查看對應規範'}</div>
+      <div style="font-size:18px;color:var(--text-dim);margin:12px 0 16px">${!hasInformal() ? '點選 Stage 查看對應規範' : '客人有在 Centric 下 SPR，點選 Stage 查看對應規範'}</div>
       <div class="stage-flow">
         ${stages.map((s, i) => `
           <div class="stage-box ${s.active ? 'stage-active' : 'stage-inactive'}"
@@ -2109,7 +2152,7 @@ function renderStageBasedPage(section, entries, pageKey, title, desc) {
       <div class="page-title">${title}</div>
       <div class="page-desc">${desc}</div>
     </div>
-    ${currentBrand !== 'ATH' ? `
+    ${hasInformal() ? `
     <div class="type-tabs">
       <button class="type-tab active" onclick="switchTab(this,'${pageKey}main','formal')" style="padding:8px 20px;font-size:16px">✅ 正單（上傳 CLO-SET）</button>
       <button class="type-tab" onclick="switchTab(this,'${pageKey}main','informal')" style="padding:8px 20px;font-size:16px">📸 非正單（不上傳 CLO-SET）</button>
@@ -2715,8 +2758,8 @@ function handleSearch(q) {
   const hiddenIds = new Set(allSections
     .filter(s => (s.group_name || '').startsWith('_'))
     .map(s => s.id));
-  // ATH 沒有非正單：搜尋也排除該分類
-  if (currentBrand === 'ATH') {
+  // ATHLETA / OLD NAVY 沒有非正單：搜尋也排除該分類
+  if (!hasInformal()) {
     const inf = allSections.find(s => s.slug === 'informal');
     if (inf) hiddenIds.add(inf.id);
   }
@@ -2854,16 +2897,23 @@ async function showAccountsContent() {
 
 // ── 開發追蹤（Excel 匯入版）────────────────────
 const TRK_SECTION_SLUG = 'tracker-data';
-const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)', 'ATHLETA(GAP)'];
+const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)', 'ATHLETA(GAP)', 'Old Navy(GAP)'];
 const TRK_ORDER_TYPE   = '3D單';
 // 依 Customer 字串判斷品牌（進度分開追蹤）
 function trkBrandOf(r) {
-  return String(r['Customer'] || '').toUpperCase().includes('ATHLETA') ? 'ATH' : 'GAP';
+  const c = String(r['Customer'] || '').toUpperCase();
+  if (c.includes('ATHLETA'))  return 'ATH';
+  if (c.includes('OLD NAVY')) return 'ON';
+  return 'GAP';
 }
 // 目前品牌的款資料
 function trkBrandRows() { return trkRows.filter(r => trkBrandOf(r) === currentBrand); }
 // 品牌顯示名（tracker 標題用）
-function trkBrandLabel() { return currentBrand === 'ATH' ? 'ATHLETA' : 'GAP / GAP OUTLET'; }
+function trkBrandLabel() {
+  if (currentBrand === 'ATH') return 'ATHLETA';
+  if (currentBrand === 'ON')  return 'OLD NAVY';
+  return 'GAP / GAP OUTLET';
+}
 const TRK_COLS = ['單別','狀態','Customer','SUBGROUP','Style','需求日','3D次','類型','尺碼','客樣種類'];
 
 let trkRows       = [];   // 匯入的款資料
@@ -2991,7 +3041,7 @@ function renderTrackerSummary() {
       document.getElementById('trkSubBlock').style.display   = '';
       document.getElementById('trkStyleBlock').style.display = 'none';
     } else {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
+      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
       document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
       document.getElementById('trkStyleBlock').style.display = 'none';
     }
@@ -3362,14 +3412,15 @@ async function uploadTrackerExcel(file) {
         TRK_COLS.forEach(c => o[c] = trkCell(r[c]));
         return o;
       });
-    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET / ATHLETA 的 3D單）');
+    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）');
 
     const nGap = rows.filter(r => trkBrandOf(r) === 'GAP').length;
     const nAth = rows.filter(r => trkBrandOf(r) === 'ATH').length;
+    const nOn  = rows.filter(r => trkBrandOf(r) === 'ON').length;
     box.textContent = `☁️ 找到 ${rows.length} 款，儲存中…`;
     await saveTrkEntry('import', { uploadedAt: new Date().toISOString(), rows });
     box.style.color = '#166534';
-    box.textContent = `✅ 更新完成：共 ${rows.length} 款（GAP ${nGap}｜ATHLETA ${nAth}）（${file.name}）`;
+    box.textContent = `✅ 更新完成：共 ${rows.length} 款（GAP ${nGap}｜ATHLETA ${nAth}｜OLD NAVY ${nOn}）（${file.name}）`;
     renderTrackerAll();
   } catch (err) {
     box.style.color = '#b91c1c';
@@ -3392,7 +3443,7 @@ async function exportTrackerExcel() {
   })];
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
-  const bn = currentBrand === 'ATH' ? 'ATHLETA' : 'GAP';
+  const bn = currentBrand === 'ATH' ? 'ATHLETA' : currentBrand === 'ON' ? 'OLD NAVY' : 'GAP';
   XLSX.utils.book_append_sheet(wb, ws, bn + ' 3D單');
   XLSX.writeFile(wb, '開發追蹤_' + bn + '_3D單.xlsx');
 }

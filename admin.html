@@ -114,6 +114,7 @@ header h1 { font-size:14px; font-weight:500; }
 .bs-warning   { background:rgba(239,68,68,0.2);  color:#fca5a5; }
 .bs-gap { background:rgba(59,125,216,0.18); color:var(--gap-navy); border:1px solid rgba(59,125,216,0.3); }
 .bs-ath { background:rgba(167,139,250,0.18); color:var(--ath-purple); border:1px solid rgba(167,139,250,0.3); }
+.bs-on  { background:rgba(0,87,184,0.20); color:#7db4f5; border:1px solid rgba(0,87,184,0.4); }
 .bs-shared { background:rgba(148,163,184,0.14); color:#94a3b8; }
 
 .brand-strip { height:3px; border-radius:3px 3px 0 0; margin:-28px -32px 20px; transition:background 0.15s; }
@@ -132,6 +133,7 @@ header h1 { font-size:14px; font-weight:500; }
 .brand-warning.bw-shared { background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.25); color:#cbd5e1; }
 .brand-warning.bw-gap { background:rgba(59,125,216,0.12); border:1px solid rgba(59,125,216,0.3); color:#bcd6f8; }
 .brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
+.brand-warning.bw-on  { background:rgba(0,87,184,0.14); border:1px solid rgba(0,87,184,0.35); color:#bfdcff; }
 
 .path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
 .path-item { display:flex; gap:6px; }
@@ -259,6 +261,7 @@ header h1 { font-size:14px; font-weight:500; }
 .pv-brand { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
 .pv-brand-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .pv-brand-ATH { background: rgba(109,40,217,0.08); color: #6d28d9; border: 1px solid rgba(109,40,217,0.3); }
+.pv-brand-ON  { background: rgba(0,87,184,0.08); color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
 .pv-content { white-space: pre-wrap; line-height: 1.75; color: #1e293b; }
 .pv-paths { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .pv-path { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
@@ -318,9 +321,10 @@ header h1 { font-size:14px; font-weight:500; }
     <div class="field">
       <label id="fBrandsLabel">適用品牌</label>
       <select id="fBrands" onchange="updateBrandWarning()">
-        <option value="">🌐 全品牌（GAP + ATH 共用）</option>
+        <option value="">🌐 全品牌（GAP + ATH + ON 共用）</option>
         <option value="GAP">🔵 GAP 專屬</option>
         <option value="ATH">🟣 ATHLETA 專屬</option>
+        <option value="ON">🔷 OLD NAVY 專屬</option>
       </select>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
@@ -458,14 +462,18 @@ header h1 { font-size:14px; font-weight:500; }
     <div style="display:flex;gap:8px;margin:14px 0 6px">
       <button class="btn btn-primary" id="scBrandGAP" onclick="switchStageCfgBrand('GAP')">🔵 GAP</button>
       <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
+      <button class="btn btn-ghost" id="scBrandON" onclick="switchStageCfgBrand('ON')">🔷 OLD NAVY</button>
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
-      兩個品牌<strong>各自獨立</strong>設定，控制前台 Stage 流程圖與各 Stage 詳細內容（尺寸表／POSE／各色）。<br>
+      各品牌<strong>各自獨立</strong>設定，控制前台 Stage 流程圖與各 Stage 詳細內容（尺寸表／POSE／各色）。<br>
       ⚠️ 切換品牌前請先按「儲存」，未儲存的修改會遺失。
     </div>
     <div id="stageCfgList"></div>
     <div class="modal-footer" style="justify-content:space-between">
-      <button class="btn btn-ghost" onclick="confirmCopyStageCfg()">📋 複製到另一品牌</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="scCopyTarget" style="padding:6px 8px"></select>
+        <button class="btn btn-ghost" onclick="confirmCopyStageCfg()">📋 複製過去</button>
+      </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
         <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
@@ -709,6 +717,7 @@ function brandTagAdmin(e) {
   const b = String(e.brands||'').trim().toUpperCase();
   if (b === 'GAP') return '<span class="badge-sm bs-gap">🔵 GAP</span>';
   if (b === 'ATH') return '<span class="badge-sm bs-ath">🟣 ATH</span>';
+  if (b === 'ON')  return '<span class="badge-sm bs-on">🔷 ON</span>';
   return '<span class="badge-sm bs-shared">🌐 全品牌</span>';
 }
 function renderEntries() {
@@ -732,7 +741,7 @@ function renderEntries() {
   const filterBar = total ? `
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:12px;color:#94a3b8;flex-wrap:wrap">
       <label class="select-all-wrap"><input type="checkbox" ${allSelected?'checked':''} onchange="toggleSelectAll(this.checked)" style="accent-color:var(--official)">全選</label>
-      品牌篩選：${fBtn('','全部')} ${fBtn('ALL','🌐 共用')} ${fBtn('GAP','🔵 GAP')} ${fBtn('ATH','🟣 ATH')}
+      品牌篩選：${fBtn('','全部')} ${fBtn('ALL','🌐 共用')} ${fBtn('GAP','🔵 GAP')} ${fBtn('ATH','🟣 ATH')} ${fBtn('ON','🔷 ON')}
     </div>` : '';
   lastRenderedEntries = entries;
   if (!total) {
@@ -775,6 +784,10 @@ function updateBrandWarning() {
     w.classList.add('bw-gap');
     w.innerHTML = '🔵 這是 <strong>GAP 專屬</strong>內容，只會出現在 GAP 前台。';
     strip.style.background = 'var(--gap-navy)';
+  } else if (v === 'ON') {
+    w.classList.add('bw-on');
+    w.innerHTML = '🔷 這是 <strong>OLD NAVY 專屬</strong>內容，只會出現在 ON 前台。';
+    strip.style.background = '#0057B8';
   } else if (v === 'ATH') {
     w.classList.add('bw-ath');
     w.innerHTML = '🟣 這是 <strong>ATHLETA 專屬</strong>內容，只會出現在 ATH 前台。';
@@ -839,10 +852,10 @@ function duplicateEntry(id) {
   editingEntryId = null;      // 但清除編輯目標 → 儲存時會 insert 成新條目
   document.getElementById('modalTitle').textContent = '📄 複製條目（儲存後成為新條目）';
   document.getElementById('deleteBtn').style.display = 'none';  // 複製模式不能刪（沒有目標可刪）
-  // 品牌自動翻到另一邊：GAP→ATH、ATH→GAP；共用維持共用（自行調整）
+  // 品牌自動輪替：GAP→ATH→ON→GAP；共用維持共用（自行調整）
   const bSel = document.getElementById('fBrands');
-  if (bSel.value === 'GAP') bSel.value = 'ATH';
-  else if (bSel.value === 'ATH') bSel.value = 'GAP';
+  const rot = { GAP: 'ATH', ATH: 'ON', ON: 'GAP' };
+  if (rot[bSel.value]) bSel.value = rot[bSel.value];
   updateBrandWarning();
   renderEntryPreview();
   showToast('已帶入原條目內容，請調整品牌與內容後儲存', '');
@@ -920,7 +933,8 @@ function renderEntryPreview() {
 
   const badgeCls = { official:'pv-official', internal:'pv-internal', warning:'pv-warning' };
   const badgeTxt = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
-  const brandTag = brand ? `<span class="pv-brand pv-brand-${brand}">${brand === 'ATH' ? 'ATHLETA' : 'GAP'}</span>` : '';
+  const SC_BRAND_LABEL = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY' };
+  const brandTag = brand ? `<span class="pv-brand pv-brand-${brand}">${SC_BRAND_LABEL[brand] || brand}</span>` : '';
 
   const pathsHtml = paths.length ? `<div class="pv-paths">${paths.map(raw => {
     const idx = raw.indexOf('｜');
@@ -1310,10 +1324,37 @@ function scNormColor(c) {
   return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#888888';
 }
 
+const SC_ON_MC_NOTE = 'Critical Measurement 貼 MC Link 到 CLO-SET comment（不是截圖）\n' +
+  'Base 路徑：\\\\Nt_pdc\\開發技術處本部\\外部使用檔\\12.V7\n（內分季節／季度，每季貼當季連結）';
+// 各品牌 Stage 差異（要與前台 index 的 BRAND_STAGE_OVERRIDES 保持一致）
+const SC_BRAND_OVERRIDES = {
+  ATH: {
+    proto: { collab: { enabled: false } },
+  },
+  ON: {
+    block:     { active: true, pose: '顯示人台（同 Proto）', colorways: '灰階，需 base layer' },
+    proto:     { active: true, mc: true, mcNote: SC_ON_MC_NOTE,
+                 pose: 'Regular Pose，顯示人台\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
+                 colorways: '灰色', collab: { enabled: false } },
+    la:        { active: true },
+    fit:       { active: true, mc: true, mcNote: SC_ON_MC_NOTE },
+    sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
+    reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
+    graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
+  },
+};
+
 function scDefaults(brand) {
   const d = JSON.parse(JSON.stringify(SC_DEFAULTS));
-  if (brand === 'ATH') { const pr = d.find(x => x.key === 'proto'); if (pr && pr.collab) pr.collab.enabled = false; }
-  return d;
+  const ov = SC_BRAND_OVERRIDES[brand];
+  if (!ov) return d;
+  return d.map(x => {
+    const o = ov[x.key];
+    if (!o) return x;
+    const m = Object.assign({}, x, o);
+    if (x.collab || o.collab) m.collab = Object.assign({}, x.collab || {}, o.collab || {});
+    return m;
+  });
 }
 
 function scLoad(brand) {
@@ -1336,10 +1377,20 @@ function scLoad(brand) {
 function openStageCfg() { switchStageCfgBrand('GAP'); document.getElementById('stageCfgOverlay').classList.add('open'); }
 function closeStageCfg() { document.getElementById('stageCfgOverlay').classList.remove('open'); }
 
+const SC_BRANDS = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY' };
+function scBrandName(b) { return SC_BRANDS[b] || b; }
+
 function switchStageCfgBrand(b) {
   scBrand = b;
-  document.getElementById('scBrandGAP').className = 'btn ' + (b === 'GAP' ? 'btn-primary' : 'btn-ghost');
-  document.getElementById('scBrandATH').className = 'btn ' + (b === 'ATH' ? 'btn-primary' : 'btn-ghost');
+  Object.keys(SC_BRANDS).forEach(k => {
+    const el = document.getElementById('scBrand' + k);
+    if (el) el.className = 'btn ' + (b === k ? 'btn-primary' : 'btn-ghost');
+  });
+  const sel = document.getElementById('scCopyTarget');
+  if (sel) {
+    sel.innerHTML = Object.keys(SC_BRANDS).filter(k => k !== b)
+      .map(k => `<option value="${k}">複製到 ${SC_BRANDS[k]}</option>`).join('');
+  }
   renderStageCfg(scLoad(b));
 }
 
@@ -1443,14 +1494,14 @@ async function scSaveBrand(brand, stages) {
 async function saveStageCfg() {
   const ok = await scSaveBrand(scBrand, collectStageCfg());
   if (!ok) return;
-  showToast('已儲存 ' + (scBrand === 'ATH' ? 'ATHLETA' : 'GAP') + ' 的 Stage 設定 ✓', 'success');
+  showToast('已儲存 ' + scBrandName(scBrand) + ' 的 Stage 設定 ✓', 'success');
   renderStageCfg(scLoad(scBrand));
 }
 
 // ── 複製目前畫面設定到另一品牌（整份覆蓋）──
 function confirmCopyStageCfg() {
-  const from = scBrand === 'ATH' ? 'ATHLETA' : 'GAP';
-  const to   = scBrand === 'ATH' ? 'GAP' : 'ATHLETA';
+  const from = scBrandName(scBrand);
+  const to   = scBrandName(document.getElementById('scCopyTarget').value);
   openConfirm({
     icon: '📋',
     title: `把 ${from} 的設定複製到 ${to}？`,
@@ -1461,10 +1512,10 @@ function confirmCopyStageCfg() {
 }
 
 async function copyStageCfg() {
-  const target = scBrand === 'ATH' ? 'GAP' : 'ATH';
+  const target = document.getElementById('scCopyTarget').value;
   const ok = await scSaveBrand(target, collectStageCfg());
   if (!ok) return;
-  showToast('已複製到 ' + (target === 'ATH' ? 'ATHLETA' : 'GAP') + ' ✓ 可切換過去微調', 'success');
+  showToast('已複製到 ' + scBrandName(target) + ' ✓ 可切換過去微調', 'success');
 }
 
 // ── 使用導覽 ──────────────────────────────────
