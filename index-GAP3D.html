@@ -48,11 +48,15 @@
   --brand-accent:      var(--gap-navy);
   --brand-accent-soft: rgba(0,42,92,0.07);
   --brand-border-soft: rgba(0,42,92,0.28);
+  --brand-accent-dark: #001a3d;
+  --brand-col-tint:    rgba(0,42,92,0.09);
 }
 body.brand-ATH {
   --brand-accent:      #6C5B87;
   --brand-accent-soft: rgba(108,91,135,0.07);
   --brand-border-soft: rgba(108,91,135,0.3);
+  --brand-accent-dark: #453a59;
+  --brand-col-tint:    rgba(108,91,135,0.11);
   --bg-page:    #faf9fc;
   --bg-sidebar: #f5f2fa;
 }
@@ -60,6 +64,8 @@ body.brand-ON {
   --brand-accent:      #0057B8;
   --brand-accent-soft: rgba(0,87,184,0.07);
   --brand-border-soft: rgba(0,87,184,0.3);
+  --brand-accent-dark: #003c80;
+  --brand-col-tint:    rgba(0,87,184,0.1);
   --bg-page:    #f8fafd;
   --bg-sidebar: #eef4fb;
 }
@@ -1736,11 +1742,11 @@ function splitPoseAvatar(poseText) {
 }
 
 function renderStageOverviewTable(stages) {
-  const cell = (label, inner) => `<td style="text-align:center;padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top">${inner}</td>`;
+  const cell = (label, inner, key) => `<td data-stagecol="${key}" style="text-align:center;padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top;transition:background .12s">${inner}</td>`;
   const row = (label, fn) => `
     <tr>
       <td style="font-size:12px;font-weight:600;color:var(--text-dim);padding:10px 10px 10px 4px;white-space:nowrap;border-bottom:1px solid var(--border)">${label}</td>
-      ${stages.map(s => cell(label, fn(s))).join('')}
+      ${stages.map(s => cell(label, fn(s), s.key)).join('')}
     </tr>`;
   const dash = '<span style="color:#cbd5e1;font-size:12px">－</span>';
   return `
@@ -1751,7 +1757,7 @@ function renderStageOverviewTable(stages) {
           <tr>
             <th style="width:120px"></th>
             ${stages.map(s => `
-              <th id="stagecol-${s.key}" ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
+              <th id="stagecol-${s.key}" data-stagecol="${s.key}" ${s.active ? `onclick="selectStage('${s.key}')"` : ''}
                 style="text-align:center;padding:10px 8px;border-radius:8px 8px 0 0;transition:background .12s;
                        cursor:${s.active ? 'pointer' : 'default'};
                        background:${s.active ? 'var(--brand-accent)' : '#f9fafb'};
@@ -1848,12 +1854,22 @@ function selectStage(key) {
           mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
   }
 
-  // highlight selected column in overview table
+  // highlight selected column in overview table (header darker brand shade + whole column tinted w/ thick border)
   document.querySelectorAll('[id^="stagecol-"]').forEach(th => {
     const k = th.id.replace('stagecol-', '');
     const st2 = cfg.find(x => x.key === k);
-    th.style.background = k === key ? '#0f3a6e' : (st2 && st2.active ? 'var(--brand-accent)' : '#f9fafb');
+    th.style.background = k === key ? 'var(--brand-accent-dark)' : (st2 && st2.active ? 'var(--brand-accent)' : '#f9fafb');
     th.style.boxShadow = k === key ? 'inset 0 0 0 2px rgba(255,255,255,0.6)' : '';
+  });
+  document.querySelectorAll('td[data-stagecol]').forEach(td => {
+    const k = td.getAttribute('data-stagecol');
+    if (k === key) {
+      td.style.background = 'var(--brand-col-tint)';
+      td.style.boxShadow = 'inset 3px 0 0 var(--brand-accent), inset -3px 0 0 var(--brand-accent)';
+    } else {
+      td.style.background = '';
+      td.style.boxShadow = '';
+    }
   });
 
   const renderInfoCard = (tab) => {
