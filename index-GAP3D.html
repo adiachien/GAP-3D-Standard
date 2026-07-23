@@ -1518,8 +1518,8 @@ function stripMarks(t) {
 const STAGE_MC_NOTE = '請 TD 提供 MC Link\n若無 MC Link（如 CO 款）可用尺寸表截圖替代';
 const STAGE_DEFAULTS = [
   { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
-  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272',
-    collab:{ enabled:true, label:'\u806f\u540d\u6b3e\uff08GAP X & Collab\uff09', mc:true, mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' } },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272\n\u806f\u540d\u6b3e\uff1a\u7070+\u5404\u8272',
+    collab:{ enabled:false, label:'\u806f\u540d\u6b3e\uff08GAP X & Collab\uff09', mc:true, mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' } },
   { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, mcNote:'',         pose:'Regular Pose\uff0c\u96b1\u85cf\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' },
   { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'Regular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272' },
   { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
@@ -1764,7 +1764,7 @@ function renderStageOverviewTable(stages) {
           ${row('WORKFLOW TAG', s => s.active ? `<div style="width:44px;height:15px;background:${s.tagColor};border-radius:3px;margin:0 auto;border:1px solid rgba(0,0,0,0.08)"></div>` : dash)}
           ${row('人台姿勢', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(splitPoseAvatar(s.pose).pose||'－'))}</div>` : dash)}
           ${row('顯示／隱藏', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${escHtml(splitPoseAvatar(s.pose).avatar||'－')}</div>` : dash)}
-          ${row('各色 COLORWAYS', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${fmtMarks(escHtml(s.colorways||'－'))}</div>` : dash)}
+          ${row('各色 COLORWAYS', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(s.colorways||'－'))}</div>` : dash)}
           ${row('尺寸表 MC', s => s.active ? (s.mc ? '✅' : '🚫') : dash)}
           ${row('🔒 需求狀態<div style="font-weight:400;font-size:9.5px;color:var(--text-muted);margin-top:2px">（內部才看得到）</div>', s => s.active
             ? '<span style="color:#166534;font-size:12.5px;font-weight:600">✅ 已收過需求</span>'
@@ -1870,7 +1870,7 @@ function selectStage(key) {
       </div>
       <div>
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.08em">各色</div>
-        <div style="font-size:18px;color:var(--text)">${fmtMarks(escHtml(tab.colorways))}</div>
+        <div style="font-size:18px;color:var(--text);white-space:pre-line">${fmtMarks(escHtml(tab.colorways))}</div>
       </div>
     </div>
   `;
