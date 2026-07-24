@@ -17,6 +17,7 @@
   /* 品牌色（與前台一致） */
   --gap-navy: #3b7dd8;
   --ath-purple: #a78bfa;
+  --br-khaki: #c2a878;
 
   --official: #3b82f6;
   --internal: #f59e0b;
@@ -115,6 +116,7 @@ header h1 { font-size:14px; font-weight:500; }
 .bs-gap { background:rgba(59,125,216,0.18); color:var(--gap-navy); border:1px solid rgba(59,125,216,0.3); }
 .bs-ath { background:rgba(167,139,250,0.18); color:var(--ath-purple); border:1px solid rgba(167,139,250,0.3); }
 .bs-on  { background:rgba(0,87,184,0.20); color:#7db4f5; border:1px solid rgba(0,87,184,0.4); }
+.bs-br  { background:rgba(194,168,120,0.20); color:var(--br-khaki); border:1px solid rgba(194,168,120,0.4); }
 .bs-shared { background:rgba(148,163,184,0.14); color:#94a3b8; }
 
 .brand-strip { height:3px; border-radius:3px 3px 0 0; margin:-28px -32px 20px; transition:background 0.15s; }
@@ -134,6 +136,7 @@ header h1 { font-size:14px; font-weight:500; }
 .brand-warning.bw-gap { background:rgba(59,125,216,0.12); border:1px solid rgba(59,125,216,0.3); color:#bcd6f8; }
 .brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
 .brand-warning.bw-on  { background:rgba(0,87,184,0.14); border:1px solid rgba(0,87,184,0.35); color:#bfdcff; }
+.brand-warning.bw-br  { background:rgba(194,168,120,0.14); border:1px solid rgba(194,168,120,0.35); color:#ecdfc9; }
 
 .brand-chip-group { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
 .brand-chip { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; transition:all 0.12s; }
@@ -143,6 +146,7 @@ header h1 { font-size:14px; font-weight:500; }
 .brand-chip:has(input:checked)[data-brand="GAP"] { background:var(--gap-navy); }
 .brand-chip:has(input:checked)[data-brand="ATH"] { background:var(--ath-purple); color:#1a1a1a; }
 .brand-chip:has(input:checked)[data-brand="ON"] { background:#0057B8; }
+.brand-chip:has(input:checked)[data-brand="BR"] { background:var(--br-khaki); color:#1a1a1a; }
 .brand-chip.disabled { opacity:0.55; cursor:not-allowed; }
 .brand-chip.disabled .soon { font-size:10px; font-weight:700; background:rgba(255,255,255,0.08); padding:1px 7px; border-radius:8px; margin-left:2px; white-space:nowrap; }
 
@@ -335,6 +339,7 @@ header h1 { font-size:14px; font-weight:500; }
         <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
         <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
         <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
+        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="updateBrandWarning()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
         <label class="brand-chip disabled" title="即將推出，尚未開放勾選"><span class="dot" style="background:#6b7280"></span>BANANA REPUBLIC<span class="soon">即將推出</span></label>
       </div>
       <div class="brand-warning" id="brandWarning"></div>
@@ -474,6 +479,7 @@ header h1 { font-size:14px; font-weight:500; }
       <button class="btn btn-primary" id="scBrandGAP" onclick="switchStageCfgBrand('GAP')">🔵 GAP</button>
       <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
       <button class="btn btn-ghost" id="scBrandON" onclick="switchStageCfgBrand('ON')">🔷 OLD NAVY</button>
+      <button class="btn btn-ghost" id="scBrandBR" onclick="switchStageCfgBrand('BR')">🟤 BANANA REPUBLIC</button>
       <button class="btn btn-ghost" disabled title="即將推出" style="opacity:0.45;cursor:not-allowed">⬜ BANANA REPUBLIC <span style="font-size:10px;margin-left:4px">即將推出</span></button>
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
@@ -671,7 +677,7 @@ function batchToolbarHtml() {
   if (!selectedEntryIds.size) return '';
   return `<div class="batch-toolbar">
     <strong>${selectedEntryIds.size} 項已選取</strong>
-    <select id="batchBrandSel"><option value="">套用品牌…</option><option value="__shared__">🌐 全品牌</option><option value="GAP">🔵 GAP 專屬</option><option value="ATH">🟣 ATHLETA 專屬</option><option value="ON">🔷 OLD NAVY 專屬</option></select>
+    <select id="batchBrandSel"><option value="">套用品牌…</option><option value="__shared__">🌐 全品牌</option><option value="GAP">🔵 GAP 專屬</option><option value="ATH">🟣 ATHLETA 專屬</option><option value="ON">🔷 OLD NAVY 專屬</option><option value="BR">🟤 BANANA REPUBLIC 專屬</option></select>
     <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchBrand()">套用品牌</button>
     <select id="batchSectionSel">${allSections.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
     <button class="btn btn-ghost" style="padding:5px 10px" onclick="applyBatchMove()">移動到此分類</button>
@@ -731,7 +737,7 @@ function entryBrandList(e) {
 function brandTagAdmin(e) {
   const list = entryBrandList(e).filter(b => b !== 'ALL');
   if (!list.length) return '<span class="badge-sm bs-shared">🌐 全品牌</span>';
-  const tags = { GAP: '<span class="badge-sm bs-gap">🔵 GAP</span>', ATH: '<span class="badge-sm bs-ath">🟣 ATH</span>', ON: '<span class="badge-sm bs-on">🔷 ON</span>' };
+  const tags = { GAP: '<span class="badge-sm bs-gap">🔵 GAP</span>', ATH: '<span class="badge-sm bs-ath">🟣 ATH</span>', ON: '<span class="badge-sm bs-on">🔷 ON</span>', BR: '<span class="badge-sm bs-br">🟤 BR</span>' };
   return list.map(b => tags[b] || '').join(' ');
 }
 function renderEntries() {
@@ -755,7 +761,7 @@ function renderEntries() {
   const filterBar = total ? `
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:12px;color:#94a3b8;flex-wrap:wrap">
       <label class="select-all-wrap"><input type="checkbox" ${allSelected?'checked':''} onchange="toggleSelectAll(this.checked)" style="accent-color:var(--official)">全選</label>
-      品牌篩選：${fBtn('','全部')} ${fBtn('ALL','🌐 共用')} ${fBtn('GAP','🔵 GAP')} ${fBtn('ATH','🟣 ATH')} ${fBtn('ON','🔷 ON')}
+      品牌篩選：${fBtn('','全部')} ${fBtn('ALL','🌐 共用')} ${fBtn('GAP','🔵 GAP')} ${fBtn('ATH','🟣 ATH')} ${fBtn('ON','🔷 ON')} ${fBtn('BR','🟤 BR')}
     </div>` : '';
   lastRenderedEntries = entries;
   if (!total) {
@@ -796,6 +802,7 @@ const BRAND_META = {
   GAP: { icon: '🔵', label: 'GAP',       color: 'var(--gap-navy)' },
   ATH: { icon: '🟣', label: 'ATHLETA',   color: 'var(--ath-purple)' },
   ON:  { icon: '🔷', label: 'OLD NAVY',  color: '#0057B8' },
+  BR:  { icon: '🟤', label: 'BANANA REPUBLIC', color: 'var(--br-khaki)' },
 };
 function updateBrandWarning() {
   const brands = getCheckedBrands();
@@ -878,7 +885,7 @@ function duplicateEntry(id) {
   document.getElementById('modalTitle').textContent = '📄 複製條目（儲存後成為新條目）';
   document.getElementById('deleteBtn').style.display = 'none';  // 複製模式不能刪（沒有目標可刪）
   // 品牌自動輪替：GAP→ATH→ON→GAP；共用／多品牌維持原樣（自行調整）
-  const rot = { GAP: 'ATH', ATH: 'ON', ON: 'GAP' };
+  const rot = { GAP: 'ATH', ATH: 'ON', ON: 'BR', BR: 'GAP' };
   const checked = getCheckedBrands();
   if (checked.length === 1 && rot[checked[0]]) {
     document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = (cb.value === rot[checked[0]]));
@@ -1369,6 +1376,12 @@ const SC_BRAND_OVERRIDES = {
     reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
     graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
   },
+  // BR：受訪者確認 5 個階段目的／步驟／規則全部同 GAP，僅 Block 需要開啟
+  BR: {
+    block: { active: true, mc: true, mcNote: SC_MC_NOTE,
+             pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請補上後存檔）',
+             colorways: '灰色' },
+  },
 };
 
 function scDefaults(brand) {
@@ -1404,7 +1417,7 @@ function scLoad(brand) {
 function openStageCfg() { switchStageCfgBrand('GAP'); document.getElementById('stageCfgOverlay').classList.add('open'); }
 function closeStageCfg() { document.getElementById('stageCfgOverlay').classList.remove('open'); }
 
-const SC_BRANDS = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY' };
+const SC_BRANDS = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY', BR: 'BANANA REPUBLIC' };
 function scBrandName(b) { return SC_BRANDS[b] || b; }
 
 function switchStageCfgBrand(b) {

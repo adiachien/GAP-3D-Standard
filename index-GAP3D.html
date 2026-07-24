@@ -69,6 +69,15 @@ body.brand-ON {
   --bg-page:    #f8fafd;
   --bg-sidebar: #eef4fb;
 }
+body.brand-BR {
+  --brand-accent:      #8A7452;
+  --brand-accent-soft: rgba(138,116,82,0.07);
+  --brand-border-soft: rgba(138,116,82,0.3);
+  --brand-accent-dark: #5C4A33;
+  --brand-col-tint:    rgba(138,116,82,0.1);
+  --bg-page:    #faf8f5;
+  --bg-sidebar: #f4f0e8;
+}
 
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; overflow:hidden; }
@@ -590,6 +599,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 .brand-tag-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
 .brand-tag-ATH { background: rgba(108,91,135,0.08); color: #6C5B87; border: 1px solid rgba(108,91,135,0.3); }
 .brand-tag-ON  { background: rgba(0,87,184,0.08);  color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
+.brand-tag-BR  { background: rgba(138,116,82,0.08); color: #8A7452; border: 1px solid rgba(138,116,82,0.3); }
 .brand-tag-SHARED { background: rgba(100,116,139,0.08); color: #475569; border: 1px solid rgba(100,116,139,0.25); }
 </style>
 </head>
@@ -614,11 +624,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       <div style="font-size:16px;font-weight:600">OLD NAVY</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">ON</div>
     </button>
-    <button disabled title="即將推出" style="cursor:not-allowed;background:#12161f;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 16px;color:rgba(255,255,255,0.35);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative">
-      <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:0.03em">BR</div>
+    <button onclick="pickBrandFromGate('BR')" style="cursor:pointer;background:#1f1810;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 16px;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s" onmouseover="this.style.borderColor='#8A7452'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+      <div style="width:56px;height:56px;border-radius:10px;background:#8A7452;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:0.03em">BR</div>
       <div style="font-size:16px;font-weight:600">BANANA REPUBLIC</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.03em">BR・BRFS</div>
-      <div style="position:absolute;top:10px;right:10px;font-size:10px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">即將推出</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.03em">BR・BRFS</div>
     </button>
   </div>
 </div>
@@ -651,7 +660,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
         <div class="bd-item" data-brand="GAP" onclick="setBrand('GAP')"><span class="bd-dot" style="background:#002A5C"></span>GAP<span class="bd-check">✓</span></div>
         <div class="bd-item" data-brand="ATH" onclick="setBrand('ATH')"><span class="bd-dot" style="background:#6C5B87"></span>ATHLETA<span class="bd-check">✓</span></div>
         <div class="bd-item" data-brand="ON" onclick="setBrand('ON')"><span class="bd-dot" style="background:#0057B8"></span>OLD NAVY<span class="bd-check">✓</span></div>
-        <div class="bd-item bd-disabled" title="即將推出"><span class="bd-dot" style="background:#9ca3af"></span>BANANA REPUBLIC<span class="bd-soon">即將推出</span></div>
+        <div class="bd-item" data-brand="BR" onclick="setBrand('BR')"><span class="bd-dot" style="background:#8A7452"></span>BANANA REPUBLIC<span class="bd-check">✓</span></div>
       </div>
     </div>
     <div class="search-sidebar">
@@ -964,7 +973,7 @@ const BRAND_INFO = {
   GAP: { label: 'GAP',     logo: 'GAP', title: 'GAP 3D Standard', enabled: true },
   ATH: { label: 'ATHLETA', logo: 'ATH', title: 'ATHLETA 3D Standard', enabled: true },
   ON:  { label: 'OLD NAVY', logo: 'ON', title: 'OLD NAVY 3D Standard', enabled: true },
-  BR:  { label: 'BANANA REPUBLIC', logo: 'BR', title: 'BANANA REPUBLIC 3D Standard', enabled: false },
+  BR:  { label: 'BANANA REPUBLIC', logo: 'BR', title: 'BANANA REPUBLIC 3D Standard', enabled: true },
 };
 let currentBrand = 'GAP';
 try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {}
@@ -1049,6 +1058,7 @@ function updateBrandUI() {
   const info = BRAND_INFO[currentBrand];
   document.body.classList.toggle('brand-ATH', currentBrand === 'ATH');
   document.body.classList.toggle('brand-ON',  currentBrand === 'ON');
+  document.body.classList.toggle('brand-BR',  currentBrand === 'BR');
   const logo = document.getElementById('appLogo');
   const title = document.getElementById('appTitle');
   if (logo)  logo.textContent = info.logo;
@@ -1550,6 +1560,13 @@ const BRAND_STAGE_OVERRIDES = {
     sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
     reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
     graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
+  },
+  // BR：受訪者確認 5 個階段目的／步驟／規則全部同 GAP，僅 Block 需要開啟（GAP 預設 Block 未啟用）
+  // Proto／LA／Fit／RS 的 MC、Pose、Colorways 皆與 GAP 預設值一致，不需覆寫
+  BR: {
+    block: { active: true, mc: true, mcNote: STAGE_MC_NOTE,
+             pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請至後台補上）',
+             colorways: '灰色' },
   },
 };
 
