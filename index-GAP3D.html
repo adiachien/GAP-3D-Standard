@@ -1946,7 +1946,7 @@ function selectStage(key) {
     </div>
   `;
 
-  const laFlowchartHtml = key !== 'la' ? '' : `
+  const laFlowchartHtml = (key !== 'la' || currentBrand !== 'GAP') ? '' : `
     <div class="card" style="margin-bottom:14px">
       <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px">LA 作業流程</div>
       <svg width="70%" viewBox="0 0 660 500" role="img" style="display:block;margin:0 auto">
