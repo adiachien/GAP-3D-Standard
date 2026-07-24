@@ -1531,40 +1531,38 @@ function stripMarks(t) {
 }
 
 // ── Stage 設定（可由後台編輯，讀不到時用預設值）──
-const STAGE_MC_NOTE = '請 TD 提供 MC Link\n若無 MC Link（如 CO 款）可用尺寸表截圖替代';
+// avatar 欄位：'show'＝顯示人台、'hide'＝隱藏人台、''＝未設定（沿用舊資料時會退回文字解析）
 const STAGE_DEFAULTS = [
-  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
-  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272\n\u806f\u540d\u6b3e\uff1a\u7070+\u5404\u8272',
-    collab:{ enabled:false, label:'\u806f\u540d\u6b3e\uff08GAP X & Collab\uff09', mc:true, mcNote:STAGE_MC_NOTE, pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\uff0c\u986f\u793a\u4eba\u53f0\n\u30fbBottoms\uff1aRegular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' } },
-  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, mcNote:'',         pose:'Regular Pose\uff0c\u96b1\u85cf\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' },
-  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  mcNote:STAGE_MC_NOTE, pose:'Regular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272' },
-  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
-  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, mcNote:'',            pose:'Regular Pose\uff0c\u986f\u793a\u4eba\u53f0', colorways:'\u7070\u8272 + \u5404\u8272' },
-  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, mcNote:'',            pose:'', colorways:'' },
+  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  avatar:'show', pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\n\u30fbBottoms\uff1aRegular Pose', colorways:'\u7070\u8272\n\u806f\u540d\u6b3e\uff1a\u7070+\u5404\u8272',
+    collab:{ enabled:false, label:'\u806f\u540d\u6b3e\uff08GAP X & Collab\uff09', mc:true, avatar:'show', pose:'\u30fbTops / Dresses / Bras / OW\uff1aRegular + Starting Pose\n\u30fbBottoms\uff1aRegular Pose', colorways:'\u7070\u8272 + \u5404\u8272' } },
+  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, avatar:'hide', pose:'Regular Pose', colorways:'\u7070\u8272 + \u5404\u8272' },
+  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  avatar:'show', pose:'Regular Pose', colorways:'\u7070\u8272' },
+  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, avatar:'show', pose:'Regular Pose', colorways:'\u7070\u8272 + \u5404\u8272' },
+  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
 ];
 
 // ── 各品牌的 Stage 差異（疊在預設值之上；後台「Stage 設定」可再覆寫這裡）──
-const ON_MC_NOTE = 'Critical Measurement 貼 MC Link 到 CLO-SET comment（不是截圖）\n' +
-  'Base 路徑：\\\\Nt_pdc\\開發技術處本部\\外部使用檔\\12.V7\n（內分季節／季度，每季貼當季連結）';
 const BRAND_STAGE_OVERRIDES = {
   ATH: {
     proto: { collab: { enabled: false } },
   },
   ON: {
-    block:     { active: true, pose: '顯示人台（同 Proto）', colorways: '灰階，需 base layer' },
-    proto:     { active: true, mc: true, mcNote: ON_MC_NOTE,
-                 pose: 'Regular Pose，顯示人台\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
+    block:     { active: true, avatar: 'show', pose: '（同 Proto）', colorways: '灰階，需 base layer' },
+    proto:     { active: true, mc: true, avatar: 'show',
+                 pose: 'Regular Pose\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
                  colorways: '灰色', collab: { enabled: false } },
     la:        { active: true },
-    fit:       { active: true, mc: true, mcNote: ON_MC_NOTE },
+    fit:       { active: true, mc: true },
     sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
-    reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
+    reference: { active: true, avatar: 'hide', pose: 'Regular Pose', colorways: '全色（需做 AW）' },
     graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
   },
   // BR：受訪者確認 5 個階段目的／步驟／規則全部同 GAP，僅 Block 需要開啟（GAP 預設 Block 未啟用）
   // Proto／LA／Fit／RS 的 MC、Pose、Colorways 皆與 GAP 預設值一致，不需覆寫
   BR: {
-    block: { active: true, mc: true, mcNote: STAGE_MC_NOTE,
+    block: { active: true, mc: true,
              pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請至後台補上）',
              colorways: '灰色' },
   },
@@ -1746,7 +1744,12 @@ function renderCardImages(e, mode) {
 }
 
 // ── Stage 總覽比較表（一眼看完 7 個 Stage 差異；含內部限定的「需求狀態」列）──
-function splitPoseAvatar(poseText) {
+function splitPoseAvatar(poseText, avatarField) {
+  // 新資料：avatar 欄位是明確的 'show'／'hide'，直接採用（POSE 文字不再需要塞「顯示人台」字樣）
+  if (avatarField === 'show' || avatarField === 'hide') {
+    return { pose: poseText || '', avatar: avatarField === 'show' ? '顯示人台' : '隱藏人台' };
+  }
+  // 舊資料退回相容：從 POSE 文字裡解析「，顯示人台」／「，隱藏人台」字樣
   if (!poseText) return { pose: '', avatar: '' };
   const avatarSet = new Set();
   const poseLines = poseText.split('\n').map(line => {
@@ -1786,8 +1789,8 @@ function renderStageOverviewTable(stages) {
         </thead>
         <tbody>
           ${row('WORKFLOW TAG', s => s.active ? `<div style="width:44px;height:15px;background:${s.tagColor};border-radius:3px;margin:0 auto;border:1px solid rgba(0,0,0,0.08)"></div>` : dash)}
-          ${row('人台姿勢', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(splitPoseAvatar(s.pose).pose||'－'))}</div>` : dash)}
-          ${row('顯示／隱藏', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${escHtml(splitPoseAvatar(s.pose).avatar||'－')}</div>` : dash)}
+          ${row('人台姿勢', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(splitPoseAvatar(s.pose, s.avatar).pose||'－'))}</div>` : dash)}
+          ${row('顯示／隱藏', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55">${escHtml(splitPoseAvatar(s.pose, s.avatar).avatar||'－')}</div>` : dash)}
           ${row('各色 COLORWAYS', s => s.active ? `<div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-line">${fmtMarks(escHtml(s.colorways||'－'))}</div>` : dash)}
           ${row('尺寸表 MC', s => s.active ? (s.mc ? '✅' : '🚫') : dash)}
           ${row('🔒 需求狀態<div style="font-weight:400;font-size:9.5px;color:var(--text-muted);margin-top:2px">（內部才看得到）</div>', s => s.active
@@ -1857,19 +1860,19 @@ function selectStage(key) {
   if (!st || !st.active) return;
   setCurrentStage(key);
 
-  const mainTab = { label: 'Proto', mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
+  const mainTab = { label: 'Proto', mc: !!st.mc, avatar: st.avatar || '', pose: st.pose || '', colorways: st.colorways || '' };
   let s;
   if (key === 'proto' && st.collab && st.collab.enabled) {
     s = {
       num: st.num, name: st.name, subtitle: st.subtitle || '', tagColor: st.tagColor, hasTabs: true,
       tabs: [
         mainTab,
-        { label: st.collab.label || '聯名款（GAP X & Collab）', mc: !!st.collab.mc, mcNote: st.collab.mcNote || '', pose: st.collab.pose || '', colorways: st.collab.colorways || '' },
+        { label: st.collab.label || '聯名款（GAP X & Collab）', mc: !!st.collab.mc, avatar: st.collab.avatar || '', pose: st.collab.pose || '', colorways: st.collab.colorways || '' },
       ],
     };
   } else {
     s = { num: st.num, name: st.name, subtitle: st.subtitle || '', tagColor: st.tagColor, hasTabs: false,
-          mc: !!st.mc, mcNote: st.mcNote || '', pose: st.pose || '', colorways: st.colorways || '' };
+          mc: !!st.mc, avatar: st.avatar || '', pose: st.pose || '', colorways: st.colorways || '' };
   }
 
   // highlight selected column in overview table (header darker brand shade + whole column tinted w/ thick border)
@@ -1891,7 +1894,7 @@ function selectStage(key) {
   });
 
   const renderInfoCard = (tab) => {
-    const { pose, avatar } = splitPoseAvatar(tab.pose);
+    const { pose, avatar } = splitPoseAvatar(tab.pose, tab.avatar);
     return `
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px">
       <div>

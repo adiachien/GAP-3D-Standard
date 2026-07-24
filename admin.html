@@ -340,7 +340,6 @@ header h1 { font-size:14px; font-weight:500; }
         <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
         <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
         <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="updateBrandWarning()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
-        <label class="brand-chip disabled" title="即將推出，尚未開放勾選"><span class="dot" style="background:#6b7280"></span>BANANA REPUBLIC<span class="soon">即將推出</span></label>
       </div>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
@@ -480,7 +479,6 @@ header h1 { font-size:14px; font-weight:500; }
       <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
       <button class="btn btn-ghost" id="scBrandON" onclick="switchStageCfgBrand('ON')">🔷 OLD NAVY</button>
       <button class="btn btn-ghost" id="scBrandBR" onclick="switchStageCfgBrand('BR')">🟤 BANANA REPUBLIC</button>
-      <button class="btn btn-ghost" disabled title="即將推出" style="opacity:0.45;cursor:not-allowed">⬜ BANANA REPUBLIC <span style="font-size:10px;margin-left:4px">即將推出</span></button>
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
       各品牌<strong>各自獨立</strong>設定，控制前台 Stage 流程圖與各 Stage 詳細內容（尺寸表／POSE／各色）。<br>
@@ -1337,18 +1335,18 @@ async function handleEntryImages(ev) {
   status.textContent = '';
 }
 
-// ── Stage 設定（樣品種類流程，GAP / ATH 各自一份）──
-const SC_MC_NOTE = '請 TD 提供 MC Link\n若無 MC Link（如 CO 款）可用尺寸表截圖替代';
-const SC_POSE_TOPS = '・Tops / Dresses / Bras / OW：Regular + Starting Pose，顯示人台\n・Bottoms：Regular Pose，顯示人台';
+// ── Stage 設定（樣品種類流程，各品牌各自一份）──
+// avatar 欄位：'show'＝顯示人台、'hide'＝隱藏人台
+const SC_POSE_TOPS = '・Tops / Dresses / Bras / OW：Regular + Starting Pose\n・Bottoms：Regular Pose';
 const SC_DEFAULTS = [
-  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
-  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  mcNote:SC_MC_NOTE, pose:SC_POSE_TOPS, colorways:'灰色\n聯名款：灰+各色',
-    collab:{ enabled:false, label:'聯名款（GAP X & Collab）', mc:true, mcNote:SC_MC_NOTE, pose:SC_POSE_TOPS, colorways:'灰色 + 各色' } },
-  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, mcNote:'',      pose:'Regular Pose，隱藏人台', colorways:'灰色 + 各色' },
-  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  mcNote:SC_MC_NOTE, pose:'Regular Pose，顯示人台', colorways:'灰色' },
-  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
-  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, mcNote:'',          pose:'Regular Pose，顯示人台', colorways:'灰色 + 各色' },
-  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, mcNote:'',          pose:'', colorways:'' },
+  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  avatar:'show', pose:SC_POSE_TOPS, colorways:'灰色\n聯名款：灰+各色',
+    collab:{ enabled:false, label:'聯名款（GAP X & Collab）', mc:true, avatar:'show', pose:SC_POSE_TOPS, colorways:'灰色 + 各色' } },
+  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, avatar:'hide', pose:'Regular Pose', colorways:'灰色 + 各色' },
+  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  avatar:'show', pose:'Regular Pose', colorways:'灰色' },
+  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, avatar:'show', pose:'Regular Pose', colorways:'灰色 + 各色' },
+  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
 ];
 let scBrand = 'GAP';
 
@@ -1358,27 +1356,25 @@ function scNormColor(c) {
   return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#888888';
 }
 
-const SC_ON_MC_NOTE = 'Critical Measurement 貼 MC Link 到 CLO-SET comment（不是截圖）\n' +
-  'Base 路徑：\\\\Nt_pdc\\開發技術處本部\\外部使用檔\\12.V7\n（內分季節／季度，每季貼當季連結）';
 // 各品牌 Stage 差異（要與前台 index 的 BRAND_STAGE_OVERRIDES 保持一致）
 const SC_BRAND_OVERRIDES = {
   ATH: {
     proto: { collab: { enabled: false } },
   },
   ON: {
-    block:     { active: true, pose: '顯示人台（同 Proto）', colorways: '灰階，需 base layer' },
-    proto:     { active: true, mc: true, mcNote: SC_ON_MC_NOTE,
-                 pose: 'Regular Pose，顯示人台\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
+    block:     { active: true, avatar: 'show', pose: '（同 Proto）', colorways: '灰階，需 base layer' },
+    proto:     { active: true, mc: true, avatar: 'show',
+                 pose: 'Regular Pose\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
                  colorways: '灰色', collab: { enabled: false } },
     la:        { active: true },
-    fit:       { active: true, mc: true, mcNote: SC_ON_MC_NOTE },
+    fit:       { active: true, mc: true },
     sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
-    reference: { active: true, pose: 'Regular Pose，隱藏人台', colorways: '全色（需做 AW）' },
+    reference: { active: true, avatar: 'hide', pose: 'Regular Pose', colorways: '全色（需做 AW）' },
     graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
   },
   // BR：受訪者確認 5 個階段目的／步驟／規則全部同 GAP，僅 Block 需要開啟
   BR: {
-    block: { active: true, mc: true, mcNote: SC_MC_NOTE,
+    block: { active: true, mc: true,
              pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請補上後存檔）',
              colorways: '灰色' },
   },
@@ -1438,7 +1434,7 @@ function renderStageCfg(cfg) {
   const fld = (label, inner) => `<div style="margin-bottom:8px"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">${label}</div>${inner}</div>`;
   const txt = (id, val) => `<input id="${id}" value="${esc(val || '')}" style="width:100%">`;
   const ta  = (id, val) => `<textarea id="${id}" rows="2" style="width:100%">${esc(val || '')}</textarea>`;
-  const mcBox = (id, on) => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="accent-color:var(--official)"> ✅ 需要</label>`;
+  const mcBox = (id, on, label) => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="accent-color:var(--official)"> ${label}</label>`;
   document.getElementById('stageCfgList').innerHTML = cfg.map(s => `
     <details style="background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;padding:10px 14px" ${s.active ? '' : ''}>
       <summary style="cursor:pointer;font-size:13px;font-weight:600">${esc(s.name)}
@@ -1454,11 +1450,11 @@ function renderStageCfg(cfg) {
           ${fld('英文副標', txt('sc-' + s.key + '-subtitle', s.subtitle))}
           ${fld('Workflow 顏色', `<input type="color" id="sc-${s.key}-tagColor" value="${scNormColor(s.tagColor)}" style="width:100%;height:32px;padding:2px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">`)}
         </div>
-        <div style="display:grid;grid-template-columns:110px 1fr;gap:10px">
-          ${fld('尺寸表', mcBox('sc-' + s.key + '-mc', s.mc))}
-          ${fld('尺寸表說明（勾「需要」時顯示）', ta('sc-' + s.key + '-mcNote', s.mcNote))}
+        <div style="display:grid;grid-template-columns:110px 110px 1fr;gap:10px">
+          ${fld('尺寸表', mcBox('sc-' + s.key + '-mc', s.mc, '✅ 需要'))}
+          ${fld('人台', mcBox('sc-' + s.key + '-avatar', s.avatar !== 'hide', '👁️ 顯示人台'))}
+          ${fld('AVATAR POSE', ta('sc-' + s.key + '-pose', s.pose))}
         </div>
-        ${fld('AVATAR POSE', ta('sc-' + s.key + '-pose', s.pose))}
         ${fld('各色', ta('sc-' + s.key + '-colorways', s.colorways))}
       </div>
     </details>
@@ -1477,7 +1473,7 @@ function collectStageCfg() {
       subtitle:  v('sc-' + k + '-subtitle').trim(),
       tagColor:  v('sc-' + k + '-tagColor') || d.tagColor,
       mc:        c('sc-' + k + '-mc'),
-      mcNote:    v('sc-' + k + '-mcNote'),
+      avatar:    c('sc-' + k + '-avatar') ? 'show' : 'hide',
       pose:      v('sc-' + k + '-pose'),
       colorways: v('sc-' + k + '-colorways').trim(),
     };
