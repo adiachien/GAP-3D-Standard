@@ -279,17 +279,6 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 }
 .card:hover { border-color: var(--brand-border-soft); }
 
-/* ── 搜尋跳轉高亮（外框脈動，不變背景色）── */
-@keyframes searchJumpPulse {
-  0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-color: #e5e7eb; }
-  25%      { box-shadow: 0 0 0 3px var(--brand-accent-soft), 0 1px 3px rgba(0,0,0,0.06); border-color: var(--brand-accent); }
-  50%      { box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-color: #e5e7eb; }
-  75%      { box-shadow: 0 0 0 3px var(--brand-accent-soft), 0 1px 3px rgba(0,0,0,0.06); border-color: var(--brand-accent); }
-}
-.search-jump-highlight {
-  animation: searchJumpPulse 0.65s ease-in-out 2;
-}
-
 .card-header {
   display: flex;
   align-items: center;
@@ -986,6 +975,8 @@ const BRAND_INFO = {
   ON:  { label: 'OLD NAVY', logo: 'ON', title: 'OLD NAVY 3D Standard', enabled: true },
   BR:  { label: 'BANANA REPUBLIC', logo: 'BR', title: 'BANANA REPUBLIC 3D Standard', enabled: true },
 };
+// 徽章專用縮寫（標題全名不變，只有品牌徽章顯示用這個）
+const BRAND_ABBR = { GAP: 'GAP', ATH: 'A', ON: 'ON', BR: 'BR' };
 let currentBrand = 'GAP';
 try { currentBrand = localStorage.getItem('gap3d_brand') || 'GAP'; } catch (e) {}
 if (!BRAND_INFO[currentBrand] || !BRAND_INFO[currentBrand].enabled) currentBrand = 'GAP';
@@ -1061,8 +1052,11 @@ function brandOk(e) {
 // 品牌專屬徽章（共用條目不顯示；多品牌條目顯示多個獨立徽章並排）
 function brandBadge(e) {
   const list = brandList(e).filter(b => b !== 'ALL' && BRAND_INFO[b]);
-  if (!list.length) return '<span class="brand-tag brand-tag-SHARED">🌐 全品牌共用</span>';
-  return list.map(b => `<span class="brand-tag brand-tag-${b}">${BRAND_INFO[b].label}</span>`).join(' ');
+  const allBrandKeys = Object.keys(BRAND_INFO).filter(b => BRAND_INFO[b].enabled);
+  if (!list.length || allBrandKeys.every(b => list.includes(b))) {
+    return '<span class="brand-tag brand-tag-SHARED">🌐 全品牌共用</span>';
+  }
+  return list.map(b => `<span class="brand-tag brand-tag-${b}">${BRAND_ABBR[b] || BRAND_INFO[b].label}</span>`).join(' ');
 }
 
 function updateBrandUI() {
@@ -1373,7 +1367,7 @@ function renderCard(e) {
     const rightBody  = right.split('\n').slice(1).join('\n');
 
     return `
-      <div class="card" id="entry-${e.id}">
+      <div class="card">
         <div class="card-header">
           <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
           <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
@@ -1418,7 +1412,7 @@ function renderCard(e) {
     body = content;
   }
   return `
-    <div class="card" id="entry-${e.id}">
+    <div class="card">
       <div class="card-header">
         <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
@@ -2122,7 +2116,7 @@ function renderAvatarPage(section, entries) {
     </div>
     ${cats.map((e,i) => `
       <div id="avp-${i}" class="tab-panel ${i===0?'active':''}">
-        <div class="card" id="entry-${e.id}">
+        <div class="card">
           <div class="card-header">
             <div class="card-title">${escHtml(e.title)}</div>
             <span class="badge badge-official">官方規範</span>
@@ -2337,7 +2331,7 @@ function selectStageTab(pageKey, stageKey) {
           }).join('');
 
           return `
-            <div class="check-item" id="entry-${e.id}" onclick="if(event.target.tagName!=='A'&&event.target.tagName!=='BUTTON')toggleCheck(this)">
+            <div class="check-item" onclick="if(event.target.tagName!=='A'&&event.target.tagName!=='BUTTON')toggleCheck(this)">
               <input type="checkbox" onclick="event.stopPropagation();this.parentElement.classList.toggle('done',this.checked)">
               <div style="flex:1">
                 <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
@@ -2817,7 +2811,7 @@ function renderQCPage(section, entries) {
     ${qcItems.length ? `
       <div class="qc-grid">
         ${qcItems.map(e => `
-          <div class="qc-item" id="entry-${e.id}">
+          <div class="qc-item">
             <div class="qc-fail">❌ ${escHtml(e.title)}</div>
             <div class="qc-body">${fmtMarks(escHtml(e.content || ''))}</div>
           </div>
@@ -2879,85 +2873,13 @@ function handleSearch(q) {
       content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
     });
     return `
-      <div class="result-card" onclick="jumpToEntry('${e.id}','${section?.slug}')">
+      <div class="result-card" onclick="showSection('${section?.slug}')">
         <div class="result-section">📂 ${section?.name || ''}</div>
         <div class="result-title">${escHtml(e.title)}</div>
         <div class="result-body">${content}</div>
       </div>
     `;
   }).join('');
-}
-
-// ── 搜尋結果 → 跳轉到條目 ───────────────────────
-// 從搜尋結果點進去：導到分類 → 若為 Stage 分頁先自動選出該條目所屬 Stage → 捲動並高亮
-function jumpToEntry(entryId, slug) {
-  if (!slug) return;
-  showSection(slug, false);
-
-  const entry = allEntries.find(x => String(x.id) === String(entryId));
-  const stages = entry ? entryStages(entry) : [];
-
-  if (stages.length) {
-    const stageOrder = getStageCfg().map(s => s.key);
-    const targetStage = stages.includes(currentStageKey)
-      ? currentStageKey
-      : (stageOrder.find(k => stages.includes(k)) || stages[0]);
-
-    const stagePageMap = { prefit:'pf', details:'dt', checklist:'cl', closet:'cs' };
-    if (slug === 'stages') {
-      selectStage(targetStage);
-    } else if (stagePageMap[slug]) {
-      selectStageTab(stagePageMap[slug], targetStage);
-    }
-  }
-
-  scrollToEntryEl(entryId);
-}
-
-// 展開包住某元素、目前未顯示的 tab-panel（不管是哪個頁面用的 tab 機制，通用處理）
-function revealTabPanel(panelEl) {
-  if (!panelEl || panelEl.classList.contains('active')) return;
-  const parent = panelEl.parentElement;
-  if (parent) {
-    Array.from(parent.children).forEach(c => {
-      if (c.classList && c.classList.contains('tab-panel')) c.classList.remove('active');
-    });
-  }
-  panelEl.classList.add('active');
-  const btn = document.querySelector(`.type-tab[onclick*="'${panelEl.id}'"]`);
-  if (btn) {
-    btn.closest('.type-tabs')?.querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-}
-
-function scrollToEntryEl(entryId) {
-  const highlight = (target) => {
-    if (!target) return;
-    let anc = target.parentElement;
-    while (anc && anc !== document.body) {
-      if (anc.classList && anc.classList.contains('tab-panel')) revealTabPanel(anc);
-      anc = anc.parentElement;
-    }
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    target.classList.add('search-jump-highlight');
-    setTimeout(() => target.classList.remove('search-jump-highlight'), 1350);
-  };
-
-  const direct = document.getElementById('entry-' + entryId);
-  if (direct) { highlight(direct); return; }
-
-  // 縮圖卡（grid-card）尚未展開：先展開，展開後裡面會產生 entry-{id}
-  const compact = document.getElementById('gc-' + entryId);
-  if (compact) {
-    const grid = compact.closest('.card-grid');
-    if (grid) {
-      toggleCardExpand(entryId, grid.id);
-      setTimeout(() => highlight(document.getElementById('entry-' + entryId) || compact), 150);
-    } else {
-      highlight(compact);
-    }
-  }
 }
 
 // ── UI helpers ─────────────────────────────────
