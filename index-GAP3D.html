@@ -966,6 +966,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let allSections = [];
 let allEntries  = [];
 let currentSlug = null;
+let editingEntryId = null;
 
 // ── 品牌切換（GAP / ATH）───────────────────────
 // entries.brands 欄位：空值 / 'ALL' = 全品牌共用，'GAP' / 'ATH' / 'ON' = 品牌專屬，逗號分隔可複選（如 'GAP,ON'）
@@ -1318,6 +1319,7 @@ function renderSection(section, entries) {
 
 // ── Card Renderer ──────────────────────────────
 function renderCard(e) {
+  if (editingEntryId === e.id) return renderCardEditForm(e);
   const badgeMap = {
     official: '官方規範',
     internal: '內部SOP',
@@ -1367,10 +1369,11 @@ function renderCard(e) {
     const rightBody  = right.split('\n').slice(1).join('\n');
 
     return `
-      <div class="card">
+      <div class="card" id="entry-${e.id}">
         <div class="card-header">
           <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
           <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
+          ${editBtnHtml(e.id)}
         </div>
         ${paths}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
@@ -1412,15 +1415,112 @@ function renderCard(e) {
     body = content;
   }
   return `
-    <div class="card">
+    <div class="card" id="entry-${e.id}">
       <div class="card-header">
         <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <span class="badge ${badgeClass[e.source] || 'badge-internal'}">${badgeMap[e.source] || '內部SOP'}</span>
+        ${editBtnHtml(e.id)}
       </div>
       ${paths}
       ${body}
     </div>
   `;
+}
+
+// ── 前台即時編輯（免跳後台）──────────────────
+function editBtnHtml(id) {
+  return `<button onclick="event.stopPropagation();startEditCard('${id}')" title="編輯此卡片"
+    style="margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:27px;height:27px;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:all .12s"
+    onmouseover="this.style.color='var(--gap-blue)';this.style.borderColor='var(--gap-blue)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">✏️</button>`;
+}
+
+function renderCardEditForm(e) {
+  const pathsText = (e.paths || []).join('\n');
+  return `
+    <div class="card" id="entry-${e.id}" style="border-color:var(--gap-blue);box-shadow:0 0 0 2px rgba(29,78,216,0.12)">
+      <div class="card-header" style="align-items:flex-start">
+        <input id="ed-title-${e.id}" value="${escHtml(e.title || '')}"
+          style="flex:1;font-size:18px;font-weight:700;color:#111827;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:inherit;background:var(--bg-input);outline:none">
+        <button onclick="cancelEditCard('${e.id}')" title="取消"
+          style="flex-shrink:0;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:27px;height:27px;font-size:13px;cursor:pointer;font-family:inherit">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-wrap:wrap">
+        <button type="button" onclick="wrapEditSel('${e.id}','**','**')" title="粗體" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">B</button>
+        <button type="button" onclick="wrapEditSel('${e.id}','==','==')" title="螢光筆" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:#fde047;color:#1a1a1a;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">螢光</button>
+        <button type="button" onclick="wrapEditSel('${e.id}','!!','!!')" title="紅字" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:#dc2626;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">紅字</button>
+        <span style="font-size:11px;color:var(--text-dim)">選取文字後點按鈕，或手打 **粗體**、==螢光==、!!紅字!!</span>
+      </div>
+      <textarea id="ed-content-${e.id}" rows="4" placeholder="內容…"
+        style="width:100%;border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:15px;color:var(--text);font-family:inherit;background:var(--bg-input);resize:vertical;line-height:1.6;outline:none">${escHtml(e.content || '')}</textarea>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:12px;color:var(--text-dim)">來源標籤</span>
+        <select id="ed-source-${e.id}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit">
+          <option value="internal" ${e.source === 'internal' ? 'selected' : ''}>🟡 內部SOP</option>
+          <option value="official" ${e.source === 'official' ? 'selected' : ''}>🔵 官方規範</option>
+          <option value="warning" ${e.source === 'warning' ? 'selected' : ''}>🔴 重要注意</option>
+        </select>
+      </div>
+      <div style="margin-top:10px">
+        <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結（每行一個，格式：標籤｜路徑或網址）</label>
+        <textarea id="ed-paths-${e.id}" rows="2" placeholder="標籤｜\\\\192.168.1.220\\3ddb\\..."
+          style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;font-family:'DM Mono',monospace;color:#1d4ed8;background:var(--bg-input);resize:vertical;outline:none">${escHtml(pathsText)}</textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button onclick="cancelEditCard('${e.id}')" style="background:var(--bg-input);color:var(--text-dim);border:1px solid var(--border);padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+        <button id="ed-save-${e.id}" onclick="saveEditCard('${e.id}')" style="background:var(--gap-blue);color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">儲存</button>
+      </div>
+    </div>
+  `;
+}
+
+function reRenderEntry(id) {
+  const e = allEntries.find(x => String(x.id) === String(id));
+  const el = document.getElementById('entry-' + id);
+  if (e && el) el.outerHTML = renderCard(e);
+}
+
+function wrapEditSel(id, pre, post) {
+  const ta = document.getElementById(`ed-content-${id}`);
+  if (!ta) return;
+  const s = ta.selectionStart, en = ta.selectionEnd;
+  const val = ta.value;
+  const sel = val.slice(s, en) || '重點文字';
+  ta.value = val.slice(0, s) + pre + sel + post + val.slice(en);
+  ta.focus();
+  ta.selectionStart = s + pre.length;
+  ta.selectionEnd = s + pre.length + sel.length;
+}
+
+function startEditCard(id) { editingEntryId = id; reRenderEntry(id); }
+function cancelEditCard(id) { editingEntryId = null; reRenderEntry(id); }
+
+async function saveEditCard(id) {
+  const title = document.getElementById(`ed-title-${id}`).value.trim();
+  if (!title) { alert('請填寫標題'); return; }
+  const content = document.getElementById(`ed-content-${id}`).value;
+  const source  = document.getElementById(`ed-source-${id}`).value;
+  const paths   = document.getElementById(`ed-paths-${id}`).value.split('\n').map(s => s.trim()).filter(Boolean);
+  const btn = document.getElementById(`ed-save-${id}`);
+  if (btn) { btn.disabled = true; btn.textContent = '儲存中…'; }
+  const { error } = await sb.from('entries').update({ title, content, source, paths }).eq('id', id);
+  if (error) {
+    alert('儲存失敗：' + error.message);
+    if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
+    return;
+  }
+  const e = allEntries.find(x => String(x.id) === String(id));
+  if (e) { e.title = title; e.content = content; e.source = source; e.paths = paths; }
+  editingEntryId = null;
+  reRenderEntry(id);
+  showEditedToast();
+}
+
+function showEditedToast() {
+  const toast = document.createElement('div');
+  toast.textContent = '✓ 已儲存';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid rgba(29,78,216,0.3);color:#1d4ed8;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
 }
 
 
