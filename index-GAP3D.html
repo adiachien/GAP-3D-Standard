@@ -699,19 +699,14 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
         <div class="page-desc" id="trkPageDesc">3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）</div>
       </div>
 
-      <!-- 更新時間 + 匯出 -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <!-- 更新時間 + 匯出 + 上傳 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <div id="trkUpdatedAt" style="font-size:13px;color:var(--text-dim);flex:1"></div>
         <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
-      </div>
-
-      <!-- 上傳區：拖曳／貼上／點擊 都會自動開始解析 -->
-      <div id="trkDropZone"
-        onclick="document.getElementById('trkFileInput').click()"
-        ondragover="trkDragOver(event)" ondragleave="trkDragLeave(event)" ondrop="trkDropExcel(event)"
-        style="border:1.5px dashed var(--border);border-radius:8px;padding:14px;text-align:center;font-size:13px;color:var(--text-dim);cursor:pointer;margin-bottom:12px;transition:all 0.15s">
-        📤 把 DPC 匯出的 Excel 拖曳到這裡，或點擊選擇檔案，也可以直接 <strong style="color:var(--text)">貼上（Ctrl+V）</strong>，會自動開始解析
-        <input id="trkFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadTrackerExcel(this.files[0]);this.value=''">
+        <label style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
+          📤 上傳 Excel
+          <input id="trkFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadTrackerExcel(this.files[0]);this.value=''">
+        </label>
       </div>
       <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
 
@@ -764,7 +759,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
                 <th onclick="sortTrkStyles('狀態')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">狀態 <span id="trksort-狀態"></span></th>
                 <th onclick="sortTrkStyles('需求日')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">需求日 <span id="trksort-需求日"></span></th>
                 <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">Customer</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">品牌</th>
+                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">單別</th>
                 <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">3D次</th>
                 <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">類型</th>
                 <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">尺碼</th>
@@ -1219,7 +1214,7 @@ function renderNav() {
         <span class="nav-icon">💬</span>留言板（即時回饋）
       </div>
       <div class="nav-item" id="nav-accounts" onclick="showSection('accounts')">
-        <span class="nav-icon">🔑</span>帳號密碼
+        <span class="nav-icon">🔑</span>常用連結與帳密
       </div>
     </div>
   `;
@@ -2710,7 +2705,7 @@ function renderAccountsPage(section, entries) {
 
   return `
     <div class="page-header">
-      <div class="page-title">🔑 ${escHtml(section.name)}</div>
+      <div class="page-title">🔑 常用連結與帳密</div>
     </div>
     <div id="aclock" style="max-width:360px;margin:0 auto;padding-top:20px">
       <div class="card" style="text-align:center;padding:32px 24px">
@@ -2729,6 +2724,52 @@ function renderAccountsPage(section, entries) {
     </div>
     <div id="ac-content" style="display:none">
       ${gridHtml}
+    </div>
+    ${renderQuickLinks()}
+  `;
+}
+
+// ── 常用連結（資料存在隱藏分類 links，可於後台新增/修改/排序）──
+const LINKS_SECTION_SLUG = 'links';
+
+function escAttr(str) {
+  return escHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// 網址可放在 content，或 paths 任一行（支援「標籤｜網址」格式）
+function linkUrlOf(e) {
+  const c = String(e.content || '').trim();
+  if (/^https?:\/\//i.test(c)) return c;
+  const fromPath = (e.paths || [])
+    .map(x => String(x).split('｜').pop().trim())
+    .find(v => /^https?:\/\//i.test(v));
+  return fromPath || '';
+}
+
+function renderQuickLinks() {
+  const sec = allSections.find(s => s.slug === LINKS_SECTION_SLUG);
+  const items = sec
+    ? allEntries.filter(e => e.section_id === sec.id && brandOk(e) && linkUrlOf(e))
+    : [];
+  if (!items.length) return '';
+
+  return `
+    <div class="page-header" style="margin-top:36px">
+      <div class="page-title" style="font-size:19px">🔗 GAP INC 常用連結</div>
+      <div class="page-desc" style="font-size:14px">點擊開新分頁 · 內容可於後台「常用連結」分類編輯</div>
+    </div>
+    <div class="card-grid">
+      ${items.map(e => {
+        const url = linkUrlOf(e);
+        let host = '';
+        try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (_) {}
+        return `
+        <div class="grid-card" data-url="${escAttr(url)}" title="${escAttr(url)}" onclick="window.open(this.dataset.url,'_blank')">
+          <div class="grid-card-icon" style="background:rgba(29,78,216,0.1);color:#1d4ed8">🔗</div>
+          <div class="grid-card-title">${escHtml(e.title)}</div>
+          <div class="grid-card-preview">${escHtml(host)}</div>
+        </div>`;
+      }).join('')}
     </div>
   `;
 }
@@ -3279,14 +3320,8 @@ function renderTrkOwnerMapList() {
   }
   box.innerHTML = entries.map(([sub, owner]) => {
     const encSub = encodeURIComponent(sub);
-    // 品牌標籤純顯示用：從已匯入的款資料反查這個 SUBGROUP 屬於哪個品牌，尚未匯入過就不顯示
-    const matched = trkRows.find(r => (r['SUBGROUP'] || '') === sub);
-    const brandBadge = matched
-      ? `<span class="brand-tag brand-tag-${trkBrandOf(matched)}" style="flex-shrink:0">${escHtml(BRAND_ABBR[trkBrandOf(matched)] || trkBrandOf(matched))}</span>`
-      : `<span style="flex-shrink:0;font-size:10.5px;color:var(--text-muted)">未匯入</span>`;
     return `
     <div style="display:flex;gap:8px;align-items:center">
-      ${brandBadge}
       <div style="flex:1;font-size:13px;color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(sub)}</div>
       <input value="${escHtml(owner)}" list="trkOwnerDatalist" onchange="updateTrkOwnerMapRow('${encSub}', this.value)" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
       <button onclick="deleteTrkOwnerMapRow('${encSub}')" title="刪除" style="background:none;border:none;color:#b91c1c;cursor:pointer;font-size:14px">🗑️</button>
@@ -3406,7 +3441,7 @@ function renderTrackerStyles() {
         <td style="padding:10px 12px;text-align:center;white-space:nowrap"><span style="background:${sc.bg};color:${sc.color};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600">${escHtml(r['狀態'] || '')}</span></td>
         <td style="padding:10px 12px;text-align:center;color:var(--text);white-space:nowrap">${escHtml(r['需求日'] || '')}</td>
         <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(trkCustShort(r['Customer']))}</td>
-        <td style="padding:10px 12px;text-align:center;white-space:nowrap"><span class="brand-tag brand-tag-${trkBrandOf(r)}">${escHtml(BRAND_ABBR[trkBrandOf(r)] || trkBrandOf(r))}</span></td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(r['單別'] || '')}</td>
         <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['3D次'] || '')}</td>
         <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['類型'] || '')}</td>
         <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['尺碼'] || '')}</td>
@@ -3489,42 +3524,6 @@ function trkCell(v) {
   if (v === null || v === undefined) return '';
   return String(v).trim();
 }
-
-// ── 拖曳／貼上自動上傳 ─────────────────────────
-function trkIsExcelFile(file) {
-  if (!file) return false;
-  if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      || file.type === 'application/vnd.ms-excel') return true;
-  return /\.(xlsx|xls)$/i.test(file.name || '');
-}
-function trkDragOver(ev) {
-  ev.preventDefault();
-  const z = document.getElementById('trkDropZone');
-  if (z) { z.style.borderColor = 'var(--official)'; z.style.background = 'rgba(59,130,246,0.05)'; }
-}
-function trkDragLeave(ev) {
-  const z = document.getElementById('trkDropZone');
-  if (z) { z.style.borderColor = 'var(--border)'; z.style.background = ''; }
-}
-function trkDropExcel(ev) {
-  ev.preventDefault();
-  trkDragLeave(ev);
-  const file = ev.dataTransfer?.files?.[0];
-  if (!file) return;
-  if (!trkIsExcelFile(file)) { alert('請拖曳 .xlsx 或 .xls 檔案'); return; }
-  uploadTrackerExcel(file);
-}
-document.addEventListener('paste', (ev) => {
-  // 只在「開發追蹤」頁開著的時候接手貼上動作，避免影響留言板貼圖或其他輸入框
-  const trkPage = document.getElementById('page-tracker');
-  if (!trkPage || !trkPage.classList.contains('active')) return;
-  const files = ev.clipboardData?.files;
-  if (!files || !files.length) return;
-  const file = [...files].find(f => trkIsExcelFile(f));
-  if (!file) return;
-  ev.preventDefault();
-  uploadTrackerExcel(file);
-});
 
 async function uploadTrackerExcel(file) {
   if (!file) return;
