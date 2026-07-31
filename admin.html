@@ -98,11 +98,11 @@ header h1 { font-size:14px; font-weight:500; }
 .entry-search .icn { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-faint); }
 
 .protected-banner {
-  display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.14); border:2px solid rgba(245,158,11,0.4);
-  color:#fcd34d; font-size:13px; font-weight:600; padding:12px 14px; border-radius:8px; margin-bottom:14px; line-height:1.5;
+  display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.28);
+  color:#fcd34d; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; line-height:1.5;
 }
 
-.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:11px 14px; margin-bottom:6px; display:flex; align-items:flex-start; gap:14px; }
+.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:14px; }
 .entry-info { flex:1; min-width:0; }
 .entry-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:4px; }
 .entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -129,14 +129,14 @@ header h1 { font-size:14px; font-weight:500; }
 .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
 .brand-warning {
-  display:none; align-items:flex-start; gap:8px; font-size:13px; font-weight:700; padding:12px 14px; border-radius:8px; margin:-6px 0 14px; line-height:1.5;
+  display:none; align-items:flex-start; gap:8px; font-size:12px; padding:9px 12px; border-radius:8px; margin:-6px 0 14px; line-height:1.5;
 }
 .brand-warning.show { display:flex; }
-.brand-warning.bw-shared { background:rgba(148,163,184,0.14); border:2px solid rgba(148,163,184,0.35); color:#e2e8f0; }
-.brand-warning.bw-gap { background:rgba(59,125,216,0.16); border:2px solid rgba(59,125,216,0.45); color:#bcd6f8; }
-.brand-warning.bw-ath { background:rgba(167,139,250,0.16); border:2px solid rgba(167,139,250,0.45); color:#dcd2fb; }
-.brand-warning.bw-on  { background:rgba(0,87,184,0.18); border:2px solid rgba(0,87,184,0.5); color:#bfdcff; }
-.brand-warning.bw-br  { background:rgba(194,168,120,0.18); border:2px solid rgba(194,168,120,0.5); color:#ecdfc9; }
+.brand-warning.bw-shared { background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.25); color:#cbd5e1; }
+.brand-warning.bw-gap { background:rgba(59,125,216,0.12); border:1px solid rgba(59,125,216,0.3); color:#bcd6f8; }
+.brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
+.brand-warning.bw-on  { background:rgba(0,87,184,0.14); border:1px solid rgba(0,87,184,0.35); color:#bfdcff; }
+.brand-warning.bw-br  { background:rgba(194,168,120,0.14); border:1px solid rgba(194,168,120,0.35); color:#ecdfc9; }
 
 .brand-chip-group { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
 .brand-chip { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; transition:all 0.12s; }
@@ -225,6 +225,7 @@ header h1 { font-size:14px; font-weight:500; }
     <div class="admin-title">內容管理</div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost" onclick="openStageCfg()">🎬 Stage 設定</button>
+      <button class="btn btn-ghost" onclick="openBizManager()">👥 業務名單</button>
       <button class="btn btn-ghost" id="tourBtnAccounts" onclick="openAccountsManager()">🔑 帳號管理</button>
       <button class="btn btn-ghost" id="tourBtnSections" onclick="openSectionManager()">⚙️ 管理分類</button>
       <button class="btn btn-primary" id="tourBtnNewEntry" onclick="openNewEntry()">＋ 新增條目</button>
@@ -336,19 +337,15 @@ header h1 { font-size:14px; font-weight:500; }
       </select>
     </div>
     <div class="field">
-      <label id="fBrandsLabel">適用品牌</label>
+      <label id="fBrandsLabel">適用品牌（不勾＝全品牌共用；可複選）</label>
       <div class="brand-chip-group" id="fBrandGroup">
-        <label class="brand-chip" data-brand="ALL" style="border-color:rgba(148,163,184,0.4)"><input type="checkbox" id="fBrandAll" checked onchange="onAllBrandToggle()"><span class="dot" style="background:#94a3b8"></span>🌐 全品牌通用</label>
-        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="onBrandCbChange()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
-        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="onBrandCbChange()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
-        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="onBrandCbChange()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
-        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="onBrandCbChange()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
+        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
+        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
+        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
+        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="updateBrandWarning()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
       </div>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
-    <details id="advancedDetails" style="margin:6px 0 14px;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
-    <summary style="cursor:pointer;font-size:12px;color:var(--text-dim);font-weight:600">⚙️ 進階設定（Stage、排序）</summary>
-    <div style="margin-top:12px">
     <div class="field" id="stageField" style="display:none">
       <label>所屬 Stage（可複選；一個條目可同時掛在多個 Stage）</label>
       <div id="fStageGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px">
@@ -366,8 +363,6 @@ header h1 { font-size:14px; font-weight:500; }
       <label>排序（數字越小越前面）</label>
       <input id="fOrder" type="number" value="0">
     </div>
-    </div>
-    </details>
     </div><!-- /form-col -->
     <div class="preview-col">
       <div class="preview-head">👁 前台預覽（即時）</div>
@@ -455,11 +450,11 @@ header h1 { font-size:14px; font-weight:500; }
       <input id="seName" placeholder="例如：各色 3D 定位">
     </div>
     <div class="field">
-      <label>Slug（選填，留空自動產生）</label>
-      <input id="seSlug" placeholder="留空會自動產生" style="font-family:'DM Mono',monospace">
+      <label>Slug（英文，用於網址）</label>
+      <input id="seSlug" placeholder="例如：color-placement" style="font-family:'DM Mono',monospace">
     </div>
     <div class="field">
-      <label>群組名稱（選填，留空預設為「一般」）</label>
+      <label>群組名稱</label>
       <input id="seGroup" placeholder="例如：非正單（不上CLO-SET）">
     </div>
     <div class="field">
@@ -502,6 +497,36 @@ header h1 { font-size:14px; font-weight:500; }
         <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
         <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 業務名單／SUBGROUP對照 Modal -->
+<div class="overlay" id="bizOverlay">
+  <div class="modal" style="width:640px;max-height:88vh;overflow-y:auto">
+    <h3>👥 業務名單／SUBGROUP對照</h3>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">
+      給「開發追蹤」的應進清單比對功能用：業務名單是上傳時下拉選單的選項（也可以手動輸入清單外的新名字，不會鎖死）；SUBGROUP對照是選了SUBGROUP後，優先排到最前面的業務。
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">業務名單</div>
+    <div id="bizListBox" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:22px">
+      <input id="bizNewName" placeholder="例如 Rosa Wu 吳季芳" style="flex:1">
+      <button class="btn btn-primary" onclick="addBizName()">＋新增</button>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">SUBGROUP ↔ 業務對照（GAP 用）</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn btn-primary" id="bizCustGS" onclick="switchBizCust('GS')">GAP 正貨（GS）</button>
+      <button class="btn btn-ghost" id="bizCustGO" onclick="switchBizCust('GO')">GAP OUTLET（GO）</button>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">每格用逗號分隔多個名字，排在越前面優先權越高</div>
+    <div id="bizSubMapBox" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeBizManager()">關閉</button>
+      <button class="btn btn-primary" onclick="saveBizManager()">💾 儲存</button>
     </div>
   </div>
 </div>
@@ -784,41 +809,22 @@ function renderEntries() {
     <div class="entry-row">
       <input type="checkbox" class="entry-cb" ${selectedEntryIds.has(e.id)?'checked':''} onclick="toggleEntrySelect('${e.id}', this.checked)" style="margin-top:3px;accent-color:var(--official);flex-shrink:0">
       <div class="entry-info">
-        <div style="display:flex;align-items:baseline;gap:10px">
-          <div class="entry-title" style="flex:1;margin-bottom:0">${esc(e.title)}</div>
-          <div style="display:flex;gap:4px;flex-shrink:0">${brandTagAdmin(e)}</div>
-        </div>
-        <div class="entry-meta" style="margin-top:5px">
+        <div class="entry-title">${esc(e.title)}</div>
+        <div class="entry-meta">
           <span class="badge-sm ${bm[e.source]}">${sl[e.source]}</span>
+          ${brandTagAdmin(e)}
           ${e.images?.length ? `<span>🖼️ ${e.images.length} 張圖</span>` : ''}
         </div>
         ${e.content?`<div class="entry-preview">${esc(e.content).substring(0,100)}…</div>`:''}
-        ${(e.paths||[]).length ? `<details style="margin-top:5px"><summary style="cursor:pointer;font-size:11.5px;color:var(--text-dim);list-style:none">📎 ${e.paths.length} 個路徑</summary>${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}</details>` : ''}
+        ${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}
       </div>
       <div class="entry-actions">
         <button class="btn btn-ghost" onclick="openEditEntry('${e.id}')">✏️ 編輯</button>
-        <div style="position:relative">
-          <button class="btn btn-ghost" onclick="toggleRowMenu('${e.id}', event)" title="更多">⋯</button>
-          <div id="rowmenu-${e.id}" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 26px rgba(0,0,0,0.4);z-index:80;min-width:132px;overflow:hidden">
-            <button class="btn btn-ghost" style="width:100%;border:none;border-radius:0;justify-content:flex-start;text-align:left" onclick="duplicateEntry('${e.id}')">📄 複製</button>
-            <button class="btn btn-ghost" style="width:100%;border:none;border-radius:0;justify-content:flex-start;text-align:left;color:#fca5a5" onclick="confirmDeleteEntryById('${e.id}')">🗑 刪除</button>
-          </div>
-        </div>
+        <button class="btn btn-ghost" onclick="duplicateEntry('${e.id}')" title="以此條目為底建立新條目（品牌自動切到另一邊）">📄 複製</button>
       </div>
     </div>
   `).join('');
 }
-
-function toggleRowMenu(id, ev) {
-  ev.stopPropagation();
-  const menu = document.getElementById('rowmenu-' + id);
-  const wasOpen = menu && menu.style.display === 'block';
-  document.querySelectorAll('[id^="rowmenu-"]').forEach(m => m.style.display = 'none');
-  if (menu && !wasOpen) menu.style.display = 'block';
-}
-document.addEventListener('click', () => {
-  document.querySelectorAll('[id^="rowmenu-"]').forEach(m => m.style.display = 'none');
-});
 
 function getCheckedBrands() {
   return [...document.querySelectorAll('#fBrandGroup .brand-cb:checked')].map(cb => cb.value);
@@ -865,7 +871,6 @@ function openNewEntry() {
   document.getElementById('fContent').value = '';
   document.getElementById('fSource').value = 'internal';
   document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
-  document.getElementById('fBrandAll').checked = true;
   document.getElementById('fOrder').value = 0;
   document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = false);
   document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
@@ -890,8 +895,7 @@ function openEditEntry(id) {
   document.getElementById('fContent').value = e.content||'';
   document.getElementById('fSource').value = e.source||'internal';
   { const bArr = entryBrandList(e).filter(b => b !== 'ALL');
-    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value));
-    document.getElementById('fBrandAll').checked = bArr.length === 0; }
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value)); }
   document.getElementById('fOrder').value = e.sort_order||0;
   document.getElementById('fSection').value = e.section_id;
   { const arr = e.stage == null || e.stage === '' ? [] : (Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s=>s.trim()).filter(Boolean));
@@ -918,7 +922,6 @@ function duplicateEntry(id) {
   const checked = getCheckedBrands();
   if (checked.length === 1 && rot[checked[0]]) {
     document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = (cb.value === rot[checked[0]]));
-    syncBrandAllCheckbox();
   }
   updateBrandWarning();
   renderEntryPreview();
@@ -938,23 +941,6 @@ function toggleStageField(sectionId) {
   );
   const show = stageSections.some(s => s.id === sectionId);
   document.getElementById('stageField').style.display = show ? 'block' : 'none';
-  if (show) { const d = document.getElementById('advancedDetails'); if (d) d.open = true; }
-}
-function onAllBrandToggle() {
-  if (document.getElementById('fBrandAll').checked) {
-    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
-  }
-  updateBrandWarning();
-  renderEntryPreview();
-}
-function onBrandCbChange() {
-  document.getElementById('fBrandAll').checked = getCheckedBrands().length === 0;
-  updateBrandWarning();
-  renderEntryPreview();
-}
-function syncBrandAllCheckbox() {
-  const cb = document.getElementById('fBrandAll');
-  if (cb) cb.checked = getCheckedBrands().length === 0;
 }
 
 document.getElementById('fSection').addEventListener('change', function() {
@@ -1084,19 +1070,15 @@ async function saveEntry() {
 
 function confirmDeleteEntry() {
   if (!editingEntryId) return;
-  confirmDeleteEntryById(editingEntryId);
-}
-function confirmDeleteEntryById(id) {
-  const e = allEntries.find(x => x.id === id);
+  const e = allEntries.find(x=>x.id===editingEntryId);
   openConfirm({
     title: '確定要刪除這個條目？',
     body: `「${e?.title||''}」刪除後無法復原，前台將立即看不到此內容。`,
-    onConfirm: () => deleteEntry(id),
+    onConfirm: deleteEntry,
   });
 }
-async function deleteEntry(id) {
-  const targetId = id || editingEntryId;
-  const { error } = await sb.from('entries').delete().eq('id', targetId);
+async function deleteEntry() {
+  const { error } = await sb.from('entries').delete().eq('id', editingEntryId);
   if (error) { showToast('刪除失敗','error'); }
   else { showToast('已刪除','success'); closeModal(); await loadData(); selectSection(currentSectionId); }
 }
@@ -1299,11 +1281,9 @@ function closeSectionEdit() {
 
 async function saveSection() {
   const name  = document.getElementById('seName').value.trim();
-  let slug    = document.getElementById('seSlug').value.trim();
-  let group   = document.getElementById('seGroup').value.trim();
-  if (!name) { showToast('請填寫分類名稱', 'error'); return; }
-  if (!slug) slug = 'cat-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-  if (!group) group = '一般';
+  const slug  = document.getElementById('seSlug').value.trim();
+  const group = document.getElementById('seGroup').value.trim();
+  if (!name || !slug || !group) { showToast('請填寫名稱、Slug 和群組', 'error'); return; }
 
   const payload = {
     name,
@@ -1586,6 +1566,132 @@ async function copyStageCfg() {
   const ok = await scSaveBrand(target, collectStageCfg());
   if (!ok) return;
   showToast('已複製到 ' + scBrandName(target) + ' ✓ 可切換過去微調', 'success');
+}
+
+// ── 業務名單／SUBGROUP對照（給開發追蹤・應進清單比對用）──
+const BIZ_GAP_SUBGROUPS = ['BAC','FIT','GAC','KIDS FR','KIDS SWIM','MAC','TSD','WAC'];
+// 跟 index-GAP3D.html 裡的預設值保持一致；Supabase 裡還沒存過資料時，這裡跟前台都會顯示這份預設值
+const BIZ_DEFAULT_LIST = [
+  'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
+  'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
+  'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
+  'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
+  'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
+];
+const BIZ_DEFAULT_SUBMAP = {
+  GS: {
+    WAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    MAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    GAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    BAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
+    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
+    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
+    FIT:['Serena Li 李秋宜']
+  },
+  GO: {
+    WAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    MAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    GAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    BAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
+    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
+    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
+    FIT:['Serena Li 李秋宜']
+  }
+};
+
+let bizList = [];
+let bizSubMap = { GS: {}, GO: {} };
+let bizCust = 'GS';
+
+function trkDataSection() { return allSections.find(s => s.slug === 'tracker-data'); }
+function trkDataEntry(title) {
+  const sec = trkDataSection();
+  if (!sec) return null;
+  return allEntries.find(e => e.section_id === sec.id && e.title === title) || null;
+}
+
+function openBizManager() {
+  const bl = trkDataEntry('bizlist');
+  bizList = BIZ_DEFAULT_LIST.slice();
+  try { if (bl && bl.content) { const arr = JSON.parse(bl.content); if (Array.isArray(arr) && arr.length) bizList = arr; } } catch (e) {}
+
+  const sm = trkDataEntry('subbizmap');
+  bizSubMap = JSON.parse(JSON.stringify(BIZ_DEFAULT_SUBMAP));
+  try { if (sm && sm.content) { const obj = JSON.parse(sm.content); if (obj && Object.keys(obj).length) bizSubMap = obj; } } catch (e) {}
+
+  renderBizList();
+  switchBizCust('GS');
+  document.getElementById('bizOverlay').classList.add('open');
+}
+function closeBizManager() { document.getElementById('bizOverlay').classList.remove('open'); }
+
+function renderBizList() {
+  document.getElementById('bizListBox').innerHTML = bizList.map((n, i) => `
+    <div style="display:flex;gap:8px;align-items:center">
+      <input value="${esc(n)}" onchange="updateBizName(${i}, this.value)" style="flex:1">
+      <button class="btn btn-ghost" onclick="removeBizName(${i})" style="color:#f87171">🗑️</button>
+    </div>`).join('') || '<div style="font-size:12px;color:#94a3b8">尚未設定，於下方新增第一筆</div>';
+}
+function addBizName() {
+  const el = document.getElementById('bizNewName');
+  const v = el.value.trim();
+  if (!v) return;
+  bizList.push(v);
+  el.value = '';
+  renderBizList();
+}
+function updateBizName(i, v) { bizList[i] = v.trim(); }
+function removeBizName(i) { bizList.splice(i, 1); renderBizList(); }
+
+function switchBizCust(c) {
+  bizCust = c;
+  document.getElementById('bizCustGS').className = 'btn ' + (c === 'GS' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('bizCustGO').className = 'btn ' + (c === 'GO' ? 'btn-primary' : 'btn-ghost');
+  renderBizSubMap();
+}
+function renderBizSubMap() {
+  const m = bizSubMap[bizCust] || {};
+  document.getElementById('bizSubMapBox').innerHTML = BIZ_GAP_SUBGROUPS.map(sub => `
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="width:90px;font-size:12.5px;color:#cbd5e1;font-weight:600;flex-shrink:0">${esc(sub)}</div>
+      <input value="${esc((m[sub] || []).join(', '))}" placeholder="逗號分隔，第一個優先權最高" onchange="updateBizSubMap('${sub}', this.value)" style="flex:1">
+    </div>`).join('');
+}
+function updateBizSubMap(sub, v) {
+  const names = v.split(',').map(s => s.trim()).filter(Boolean);
+  if (!bizSubMap[bizCust]) bizSubMap[bizCust] = {};
+  bizSubMap[bizCust][sub] = names;
+}
+
+async function saveBizManager() {
+  let sec = trkDataSection();
+  if (!sec) {
+    const { data, error } = await sb.from('sections')
+      .insert({ slug: 'tracker-data', name: '開發追蹤資料', group_name: '_hidden', sort_order: 999 })
+      .select().single();
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return; }
+    sec = data;
+    allSections.push(sec);
+  }
+  async function upsert(title, obj) {
+    const content = JSON.stringify(obj);
+    const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+    const { error } = existing
+      ? await sb.from('entries').update({ content }).eq('id', existing.id)
+      : await sb.from('entries').insert({ section_id: sec.id, title, content, sort_order: 0 });
+    if (error) throw error;
+  }
+  try {
+    await upsert('bizlist', bizList);
+    await upsert('subbizmap', bizSubMap);
+  } catch (err) {
+    showToast('儲存失敗：' + err.message, 'error');
+    return;
+  }
+  await loadData();
+  showToast('已儲存業務名單／SUBGROUP對照 ✓', 'success');
 }
 
 // ── 使用導覽 ──────────────────────────────────

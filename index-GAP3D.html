@@ -637,12 +637,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
     <div class="stage-indicator" id="stageIndicator" onclick="jumpToCurrentStage()" title="回到目前 Stage 的樣品種類頁面"></div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>重要注意</div>
-    </div>
-    <a id="editBtn" href="admin.html" class="btn-admin">✏️ 編輯</a>
+    <a id="editBtn" href="admin.html" class="btn-admin">✏️ 後台編輯</a>
   </div>
 </header>
 
@@ -696,22 +691,35 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           <div class="page-title">📊 開發追蹤</div>
           <button onclick="openTrkHelp()" title="使用說明" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1">？</button>
         </div>
-        <div class="page-desc" id="trkPageDesc">3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）</div>
+        <div class="page-desc" id="trkPageDesc">3D單 進度</div>
       </div>
 
       <!-- 更新時間 + 匯出 + 上傳 -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <div id="trkUpdatedAt" style="font-size:13px;color:var(--text-dim);flex:1"></div>
         <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
-        <label style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
+        <label id="trkUploadZone" style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
           📤 上傳 Excel
           <input id="trkFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadTrackerExcel(this.files[0]);this.value=''">
         </label>
       </div>
       <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
 
-      <!-- 總覽摘要 -->
-      <div id="trkSummary" style="margin-bottom:22px"></div>
+      <!-- 總覽摘要（本身也是拖曳上傳區） -->
+      <div id="trkSummary" ondragover="trkDragOver(event,'trkSummary')" ondragleave="trkDragLeave(event,'trkSummary')" ondrop="trkDropFile(event,'trkSummary',uploadTrackerExcel)" style="margin-bottom:22px;border-radius:10px;transition:background .15s,outline .15s"></div>
+
+      <!-- 應進清單比對 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">📋 應進清單比對</div>
+        <label id="trkExpUploadZone" style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
+          📤 上傳應進清單
+          <input id="trkExpFileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="trkExpHandleFile(this.files[0]);this.value=''">
+        </label>
+        <button onclick="trkExpClearBrand()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本品牌應進清單</button>
+      </div>
+      <div id="trkExpSummary" ondragover="trkDragOver(event,'trkExpSummary')" ondragleave="trkDragLeave(event,'trkExpSummary')" ondrop="trkDropFile(event,'trkExpSummary',trkExpHandleFile)" style="margin-bottom:14px;border-radius:10px;transition:background .15s,outline .15s"></div>
+      <div id="trkExpMissingWrap" style="margin-bottom:14px"></div>
+      <div id="trkExpDupWrap" style="margin-bottom:24px"></div>
 
       <!-- 各 SUB 進單進度：標題與按鈕永遠顯示（即使還沒上傳Excel、還沒任何資料，也要能點「業務對照表」開始登記） -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
@@ -825,46 +833,78 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
       <datalist id="trkOwnerDatalist"></datalist>
 
+      <!-- 應進清單設定 Modal -->
+      <div id="trkExpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:220;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">📋 應進清單設定</h3>
+          <div id="trkExpFileInfo" style="font-size:12px;color:var(--text-dim);margin-bottom:16px"></div>
+          <div style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;padding-right:4px">
+
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">款號欄位（自動偵測，格式：D + 6碼數字）</label>
+              <select id="trkExpColBom" onchange="trkExpRecount()" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
+              <div id="trkExpBomCount" style="font-size:12px;color:var(--text-dim);margin-top:4px"></div>
+            </div>
+
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Gender</label>
+              <div style="display:flex;gap:14px;margin-bottom:6px;font-size:12.5px;color:var(--text)">
+                <label style="cursor:pointer"><input type="radio" name="trkExpGenderMode" value="col" onchange="trkExpToggleMode('gender')" checked> 從欄位選</label>
+                <label style="cursor:pointer"><input type="radio" name="trkExpGenderMode" value="manual" onchange="trkExpToggleMode('gender')"> 整份手動輸入一個值</label>
+              </div>
+              <select id="trkExpColGender" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
+              <input id="trkExpManualGender" list="trkGenderDatalist" placeholder="例如 Womens" style="display:none;width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            </div>
+
+            <div id="trkExpSubgroupBlock" style="display:none">
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">SUBGROUP</label>
+              <div style="display:flex;gap:14px;margin-bottom:6px;font-size:12.5px;color:var(--text)">
+                <label style="cursor:pointer"><input type="radio" name="trkExpSubMode" value="col" onchange="trkExpToggleMode('sub')" checked> 從欄位選</label>
+                <label style="cursor:pointer"><input type="radio" name="trkExpSubMode" value="manual" onchange="trkExpToggleMode('sub')"> 整份手動輸入一個值</label>
+              </div>
+              <select id="trkExpColSub" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
+              <select id="trkExpManualSub" onchange="trkExpRefreshOwnerPriority()" style="display:none;width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
+            </div>
+
+            <div id="trkExpCustomerBlock" style="display:none">
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">這批是 GS 還是 GO？（決定業務優先名單、也會記錄下來）</label>
+              <div style="display:flex;gap:14px;font-size:12.5px;color:var(--text)">
+                <label style="cursor:pointer"><input type="radio" name="trkExpCustomer" value="GS" checked onchange="trkExpRefreshOwnerPriority()"> GAP 正貨（GS）</label>
+                <label style="cursor:pointer"><input type="radio" name="trkExpCustomer" value="GO" onchange="trkExpRefreshOwnerPriority()"> GAP OUTLET（GO）</label>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務名（這批全部款號都算這位業務，可從清單選或手動輸入新名字）</label>
+              <input id="trkExpOwnerInput" list="trkBizDatalist" placeholder="從清單選，或直接手動輸入" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            </div>
+
+            <div id="trkExpPreviewWrap"></div>
+            <div id="trkExpOverwriteWrap"></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+            <button onclick="closeTrkExpModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="trkExpPreview()" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">產生預覽</button>
+            <button id="trkExpConfirmBtn" onclick="trkExpConfirmSave()" disabled style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;opacity:0.5">確認存檔</button>
+          </div>
+        </div>
+      </div>
+      <datalist id="trkBizDatalist"></datalist>
+      <datalist id="trkGenderDatalist">
+        <option value="Mens"><option value="Womens"><option value="Girls"><option value="Boys"><option value="Baby"><option value="Kids">
+      </datalist>
+
       <!-- 使用說明 Modal -->
       <div id="trkHelpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:640px;max-width:95vw;max-height:82vh;display:flex;flex-direction:column">
-          <h3 style="font-size:17px;font-weight:700;margin-bottom:16px">📖 開發追蹤・使用說明</h3>
-          <div style="overflow-y:auto;flex:1;font-size:13.5px;line-height:1.75;color:var(--text)">
-
-            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">① 上傳資料</div>
-            <div style="margin-bottom:16px;color:var(--text-dim)">
-              點右上「📤 上傳 Excel」，丟入 DPC 匯出的原始檔即可，系統會自動篩出 GAP／GAP OUTLET／ATHLETA／OLD NAVY 的 3D單。每次重新上傳都會<strong style="color:var(--text)">更新全部人看到的資料</strong>，「負責人／Miro」「業務對照表」「預計款數／備註」都不會被洗掉。
-            </div>
-
-            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">② 各 SUB 進單進度（追蹤誰還沒進單）</div>
-            <div style="margin-bottom:16px;color:var(--text-dim)">
-              • <strong style="color:var(--text)">已進</strong>：這個SUB在目前匯入的Excel裡有幾款，自動算，不用管。<br>
-              • <strong style="color:var(--text)">業務</strong>：自動從「業務對照表」帶出，通常不用動。<br>
-              • <strong style="color:var(--text)">預計</strong>：業務發信說「這SUB有幾款」時，點該列的 ✏️ 把數字填進去。<br>
-              • <strong style="color:var(--text)">未進</strong>：預計－已進，自動算好，紅字＝還沒補齊、綠字＝到齊了。<br>
-              • <strong style="color:var(--text)">備註</strong>：想寫什麼都可以，例如「業務說明天補」。<br>
-              點 SUBGROUP 名稱可以直接跳到下方看該SUB的款明細。
-            </div>
-
-            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">③ 業務對照表（一次設定，很少要改）</div>
-            <div style="margin-bottom:16px;color:var(--text-dim)">
-              點「⚙️ 業務對照表」，把固定的配對建好，例如 GS-WAC＝Demi、GO-MAC＝Carol。設定好之後，②的「業務」欄位會自動帶出，平常不用再手動選。
-            </div>
-
-            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">④ 清空本輪預計／備註</div>
-            <div style="margin-bottom:16px;color:var(--text-dim)">
-              一輪下單週期（例如8/10~8/15）結束、要開始追下一輪時，點「🧹 清空本輪預計／備註」。只會清掉②的預計款數跟備註，<strong style="color:var(--text)">業務對照表不會被清掉</strong>。
-            </div>
-
-            <div style="font-weight:700;color:var(--gap-blue);margin-bottom:6px">⑤ 各款進度（單一款式明細）</div>
-            <div style="margin-bottom:16px;color:var(--text-dim)">
-              下方表格是每一款的明細，可以用上面的下拉選單篩 SUB／狀態，點欄位標題可以排序。每一列最右邊的 ✏️ 是編輯這一款的「負責人／Miro連結」，跟②的SUB層級資料是分開的。
-            </div>
-
-            <div style="font-weight:700;color:#b91c1c;margin-bottom:6px">⚠️ 常見問題</div>
-            <div style="color:var(--text-dim)">
-              如果②的「已進」數字看起來不對，通常是業務對照表或預計款數裡打的 SUBGROUP 名稱，跟Excel裡的寫法不一致（全形／半形、多打空格）。可以先上傳一次Excel，照著實際出現的名字填。
-            </div>
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:82vh;display:flex;flex-direction:column">
+          <h3 style="font-size:17px;font-weight:700;margin-bottom:14px">📖 開發追蹤・使用說明</h3>
+          <div style="overflow-y:auto;flex:1;font-size:13.5px;line-height:2;color:var(--text-dim)">
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">上傳資料</strong>：拖曳檔案或點「上傳 Excel」，DPC 匯出的原始檔即可，自動篩品牌、更新給大家看。</div>
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">各 SUB 進單進度</strong>：已進自動算，預計款數點 ✏️ 填，未進自動算出來（紅字沒到齊、綠字到齊了）。</div>
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">應進清單比對</strong>：上傳業務給的清單，自動比對已進／未進，也會抓系統裡重複進單的款號。</div>
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">業務對照表</strong>：設定好 SUBGROUP 對應業務，之後自動帶出，不用每次手動選。</div>
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">清空本輪</strong>：週期結束要重新開始時點這個，只清預計款數／備註，其他設定不動。</div>
+            <div style="color:#b91c1c"><strong>常見問題</strong>：已進數字不對，通常是 SUBGROUP 名稱打法跟 Excel 裡不一致，照 Excel 實際寫法改一下就好。</div>
 
           </div>
           <div style="display:flex;justify-content:flex-end;margin-top:18px">
@@ -3191,6 +3231,49 @@ let trkEditingSub   = null;
 let trkSortCol = '需求日';
 let trkSortAsc = true;
 
+// ── 應進清單比對 ────────────────────────────────
+const TRK_BOM_RE = /^D\d{6}/;   // 款號格式：D + 6碼數字
+const GAP_SUBGROUPS = ['BAC','FIT','GAC','KIDS FR','KIDS SWIM','MAC','TSD','WAC'];
+
+// 預設值：Supabase 裡還沒存過資料時使用；一旦在 admin.html 存過，就會用存過的版本蓋掉這裡
+const TRK_DEFAULT_BIZLIST = [
+  'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
+  'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
+  'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
+  'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
+  'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
+];
+const TRK_DEFAULT_SUBBIZMAP = {
+  GS: {
+    WAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    MAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    GAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    BAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
+    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
+    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
+    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
+    FIT:['Serena Li 李秋宜']
+  },
+  GO: {
+    WAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    MAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    GAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    BAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
+    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
+    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
+    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
+    FIT:['Serena Li 李秋宜']
+  }
+};
+
+let trkExpected  = { GAP:{}, ATH:{}, ON:{}, BR:{} };  // { GAP:{ 'D107453':{gender,subgroup,customer,owner,source,uploadedAt} }, ... }
+let trkBizList   = TRK_DEFAULT_BIZLIST.slice();
+let trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
+
+let trkExpRawRows  = null;   // 目前解析中的檔案內容（array-of-arrays）
+let trkExpFileName = '';
+let trkExpParsed   = null;   // 產生預覽後的 [{bom,gender,subgroup,customer,owner,source,uploadedAt}]
+
 // XLSX 動態載入（用到才載，加快開頁速度）
 function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
@@ -3228,6 +3311,21 @@ function loadTrackerFromEntries() {
     const sm = trkEntry('submanual');
     if (sm && sm.content) trkSubManual = JSON.parse(sm.content) || {};
   } catch (e) {}
+  trkExpected = { GAP:{}, ATH:{}, ON:{}, BR:{} };
+  try {
+    const ex = trkEntry('expected');
+    if (ex && ex.content) trkExpected = Object.assign({ GAP:{}, ATH:{}, ON:{}, BR:{} }, JSON.parse(ex.content));
+  } catch (e) {}
+  trkBizList = TRK_DEFAULT_BIZLIST.slice();
+  try {
+    const bl = trkEntry('bizlist');
+    if (bl && bl.content) { const arr = JSON.parse(bl.content); if (Array.isArray(arr) && arr.length) trkBizList = arr; }
+  } catch (e) {}
+  trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
+  try {
+    const sbm = trkEntry('subbizmap');
+    if (sbm && sbm.content) { const obj = JSON.parse(sbm.content); if (obj && Object.keys(obj).length) trkSubBizMap = obj; }
+  } catch (e) {}
   try {
     const om = trkEntry('ownermap');
     if (om && om.content) trkOwnerMap = JSON.parse(om.content) || {};
@@ -3263,6 +3361,7 @@ function renderTrackerAll() {
   renderTrackerSubs();
   renderTrackerFilters();
   renderTrackerStyles();
+  renderTrkExpected();
 }
 
 // 狀態顏色：常見狀態固定色，其餘依關鍵字分類
@@ -3297,15 +3396,15 @@ function trkChips(counts) {
 function renderTrackerSummary() {
   const el = document.getElementById('trkSummary');
   const desc = document.getElementById('trkPageDesc');
-  if (desc) desc.textContent = `${trkBrandLabel()}・3D單 進度（上傳 DPC 匯出的 Excel 自動更新，大家都看得到）`;
+  if (desc) desc.textContent = `${trkBrandLabel()}・3D單 進度`;
   const hasPreData = Object.keys(trkOwnerMap).length > 0 || Object.keys(trkSubManual).length > 0;
   if (!trkRows.length) {
     if (hasPreData) {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">📝 尚未上傳 Excel，目前是預先登記的「預計款數」，已進單數量會顯示 0，等匯入 Excel 後自動帶出實際款數</div>';
+      el.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">📝 尚未上傳 Excel，目前是預先登記的「預計款數」，已進單數量會顯示 0，等匯入 Excel（可直接拖曳到這個框框）後自動帶出實際款數</div>';
       document.getElementById('trkSubBlock').style.display   = '';
       document.getElementById('trkStyleBlock').style.display = 'none';
     } else {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點右上「📤 上傳 Excel」丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
+      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點「📤 上傳 Excel」或直接把檔案拖曳到這個框框，丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
       document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
       document.getElementById('trkStyleBlock').style.display = 'none';
     }
@@ -3641,6 +3740,372 @@ async function saveTrkEntry(title, obj) {
   }
   // 同步更新快取，避免下次開頁看到舊資料
   try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
+}
+
+// ── 應進清單比對：上傳解析 ──────────────────────
+function colLabel(i) {
+  let s = ''; i++;
+  while (i > 0) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
+  return s;
+}
+
+async function trkExpHandleFile(file) {
+  if (!file) return;
+  try {
+    const XLSX = await loadXLSX();
+    let raw;
+    if (/\.csv$/i.test(file.name)) {
+      const text = await file.text();
+      const wb = XLSX.read(text, { type: 'string' });
+      raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+    } else {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { cellDates: true });
+      raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+    }
+    if (!raw.length) { alert('檔案裡讀不到資料'); return; }
+    trkExpRawRows  = raw.map(row => row.map(c => trkCell(c)));
+    trkExpFileName = file.name;
+    trkExpOpenModal();
+  } catch (err) {
+    alert('讀取失敗：' + err.message);
+  }
+}
+
+function trkExpMaxCols() {
+  return trkExpRawRows.reduce((m, r) => Math.max(m, r.length), 0);
+}
+
+function trkExpDetectBomCol() {
+  const maxCols = trkExpMaxCols();
+  let best = -1, bestCount = 0;
+  for (let c = 0; c < maxCols; c++) {
+    let n = 0;
+    trkExpRawRows.forEach(r => { if (TRK_BOM_RE.test(String(r[c] || '').trim())) n++; });
+    if (n > bestCount) { bestCount = n; best = c; }
+  }
+  return { col: best, count: bestCount };
+}
+
+function trkExpColSample(c) {
+  for (const r of trkExpRawRows) {
+    const v = String(r[c] || '').trim();
+    if (v) return v.length > 24 ? v.slice(0, 24) + '…' : v;
+  }
+  return '(空)';
+}
+
+function trkExpOpenModal() {
+  const maxCols = trkExpMaxCols();
+  const { col: bomCol, count } = trkExpDetectBomCol();
+  const isGap = currentBrand === 'GAP';
+
+  const optsHtml = Array.from({ length: maxCols }, (_, c) =>
+    `<option value="${c}">${colLabel(c)}欄（例：${escHtml(trkExpColSample(c))}）</option>`).join('');
+
+  document.getElementById('trkExpFileInfo').textContent = `📄 ${trkExpFileName}（共 ${trkExpRawRows.length} 列，${trkBrandLabel()}）`;
+  document.getElementById('trkExpColBom').innerHTML = optsHtml;
+  document.getElementById('trkExpColBom').value = bomCol >= 0 ? bomCol : 0;
+  document.getElementById('trkExpColGender').innerHTML = optsHtml;
+  document.getElementById('trkExpColSub').innerHTML = optsHtml;
+
+  document.getElementById('trkExpBomCount').textContent = bomCol >= 0
+    ? `✅ 自動抓到「${colLabel(bomCol)}欄」，符合 D+6碼 格式的有 ${count} 筆`
+    : `⚠️ 沒有欄位符合 D+6碼 格式，請手動選正確的款號欄位`;
+
+  document.getElementById('trkExpSubgroupBlock').style.display = isGap ? '' : 'none';
+  document.getElementById('trkExpCustomerBlock').style.display = isGap ? '' : 'none';
+
+  document.getElementById('trkExpManualSub').innerHTML = GAP_SUBGROUPS.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  document.querySelector('input[name="trkExpGenderMode"][value="col"]').checked = true;
+  document.querySelector('input[name="trkExpSubMode"][value="col"]').checked = true;
+  document.querySelector('input[name="trkExpCustomer"][value="GS"]').checked = true;
+  trkExpToggleMode('gender');
+  trkExpToggleMode('sub');
+
+  document.getElementById('trkExpOwnerInput').value = '';
+  trkExpRefreshOwnerPriority();
+
+  document.getElementById('trkExpPreviewWrap').innerHTML = '';
+  document.getElementById('trkExpOverwriteWrap').innerHTML = '';
+  document.getElementById('trkExpConfirmBtn').disabled = true;
+  document.getElementById('trkExpConfirmBtn').style.opacity = '0.5';
+  trkExpParsed = null;
+
+  document.getElementById('trkExpModal').style.display = 'flex';
+}
+
+function closeTrkExpModal() {
+  document.getElementById('trkExpModal').style.display = 'none';
+  trkExpRawRows = null;
+}
+
+function trkExpToggleMode(which) {
+  if (which === 'gender') {
+    const mode = document.querySelector('input[name="trkExpGenderMode"]:checked').value;
+    document.getElementById('trkExpColGender').style.display    = mode === 'col' ? '' : 'none';
+    document.getElementById('trkExpManualGender').style.display = mode === 'col' ? 'none' : '';
+  } else {
+    const mode = document.querySelector('input[name="trkExpSubMode"]:checked').value;
+    document.getElementById('trkExpColSub').style.display    = mode === 'col' ? '' : 'none';
+    document.getElementById('trkExpManualSub').style.display = mode === 'col' ? 'none' : '';
+    trkExpRefreshOwnerPriority();
+  }
+}
+
+function trkExpRecount() {
+  const col = Number(document.getElementById('trkExpColBom').value);
+  let n = 0;
+  trkExpRawRows.forEach(r => { if (TRK_BOM_RE.test(String(r[col] || '').trim())) n++; });
+  document.getElementById('trkExpBomCount').textContent = `符合 D+6碼 格式的有 ${n} 筆`;
+}
+
+// 依目前選的 SUBGROUP（手動模式時）+ Customer，把對應業務排到下拉最前面（其他人還在，只是排序調整）
+function trkExpRefreshOwnerPriority() {
+  const dl = document.getElementById('trkBizDatalist');
+  let priority = [];
+  if (currentBrand === 'GAP') {
+    const subMode = document.querySelector('input[name="trkExpSubMode"]:checked')?.value;
+    const cust = document.querySelector('input[name="trkExpCustomer"]:checked')?.value || 'GS';
+    if (subMode === 'manual') {
+      const sub = document.getElementById('trkExpManualSub').value;
+      priority = (trkSubBizMap[cust] && trkSubBizMap[cust][sub]) || [];
+    }
+  }
+  const rest = trkBizList.filter(n => !priority.includes(n));
+  dl.innerHTML = [...priority, ...rest].map(n => `<option value="${escHtml(n)}">`).join('');
+}
+
+function trkExpPreview() {
+  const bomCol = Number(document.getElementById('trkExpColBom').value);
+  const genderMode   = document.querySelector('input[name="trkExpGenderMode"]:checked').value;
+  const genderCol    = Number(document.getElementById('trkExpColGender').value);
+  const genderManual = document.getElementById('trkExpManualGender').value.trim();
+  const isGap = currentBrand === 'GAP';
+  const subMode   = isGap ? document.querySelector('input[name="trkExpSubMode"]:checked').value : null;
+  const subCol    = isGap ? Number(document.getElementById('trkExpColSub').value) : null;
+  const subManual = isGap ? document.getElementById('trkExpManualSub').value : '';
+  const customer  = isGap ? (document.querySelector('input[name="trkExpCustomer"]:checked')?.value || 'GS') : '';
+  const owner = document.getElementById('trkExpOwnerInput').value.trim();
+
+  if (!owner) { alert('請填業務名'); return; }
+  if (genderMode === 'manual' && !genderManual) { alert('請填 Gender'); return; }
+  if (isGap && subMode === 'manual' && !subManual) { alert('請選 SUBGROUP'); return; }
+
+  const seen = new Map();
+  let dupInFile = 0;
+  trkExpRawRows.forEach(r => {
+    const raw = String(r[bomCol] || '').trim();
+    const m = raw.match(TRK_BOM_RE);
+    if (!m) return;
+    const bom = m[0];
+    if (seen.has(bom)) dupInFile++;
+    seen.set(bom, {
+      bom,
+      gender:   genderMode === 'col' ? String(r[genderCol] || '').trim() : genderManual,
+      subgroup: isGap ? (subMode === 'col' ? String(r[subCol] || '').trim() : subManual) : '',
+      customer,
+      owner,
+      source: trkExpFileName,
+      uploadedAt: new Date().toISOString()
+    });
+  });
+  trkExpParsed = [...seen.values()];
+
+  if (!trkExpParsed.length) { alert('沒有抓到任何符合格式的款號，請確認款號欄位選對了'); return; }
+
+  const existing = trkExpected[currentBrand] || {};
+  const overwrite = trkExpParsed.filter(p => existing[p.bom]);
+
+  document.getElementById('trkExpPreviewWrap').innerHTML = `
+    <div class="card" style="padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">預覽：共 ${trkExpParsed.length} 筆款號${dupInFile ? `（檔案內部有 ${dupInFile} 筆款號重複列出，已自動合併只留一筆）` : ''}</div>
+      <div style="max-height:180px;overflow-y:auto;font-size:12.5px;color:var(--text-dim)">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:4px 6px">款號</th><th style="text-align:left;padding:4px 6px">Gender</th>${isGap ? '<th style="text-align:left;padding:4px 6px">SUBGROUP</th>' : ''}<th style="text-align:left;padding:4px 6px">業務</th>
+          </tr></thead>
+          <tbody>${trkExpParsed.slice(0, 200).map(p => `<tr><td style="padding:3px 6px;font-family:'DM Mono',monospace">${escHtml(p.bom)}</td><td style="padding:3px 6px">${escHtml(p.gender)}</td>${isGap ? `<td style="padding:3px 6px">${escHtml(p.subgroup)}</td>` : ''}<td style="padding:3px 6px">${escHtml(p.owner)}</td></tr>`).join('')}</tbody>
+        </table>
+        ${trkExpParsed.length > 200 ? `<div style="padding:6px">…僅預覽前200筆，實際會全部存入</div>` : ''}
+      </div>
+    </div>`;
+
+  document.getElementById('trkExpOverwriteWrap').innerHTML = !overwrite.length ? '' : `
+    <div class="card" style="padding:12px 14px;border-color:rgba(217,119,6,0.35);background:rgba(217,119,6,0.06)">
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 以下 ${overwrite.length} 筆款號已經在應進清單裡，這次存檔會被覆蓋更新</div>
+      <div style="max-height:160px;overflow-y:auto;font-size:12.5px;color:#92400e">
+        ${overwrite.map(p => {
+          const old = existing[p.bom];
+          const diffs = [];
+          if ((old.owner || '') !== p.owner) diffs.push(`業務：${escHtml(old.owner || '—')} → ${escHtml(p.owner)}`);
+          if ((old.gender || '') !== p.gender) diffs.push(`Gender：${escHtml(old.gender || '—')} → ${escHtml(p.gender)}`);
+          if (isGap && (old.subgroup || '') !== p.subgroup) diffs.push(`SUBGROUP：${escHtml(old.subgroup || '—')} → ${escHtml(p.subgroup)}`);
+          return `<div style="padding:3px 0;border-bottom:1px solid rgba(217,119,6,0.15)"><strong style="font-family:'DM Mono',monospace">${escHtml(p.bom)}</strong>　${diffs.length ? diffs.join('｜') : '(內容相同)'}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  document.getElementById('trkExpConfirmBtn').disabled = false;
+  document.getElementById('trkExpConfirmBtn').style.opacity = '1';
+}
+
+async function trkExpConfirmSave() {
+  if (!trkExpParsed || !trkExpParsed.length) return;
+  const existing = trkExpected[currentBrand] || {};
+  const overwriteCount = trkExpParsed.filter(p => existing[p.bom]).length;
+  if (overwriteCount && !confirm(`有 ${overwriteCount} 筆款號會被覆蓋更新，確定要存檔嗎？`)) return;
+
+  trkExpParsed.forEach(p => { existing[p.bom] = p; });
+  trkExpected[currentBrand] = existing;
+  try {
+    await saveTrkEntry('expected', trkExpected);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  closeTrkExpModal();
+  renderTrkExpected();
+}
+
+async function trkExpClearBrand() {
+  const n = Object.keys(trkExpected[currentBrand] || {}).length;
+  if (!n) { alert('目前品牌沒有應進清單資料'); return; }
+  if (!confirm(`確定要清空「${trkBrandLabel()}」的應進清單（共 ${n} 筆）嗎？這個動作無法復原。`)) return;
+  trkExpected[currentBrand] = {};
+  try {
+    await saveTrkEntry('expected', trkExpected);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  renderTrkExpected();
+}
+
+async function trkExpDeleteBom(enc) {
+  const bom = decodeURIComponent(enc);
+  if (!confirm(`確定要從應進清單刪除「${bom}」嗎？`)) return;
+  delete trkExpected[currentBrand][bom];
+  try {
+    await saveTrkEntry('expected', trkExpected);
+  } catch (err) {
+    alert('刪除失敗：' + err.message);
+    return;
+  }
+  renderTrkExpected();
+}
+
+// ── 應進清單比對：比對邏輯 + 渲染 ────────────────
+function trkExpBomKeyOfStyle(style) {
+  const m = String(style || '').match(TRK_BOM_RE);
+  return m ? m[0] : null;
+}
+
+function trkComputeComparison() {
+  const expected = trkExpected[currentBrand] || {};
+  const rows = trkBrandRows();
+  const matched = {};   // bom -> [row,...]
+  rows.forEach(r => {
+    const bom = trkExpBomKeyOfStyle(r['Style']);
+    if (!bom) return;
+    (matched[bom] = matched[bom] || []).push(r);
+  });
+  const missing = [];
+  const found = [];
+  Object.entries(expected).forEach(([bom, info]) => {
+    if (matched[bom] && matched[bom].length) found.push({ bom, info, rows: matched[bom] });
+    else missing.push({ bom, info });
+  });
+  const dup = Object.entries(matched)
+    .filter(([bom, rs]) => new Set(rs.map(r => r['Style'])).size >= 2)
+    .map(([bom, rs]) => ({ bom, rows: rs }));
+  return { expectedCount: Object.keys(expected).length, found, missing, dup };
+}
+
+function renderTrkExpected() {
+  const cmp = trkComputeComparison();
+  const sumEl = document.getElementById('trkExpSummary');
+  if (!sumEl) return; // 頁面尚未渲染出來時安全跳過
+  if (!cmp.expectedCount) {
+    sumEl.innerHTML = `<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">尚未上傳「${trkBrandLabel()}」的應進清單，點「📤 上傳應進清單」或直接把檔案拖曳到這個框框開始</div>`;
+    document.getElementById('trkExpMissingWrap').innerHTML = '';
+    document.getElementById('trkExpDupWrap').innerHTML = '';
+    return;
+  }
+  const isGap = currentBrand === 'GAP';
+  const foundN = cmp.found.length, missN = cmp.missing.length, dupN = cmp.dup.length;
+
+  sumEl.innerHTML = `
+    <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px">
+      <span style="background:rgba(0,42,92,0.06);color:var(--text);border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">應進 ${cmp.expectedCount}</span>
+      <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">已進 ${foundN}</span>
+      <span style="background:rgba(185,28,28,0.08);color:#b91c1c;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">未進 ${missN}</span>
+      ${dupN ? `<span style="background:rgba(217,119,6,0.1);color:#92400e;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">⚠️ 疑似重複進單 ${dupN}</span>` : ''}
+    </div>`;
+
+  const missWrap = document.getElementById('trkExpMissingWrap');
+  if (!missN) {
+    missWrap.innerHTML = `<div class="card" style="text-align:center;padding:16px;color:#166534;font-size:13px">🎉 全部都已經進單了</div>`;
+  } else {
+    missWrap.innerHTML = `
+      <div style="font-size:14px;font-weight:700;color:#b91c1c;margin:14px 0 8px">❌ 未進（${missN}）</div>
+      <div class="card" style="overflow-x:auto;padding:6px 0">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">款號</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">Gender</th>
+            ${isGap ? '<th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">SUBGROUP</th>' : ''}
+            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">業務</th>
+            <th style="padding:8px 12px"></th>
+          </tr></thead>
+          <tbody>${cmp.missing.map(m => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600">${escHtml(m.bom)}</td>
+              <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.gender || '—')}</td>
+              ${isGap ? `<td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.subgroup || '—')}</td>` : ''}
+              <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.owner || '—')}</td>
+              <td style="padding:8px 12px"><button onclick="trkExpDeleteBom('${encodeURIComponent(m.bom)}')" title="從應進清單刪除這筆" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">🗑️</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  const dupWrap = document.getElementById('trkExpDupWrap');
+  dupWrap.innerHTML = !dupN ? '' : `
+    <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">⚠️ 系統資料裡疑似重複進單（同款號對到多筆不同 Style，${dupN}）</div>
+    <div class="card" style="overflow-x:auto;padding:6px 0">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">款號</th>
+          <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">重複明細（Style／狀態／需求日）</th>
+        </tr></thead>
+        <tbody>${cmp.dup.map(d => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600;white-space:nowrap;vertical-align:top">${escHtml(d.bom)}</td>
+            <td style="padding:8px 12px;color:var(--text-dim)">${d.rows.map(r => `<div>${escHtml(r['Style'])}　${escHtml(r['狀態'] || '')}　${escHtml(r['需求日'] || '')}</div>`).join('')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── 拖曳上傳（通用，兩個框框／按鈕共用）──────────
+function trkDragOver(ev, id) {
+  ev.preventDefault();
+  const el = document.getElementById(id);
+  if (el) { el.style.outline = '2px dashed var(--gap-blue)'; el.style.outlineOffset = '-2px'; el.style.background = 'rgba(29,78,216,0.05)'; }
+}
+function trkDragLeave(ev, id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.outline = 'none'; el.style.background = 'transparent'; }
+}
+function trkDropFile(ev, id, handler) {
+  ev.preventDefault();
+  trkDragLeave(ev, id);
+  const file = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+  if (file) handler(file);
 }
 
 // ── Excel 上傳解析 ─────────────────────────────
