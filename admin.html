@@ -98,11 +98,11 @@ header h1 { font-size:14px; font-weight:500; }
 .entry-search .icn { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-faint); }
 
 .protected-banner {
-  display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.28);
-  color:#fcd34d; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; line-height:1.5;
+  display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.14); border:2px solid rgba(245,158,11,0.4);
+  color:#fcd34d; font-size:13px; font-weight:600; padding:12px 14px; border-radius:8px; margin-bottom:14px; line-height:1.5;
 }
 
-.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:14px; }
+.entry-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:11px 14px; margin-bottom:6px; display:flex; align-items:flex-start; gap:14px; }
 .entry-info { flex:1; min-width:0; }
 .entry-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:4px; }
 .entry-meta { font-size:11.5px; color:var(--text-dim); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -129,14 +129,14 @@ header h1 { font-size:14px; font-weight:500; }
 .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
 .brand-warning {
-  display:none; align-items:flex-start; gap:8px; font-size:12px; padding:9px 12px; border-radius:8px; margin:-6px 0 14px; line-height:1.5;
+  display:none; align-items:flex-start; gap:8px; font-size:13px; font-weight:700; padding:12px 14px; border-radius:8px; margin:-6px 0 14px; line-height:1.5;
 }
 .brand-warning.show { display:flex; }
-.brand-warning.bw-shared { background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.25); color:#cbd5e1; }
-.brand-warning.bw-gap { background:rgba(59,125,216,0.12); border:1px solid rgba(59,125,216,0.3); color:#bcd6f8; }
-.brand-warning.bw-ath { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color:#dcd2fb; }
-.brand-warning.bw-on  { background:rgba(0,87,184,0.14); border:1px solid rgba(0,87,184,0.35); color:#bfdcff; }
-.brand-warning.bw-br  { background:rgba(194,168,120,0.14); border:1px solid rgba(194,168,120,0.35); color:#ecdfc9; }
+.brand-warning.bw-shared { background:rgba(148,163,184,0.14); border:2px solid rgba(148,163,184,0.35); color:#e2e8f0; }
+.brand-warning.bw-gap { background:rgba(59,125,216,0.16); border:2px solid rgba(59,125,216,0.45); color:#bcd6f8; }
+.brand-warning.bw-ath { background:rgba(167,139,250,0.16); border:2px solid rgba(167,139,250,0.45); color:#dcd2fb; }
+.brand-warning.bw-on  { background:rgba(0,87,184,0.18); border:2px solid rgba(0,87,184,0.5); color:#bfdcff; }
+.brand-warning.bw-br  { background:rgba(194,168,120,0.18); border:2px solid rgba(194,168,120,0.5); color:#ecdfc9; }
 
 .brand-chip-group { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
 .brand-chip { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--text-dim); cursor:pointer; transition:all 0.12s; }
@@ -336,15 +336,19 @@ header h1 { font-size:14px; font-weight:500; }
       </select>
     </div>
     <div class="field">
-      <label id="fBrandsLabel">適用品牌（不勾＝全品牌共用；可複選）</label>
+      <label id="fBrandsLabel">適用品牌</label>
       <div class="brand-chip-group" id="fBrandGroup">
-        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
-        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
-        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
-        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="updateBrandWarning()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
+        <label class="brand-chip" data-brand="ALL" style="border-color:rgba(148,163,184,0.4)"><input type="checkbox" id="fBrandAll" checked onchange="onAllBrandToggle()"><span class="dot" style="background:#94a3b8"></span>🌐 全品牌通用</label>
+        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="onBrandCbChange()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
+        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="onBrandCbChange()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
+        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="onBrandCbChange()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
+        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="onBrandCbChange()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
       </div>
       <div class="brand-warning" id="brandWarning"></div>
     </div>
+    <details id="advancedDetails" style="margin:6px 0 14px;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+    <summary style="cursor:pointer;font-size:12px;color:var(--text-dim);font-weight:600">⚙️ 進階設定（Stage、排序）</summary>
+    <div style="margin-top:12px">
     <div class="field" id="stageField" style="display:none">
       <label>所屬 Stage（可複選；一個條目可同時掛在多個 Stage）</label>
       <div id="fStageGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px">
@@ -362,6 +366,8 @@ header h1 { font-size:14px; font-weight:500; }
       <label>排序（數字越小越前面）</label>
       <input id="fOrder" type="number" value="0">
     </div>
+    </div>
+    </details>
     </div><!-- /form-col -->
     <div class="preview-col">
       <div class="preview-head">👁 前台預覽（即時）</div>
@@ -449,11 +455,11 @@ header h1 { font-size:14px; font-weight:500; }
       <input id="seName" placeholder="例如：各色 3D 定位">
     </div>
     <div class="field">
-      <label>Slug（英文，用於網址）</label>
-      <input id="seSlug" placeholder="例如：color-placement" style="font-family:'DM Mono',monospace">
+      <label>Slug（選填，留空自動產生）</label>
+      <input id="seSlug" placeholder="留空會自動產生" style="font-family:'DM Mono',monospace">
     </div>
     <div class="field">
-      <label>群組名稱</label>
+      <label>群組名稱（選填，留空預設為「一般」）</label>
       <input id="seGroup" placeholder="例如：非正單（不上CLO-SET）">
     </div>
     <div class="field">
@@ -778,22 +784,41 @@ function renderEntries() {
     <div class="entry-row">
       <input type="checkbox" class="entry-cb" ${selectedEntryIds.has(e.id)?'checked':''} onclick="toggleEntrySelect('${e.id}', this.checked)" style="margin-top:3px;accent-color:var(--official);flex-shrink:0">
       <div class="entry-info">
-        <div class="entry-title">${esc(e.title)}</div>
-        <div class="entry-meta">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div class="entry-title" style="flex:1;margin-bottom:0">${esc(e.title)}</div>
+          <div style="display:flex;gap:4px;flex-shrink:0">${brandTagAdmin(e)}</div>
+        </div>
+        <div class="entry-meta" style="margin-top:5px">
           <span class="badge-sm ${bm[e.source]}">${sl[e.source]}</span>
-          ${brandTagAdmin(e)}
           ${e.images?.length ? `<span>🖼️ ${e.images.length} 張圖</span>` : ''}
         </div>
         ${e.content?`<div class="entry-preview">${esc(e.content).substring(0,100)}…</div>`:''}
-        ${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}
+        ${(e.paths||[]).length ? `<details style="margin-top:5px"><summary style="cursor:pointer;font-size:11.5px;color:var(--text-dim);list-style:none">📎 ${e.paths.length} 個路徑</summary>${(e.paths||[]).map(p=>`<code style="font-size:10px;color:#7dd3fc;display:block;margin-top:3px">${esc(p)}</code>`).join('')}</details>` : ''}
       </div>
       <div class="entry-actions">
         <button class="btn btn-ghost" onclick="openEditEntry('${e.id}')">✏️ 編輯</button>
-        <button class="btn btn-ghost" onclick="duplicateEntry('${e.id}')" title="以此條目為底建立新條目（品牌自動切到另一邊）">📄 複製</button>
+        <div style="position:relative">
+          <button class="btn btn-ghost" onclick="toggleRowMenu('${e.id}', event)" title="更多">⋯</button>
+          <div id="rowmenu-${e.id}" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 26px rgba(0,0,0,0.4);z-index:80;min-width:132px;overflow:hidden">
+            <button class="btn btn-ghost" style="width:100%;border:none;border-radius:0;justify-content:flex-start;text-align:left" onclick="duplicateEntry('${e.id}')">📄 複製</button>
+            <button class="btn btn-ghost" style="width:100%;border:none;border-radius:0;justify-content:flex-start;text-align:left;color:#fca5a5" onclick="confirmDeleteEntryById('${e.id}')">🗑 刪除</button>
+          </div>
+        </div>
       </div>
     </div>
   `).join('');
 }
+
+function toggleRowMenu(id, ev) {
+  ev.stopPropagation();
+  const menu = document.getElementById('rowmenu-' + id);
+  const wasOpen = menu && menu.style.display === 'block';
+  document.querySelectorAll('[id^="rowmenu-"]').forEach(m => m.style.display = 'none');
+  if (menu && !wasOpen) menu.style.display = 'block';
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('[id^="rowmenu-"]').forEach(m => m.style.display = 'none');
+});
 
 function getCheckedBrands() {
   return [...document.querySelectorAll('#fBrandGroup .brand-cb:checked')].map(cb => cb.value);
@@ -840,6 +865,7 @@ function openNewEntry() {
   document.getElementById('fContent').value = '';
   document.getElementById('fSource').value = 'internal';
   document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
+  document.getElementById('fBrandAll').checked = true;
   document.getElementById('fOrder').value = 0;
   document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = false);
   document.getElementById('fSection').value = currentSectionId || allSections[0]?.id;
@@ -864,7 +890,8 @@ function openEditEntry(id) {
   document.getElementById('fContent').value = e.content||'';
   document.getElementById('fSource').value = e.source||'internal';
   { const bArr = entryBrandList(e).filter(b => b !== 'ALL');
-    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value)); }
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value));
+    document.getElementById('fBrandAll').checked = bArr.length === 0; }
   document.getElementById('fOrder').value = e.sort_order||0;
   document.getElementById('fSection').value = e.section_id;
   { const arr = e.stage == null || e.stage === '' ? [] : (Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s=>s.trim()).filter(Boolean));
@@ -891,6 +918,7 @@ function duplicateEntry(id) {
   const checked = getCheckedBrands();
   if (checked.length === 1 && rot[checked[0]]) {
     document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = (cb.value === rot[checked[0]]));
+    syncBrandAllCheckbox();
   }
   updateBrandWarning();
   renderEntryPreview();
@@ -910,6 +938,23 @@ function toggleStageField(sectionId) {
   );
   const show = stageSections.some(s => s.id === sectionId);
   document.getElementById('stageField').style.display = show ? 'block' : 'none';
+  if (show) { const d = document.getElementById('advancedDetails'); if (d) d.open = true; }
+}
+function onAllBrandToggle() {
+  if (document.getElementById('fBrandAll').checked) {
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
+  }
+  updateBrandWarning();
+  renderEntryPreview();
+}
+function onBrandCbChange() {
+  document.getElementById('fBrandAll').checked = getCheckedBrands().length === 0;
+  updateBrandWarning();
+  renderEntryPreview();
+}
+function syncBrandAllCheckbox() {
+  const cb = document.getElementById('fBrandAll');
+  if (cb) cb.checked = getCheckedBrands().length === 0;
 }
 
 document.getElementById('fSection').addEventListener('change', function() {
@@ -1039,15 +1084,19 @@ async function saveEntry() {
 
 function confirmDeleteEntry() {
   if (!editingEntryId) return;
-  const e = allEntries.find(x=>x.id===editingEntryId);
+  confirmDeleteEntryById(editingEntryId);
+}
+function confirmDeleteEntryById(id) {
+  const e = allEntries.find(x => x.id === id);
   openConfirm({
     title: '確定要刪除這個條目？',
     body: `「${e?.title||''}」刪除後無法復原，前台將立即看不到此內容。`,
-    onConfirm: deleteEntry,
+    onConfirm: () => deleteEntry(id),
   });
 }
-async function deleteEntry() {
-  const { error } = await sb.from('entries').delete().eq('id', editingEntryId);
+async function deleteEntry(id) {
+  const targetId = id || editingEntryId;
+  const { error } = await sb.from('entries').delete().eq('id', targetId);
   if (error) { showToast('刪除失敗','error'); }
   else { showToast('已刪除','success'); closeModal(); await loadData(); selectSection(currentSectionId); }
 }
@@ -1250,9 +1299,11 @@ function closeSectionEdit() {
 
 async function saveSection() {
   const name  = document.getElementById('seName').value.trim();
-  const slug  = document.getElementById('seSlug').value.trim();
-  const group = document.getElementById('seGroup').value.trim();
-  if (!name || !slug || !group) { showToast('請填寫名稱、Slug 和群組', 'error'); return; }
+  let slug    = document.getElementById('seSlug').value.trim();
+  let group   = document.getElementById('seGroup').value.trim();
+  if (!name) { showToast('請填寫分類名稱', 'error'); return; }
+  if (!slug) slug = 'cat-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  if (!group) group = '一般';
 
   const payload = {
     name,

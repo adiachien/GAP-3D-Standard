@@ -246,6 +246,10 @@ aside::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
   font-weight: 600;
 }
 .nav-icon { font-size: 16px; }
+.cat-actions { opacity: 0; display: flex; gap: 2px; transition: opacity 0.12s; margin-left: auto; }
+.nav-item:hover .cat-actions { opacity: 1; }
+.cat-actions button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; }
+.cat-actions button:hover { background: rgba(0,0,0,0.06); color: var(--text); }
 
 /* ── MAIN ── */
 main {
@@ -530,7 +534,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   max-height: 0;
   transition: max-height 0.3s ease, padding 0.2s ease;
 }
-.grid-expand-row.open { max-height: 1000px; }
+.grid-expand-row.open { max-height: 6000px; }
 .grid-expand-inner {
   padding: 0 20px;
   transition: padding 0.2s ease;
@@ -636,12 +640,6 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   <div class="logo" id="appLogo" onclick="openBrandGate()" style="cursor:pointer" title="切換品牌">GAP</div>
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
-    <div class="stage-indicator" id="stageIndicator" onclick="jumpToCurrentStage()" title="回到目前 Stage 的樣品種類頁面"></div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>官方規範</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>內部SOP</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>重要注意</div>
-    </div>
     <a id="editBtn" href="admin.html" class="btn-admin">✏️ 編輯</a>
   </div>
 </header>
@@ -1218,6 +1216,60 @@ function renderNav() {
   `;
 }
 
+// ── 前台快速管理分類：重新命名／排序／新增 ──
+function renameSectionInline(slug, ev) {
+  ev.stopPropagation();
+  const s = allSections.find(x => x.slug === slug);
+  if (!s) return;
+  const name = prompt('分類名稱：', s.name);
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  sb.from('sections').update({ name: trimmed }).eq('id', s.id).then(({ error }) => {
+    if (error) { alert('更新失敗：' + error.message); return; }
+    s.name = trimmed;
+    renderNav();
+    if (currentSlug === slug) showSection(slug);
+  });
+}
+function moveSectionOrder(slug, dir, ev) {
+  ev.stopPropagation();
+  const target = allSections.find(x => x.slug === slug);
+  if (!target) return;
+  const groupSecs = allSections.filter(s => s.group_name === target.group_name).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  const idx = groupSecs.findIndex(s => s.slug === slug);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= groupSecs.length) return;
+  const a = groupSecs[idx], b = groupSecs[swapIdx];
+  const aOrder = a.sort_order || 0, bOrder = b.sort_order || 0;
+  Promise.all([
+    sb.from('sections').update({ sort_order: bOrder }).eq('id', a.id),
+    sb.from('sections').update({ sort_order: aOrder }).eq('id', b.id),
+  ]).then(() => {
+    a.sort_order = bOrder; b.sort_order = aOrder;
+    renderNav();
+  });
+}
+function addSectionInline() {
+  const name = prompt('新分類名稱：');
+  if (!name || !name.trim()) return;
+  const icon = prompt('Icon（emoji，可留空）：', '📁') || '📁';
+  const groups = [...new Set(allSections.filter(s => !(s.group_name || '').startsWith('_')).map(s => s.group_name))];
+  let group = groups[0] || '一般';
+  if (groups.length) {
+    const pick = prompt('放到哪個群組？（' + groups.join('、') + '）\n也可以輸入新的群組名稱', groups[0]);
+    if (pick && pick.trim()) group = pick.trim();
+  }
+  const slug = 'cat-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const maxOrder = Math.max(0, ...allSections.map(s => s.sort_order || 0));
+  sb.from('sections').insert({ name: name.trim(), slug, group_name: group, icon, sort_order: maxOrder + 1 }).select().single().then(({ data, error }) => {
+    if (error) { alert('新增失敗：' + error.message); return; }
+    allSections.push(data);
+    renderNav();
+    showSection(slug);
+  });
+}
+
 function showSectionWithStage(slug, stageKey) {
   showSection(slug);
   setTimeout(() => {
@@ -1397,17 +1449,19 @@ function renderCard(e) {
   const hasImages = e.images && e.images.length;
   const hasContent = !!(e.content && e.content.trim());
   let body;
-  if (hasImages && hasContent) {
-    // 有文字說明時，圖擺右邊搭配閱讀
+  if (hasImages && hasContent && e.images.length <= 3) {
+    // 少量圖：擺右邊搭配閱讀
     body = `
       <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:4px">
         <div style="flex:2;min-width:320px">${content}</div>
         ${renderCardImages(e, 'stack')}
       </div>
     `;
+  } else if (hasImages && hasContent) {
+    // 四張以上：文字在上，圖片改成滿寬畫廊，不會被切掉
+    body = content + renderCardImages(e, 'gallery');
   } else if (hasImages) {
-    // 沒有文字說明，圖片本身就是重點，用原本滿版排列
-    body = renderCardImages(e, 'grid');
+    body = renderCardImages(e, 'gallery');
   } else {
     body = content;
   }
@@ -1458,9 +1512,23 @@ function renderCardEditForm(e) {
         </select>
       </div>
       <div style="margin-top:10px">
+        <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px">適用品牌</label>
+        <div id="ed-brands-${e.id}" style="display:flex;flex-wrap:wrap;gap:6px">
+          ${editBrandChipsHtml(e)}
+        </div>
+        <div id="ed-brandnote-${e.id}" style="font-size:12px;font-weight:600;margin-top:8px;padding:8px 10px;border-radius:6px"></div>
+      </div>
+      <div style="margin-top:10px">
         <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結（每行一個，格式：標籤｜路徑或網址）</label>
         <textarea id="ed-paths-${e.id}" rows="2" placeholder="標籤｜\\\\192.168.1.220\\3ddb\\..."
           style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;font-family:'DM Mono',monospace;color:#1d4ed8;background:var(--bg-input);resize:vertical;outline:none">${escHtml(pathsText)}</textarea>
+      </div>
+      <div style="margin-top:10px">
+        <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">圖片</label>
+        <div id="ed-imgs-${e.id}" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <input type="file" id="ed-imginput-${e.id}" accept="image/*" multiple style="display:none" onchange="handleEditImages('${e.id}', event)">
+        <button type="button" onclick="document.getElementById('ed-imginput-${e.id}').click()" style="font-size:12px;padding:5px 10px;border-radius:5px;border:1px dashed var(--border);background:none;color:var(--text-dim);cursor:pointer;font-family:inherit">＋ 上傳圖片</button>
+        <span id="ed-imgstatus-${e.id}" style="font-size:12px;color:var(--text-dim);margin-left:8px"></span>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
         <button onclick="cancelEditCard('${e.id}')" style="background:var(--bg-input);color:var(--text-dim);border:1px solid var(--border);padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
@@ -1474,6 +1542,7 @@ function reRenderEntry(id) {
   const e = allEntries.find(x => String(x.id) === String(id));
   const el = document.getElementById('entry-' + id);
   if (e && el) el.outerHTML = renderCard(e);
+  if (editingEntryId === id) { renderEditImgThumbs(id); renderEditBrandNote(id); }
 }
 
 function wrapEditSel(id, pre, post) {
@@ -1488,8 +1557,89 @@ function wrapEditSel(id, pre, post) {
   ta.selectionEnd = s + pre.length + sel.length;
 }
 
-function startEditCard(id) { editingEntryId = id; reRenderEntry(id); }
-function cancelEditCard(id) { editingEntryId = null; reRenderEntry(id); }
+function startEditCard(id) {
+  editingEntryId = id;
+  const e = allEntries.find(x => String(x.id) === String(id));
+  initEditImages(id, e?.images);
+  editBrands[id] = brandList(e).filter(b => b !== 'ALL' && BRAND_INFO[b]);
+  reRenderEntry(id);
+}
+
+// ── 前台即時編輯：適用品牌 ──
+let editBrands = {};
+const EDIT_BRAND_COLORS = { GAP: '#002A5C', ATH: '#6C5B87', ON: '#0057B8', BR: '#8A7452' };
+function editBrandChipsHtml(e) {
+  const sel = editBrands[e.id] || [];
+  const chip = (key, label, color, on) => `
+    <button type="button" onclick="toggleEditBrand('${e.id}','${key}')"
+      style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .12s;
+             border:1px solid ${on ? 'transparent' : 'var(--border)'};
+             background:${on ? color : 'var(--bg-card)'};color:${on ? '#fff' : 'var(--text-dim)'}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${on ? 'rgba(255,255,255,0.85)' : color}"></span>${label}</button>`;
+  return chip('ALL', '🌐 全品牌通用', '#64748b', sel.length === 0)
+    + Object.keys(BRAND_INFO).map(b => chip(b, BRAND_INFO[b].label, EDIT_BRAND_COLORS[b] || '#64748b', sel.includes(b))).join('');
+}
+function toggleEditBrand(id, key) {
+  const sel = editBrands[id] || [];
+  if (key === 'ALL') editBrands[id] = [];
+  else editBrands[id] = sel.includes(key) ? sel.filter(b => b !== key) : [...sel, key];
+  const box = document.getElementById('ed-brands-' + id);
+  if (box) box.innerHTML = editBrandChipsHtml({ id });
+  renderEditBrandNote(id);
+}
+function renderEditBrandNote(id) {
+  const el = document.getElementById('ed-brandnote-' + id);
+  if (!el) return;
+  const sel = editBrands[id] || [];
+  if (!sel.length) {
+    el.style.background = 'rgba(100,116,139,0.1)';
+    el.style.border = '1px solid rgba(100,116,139,0.3)';
+    el.style.color = '#475569';
+    el.innerHTML = '🌐 全品牌通用 — 修改後 GAP、ATHLETA、OLD NAVY、BANANA REPUBLIC 前台會<strong>同時</strong>變更。';
+    return;
+  }
+  const names = sel.map(b => BRAND_INFO[b]?.label || b);
+  const excluded = Object.keys(BRAND_INFO).filter(b => !sel.includes(b)).map(b => BRAND_INFO[b].label);
+  const color = EDIT_BRAND_COLORS[sel[0]] || '#475569';
+  el.style.background = 'rgba(29,78,216,0.06)';
+  el.style.border = '1px solid ' + color + '55';
+  el.style.color = color;
+  el.innerHTML = `只會出現在 <strong>${names.join(' + ')}</strong> 前台${excluded.length ? `（${excluded.join('、')} 看不到）` : ''}。`;
+}
+function cancelEditCard(id) { editingEntryId = null; delete editImages[id]; delete editBrands[id]; reRenderEntry(id); }
+
+// ── 前台即時編輯：圖片上傳/刪除 ──
+let editImages = {};
+function initEditImages(id, images) { editImages[id] = [...(images || [])]; }
+function renderEditImgThumbs(id) {
+  const el = document.getElementById('ed-imgs-' + id);
+  if (!el) return;
+  el.innerHTML = (editImages[id] || []).map((u, i) => `
+    <div style="position:relative">
+      <img src="${escHtml(u)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+      <button onclick="removeEditImage('${id}',${i})" title="移除" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:10px;line-height:1">✕</button>
+    </div>`).join('');
+}
+function removeEditImage(id, i) { editImages[id].splice(i, 1); renderEditImgThumbs(id); }
+async function handleEditImages(id, ev) {
+  const files = [...ev.target.files];
+  ev.target.value = '';
+  if (!files.length) return;
+  const status = document.getElementById('ed-imgstatus-' + id);
+  for (let i = 0; i < files.length; i++) {
+    if (status) status.textContent = `上傳中 ${i + 1}/${files.length}…`;
+    const f = files[i];
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${safe}`;
+    const { error } = await sb.storage.from('entry-images').upload(path, f);
+    if (error) { alert('圖片上傳失敗：' + error.message); break; }
+    const { data } = sb.storage.from('entry-images').getPublicUrl(path);
+    editImages[id] = editImages[id] || [];
+    editImages[id].push(data.publicUrl);
+    renderEditImgThumbs(id);
+  }
+  if (status) status.textContent = '';
+}
 
 async function saveEditCard(id) {
   const title = document.getElementById(`ed-title-${id}`).value.trim();
@@ -1499,25 +1649,40 @@ async function saveEditCard(id) {
   const paths   = document.getElementById(`ed-paths-${id}`).value.split('\n').map(s => s.trim()).filter(Boolean);
   const btn = document.getElementById(`ed-save-${id}`);
   if (btn) { btn.disabled = true; btn.textContent = '儲存中…'; }
-  const { error } = await sb.from('entries').update({ title, content, source, paths }).eq('id', id);
+  const images = editImages[id] || [];
+  const brands = (editBrands[id] || []).join(',') || null;
+  const { error } = await sb.from('entries').update({ title, content, source, paths, images, brands }).eq('id', id);
   if (error) {
     alert('儲存失敗：' + error.message);
     if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
     return;
   }
   const e = allEntries.find(x => String(x.id) === String(id));
-  if (e) { e.title = title; e.content = content; e.source = source; e.paths = paths; }
+  if (e) { e.title = title; e.content = content; e.source = source; e.paths = paths; e.images = images; e.brands = brands; }
+  delete editImages[id];
+  delete editBrands[id];
   editingEntryId = null;
   reRenderEntry(id);
   showEditedToast();
+  // 品牌改成不含目前品牌：卡片淡出並說明去向，不會讓人以為沒存到
+  if (e && !brandOk(e)) {
+    const el = document.getElementById('entry-' + id);
+    const names = brandList(e).map(b => BRAND_INFO[b]?.label || b).join('、');
+    if (el) {
+      el.style.transition = 'opacity .4s';
+      el.style.opacity = '0.25';
+      setTimeout(() => { el.remove(); }, 500);
+    }
+    showEditedToast(`已改為 ${names} 專屬，${BRAND_INFO[currentBrand]?.label} 前台不再顯示這筆`);
+  }
 }
 
-function showEditedToast() {
+function showEditedToast(msg) {
   const toast = document.createElement('div');
-  toast.textContent = '✓ 已儲存';
+  toast.textContent = msg || '✓ 已儲存';
   toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid rgba(29,78,216,0.3);color:#1d4ed8;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
   document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, msg ? 3200 : 1500);
 }
 
 
@@ -1709,23 +1874,25 @@ function openImgZoom(list, idx) {
   imgZoomIdx = idx;
   const ov = document.createElement('div');
   ov.id = 'imgZoomOverlay';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow:hidden';
   ov.innerHTML = `
-    <div style="position:relative;width:99vw;height:96vh;display:flex;align-items:center;justify-content:center;overflow:hidden" onclick="event.stopPropagation()">
-      <img id="imgZoomImg" style="max-width:99vw;max-height:96vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block;cursor:grab;user-select:none;touch-action:none">
-      <div style="position:absolute;top:-30px;left:0;color:rgba(255,255,255,0.75);font-size:12px;font-family:'DM Mono',monospace">滾輪縮放，拖曳移動；雙擊重置</div>
-      ${list.length > 1 ? `
-        <button onclick="imgZoomNav(-1)" title="上一張" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">‹</button>
-        <button onclick="imgZoomNav(1)" title="下一張" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">›</button>
-        <div id="imgZoomCounter" style="position:absolute;bottom:-64px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.85);font-size:13px;font-family:'DM Mono',monospace"></div>
-      ` : ''}
-      <button onclick="closeImgZoom()" title="關閉" style="position:absolute;top:-16px;right:-16px;width:30px;height:30px;border-radius:50%;background:#fff;border:none;color:#111;font-size:16px;cursor:pointer;line-height:1;z-index:2">✕</button>
-      <div style="position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(20,20,20,0.75);padding:6px 16px;border-radius:20px;z-index:2" onclick="event.stopPropagation()">
-        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale-0.5)">🔍－</span>
-        <input id="imgZoomSlider" type="range" min="1" max="6" step="0.1" value="1" oninput="imgZoomSetScale(parseFloat(this.value))" style="width:140px;accent-color:#ff5a3c;cursor:pointer">
-        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale+0.5)">🔍＋</span>
-        <span id="imgZoomPct" style="color:rgba(255,255,255,0.6);font-size:12px;font-family:'DM Mono',monospace;width:38px">100%</span>
-      </div>
+    <div style="position:absolute;inset:56px 16px 72px;display:flex;align-items:center;justify-content:center;overflow:hidden" onclick="event.stopPropagation()">
+      <img id="imgZoomImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block;cursor:grab;user-select:none;touch-action:none">
+    </div>
+    <div style="position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:14px;padding:0 16px;color:rgba(255,255,255,0.7);font-size:12px;font-family:'DM Mono',monospace" onclick="event.stopPropagation()">
+      <span id="imgZoomCounter" style="color:#fff;font-size:13px"></span>
+      <span>滾輪縮放，拖曳移動；雙擊重置；Esc 關閉</span>
+      <button onclick="closeImgZoom()" title="關閉" style="margin-left:auto;width:34px;height:34px;border-radius:50%;background:#fff;border:none;color:#111;font-size:16px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    ${list.length > 1 ? `
+      <button onclick="event.stopPropagation();imgZoomNav(-1)" title="上一張" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">‹</button>
+      <button onclick="event.stopPropagation();imgZoomNav(1)" title="下一張" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">›</button>
+    ` : ''}
+    <div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(20,20,20,0.85);padding:8px 16px;border-radius:20px;z-index:2" onclick="event.stopPropagation()">
+      <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale-0.5)">🔍－</span>
+      <input id="imgZoomSlider" type="range" min="1" max="6" step="0.1" value="1" oninput="imgZoomSetScale(parseFloat(this.value))" style="width:140px;accent-color:#ff5a3c;cursor:pointer">
+      <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale+0.5)">🔍＋</span>
+      <span id="imgZoomPct" style="color:rgba(255,255,255,0.6);font-size:12px;font-family:'DM Mono',monospace;width:38px">100%</span>
     </div>
   `;
   ov.onclick = () => closeImgZoom();
@@ -1826,13 +1993,16 @@ function renderCardImages(e, mode) {
   __imgLists[e.id] = e.images;
   const stack = mode === 'stack';
   const grid = mode === 'grid';
+  const gallery = mode === 'gallery';
   const thumbStyle = stack
     ? 'width:100%;height:220px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
+    : gallery
+    ? 'width:100%;height:210px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
     : grid
     ? 'width:220px;height:220px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
     : 'width:132px;height:132px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block';
-  const labelSize = stack || grid ? '13px' : '11px';
-  const labelPad = stack || grid ? '2px 9px' : '1px 7px';
+  const labelSize = stack || grid || gallery ? '13px' : '11px';
+  const labelPad = stack || grid || gallery ? '2px 9px' : '1px 7px';
   const items = e.images.map((u, i) => `
     <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],${i})" title="點擊放大">
       <img src="${escHtml(u)}" loading="lazy" style="${thumbStyle}">
@@ -1841,6 +2011,7 @@ function renderCardImages(e, mode) {
     </div>
   `).join('');
   if (stack) return `<div style="flex:1;min-width:220px;max-width:280px;display:flex;flex-direction:column;gap:12px">${items}</div>`;
+  if (gallery) return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:14px 0 4px">${items}</div>`;
   if (grid) return `<div style="display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px">${items}</div>`;
   return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px">${items}</div>`;
 }
