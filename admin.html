@@ -506,14 +506,20 @@ header h1 { font-size:14px; font-weight:500; }
   <div class="modal" style="width:640px;max-height:88vh;overflow-y:auto">
     <h3>👥 業務名單／SUBGROUP對照</h3>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">
-      給「開發追蹤」的應進清單比對功能用：業務名單是上傳時下拉選單的選項（也可以手動輸入清單外的新名字，不會鎖死）；SUBGROUP對照是選了SUBGROUP後，優先排到最前面的業務。
+      給「開發追蹤」的應進清單比對功能用：業務名單是上傳時下拉選單的選項（也可以手動輸入清單外的新名字，不會鎖死），<strong>每個品牌各自獨立、不共用</strong>；SUBGROUP對照是選了SUBGROUP後，優先排到最前面的業務（GAP才有）。
     </div>
 
     <div style="font-size:13px;font-weight:700;margin-bottom:8px">業務名單</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="bizBrandGAP" onclick="switchBizBrand('GAP')">🔵 GAP</button>
+      <button class="btn btn-ghost" id="bizBrandATH" onclick="switchBizBrand('ATH')">🟣 ATHLETA</button>
+      <button class="btn btn-ghost" id="bizBrandON" onclick="switchBizBrand('ON')">🔷 OLD NAVY</button>
+      <button class="btn btn-ghost" id="bizBrandBR" onclick="switchBizBrand('BR')">🟤 BANANA REPUBLIC</button>
+    </div>
     <div id="bizListBox" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:22px">
       <input id="bizNewName" placeholder="例如 Rosa Wu 吳季芳" style="flex:1">
-      <button class="btn btn-primary" onclick="addBizName()">＋新增</button>
+      <button class="btn btn-primary" onclick="addBizName()">＋新增到目前品牌</button>
     </div>
 
     <div style="font-size:13px;font-weight:700;margin-bottom:8px">SUBGROUP ↔ 業務對照（GAP 用）</div>
@@ -1571,13 +1577,19 @@ async function copyStageCfg() {
 // ── 業務名單／SUBGROUP對照（給開發追蹤・應進清單比對用）──
 const BIZ_GAP_SUBGROUPS = ['BAC','FIT','GAC','KIDS FR','KIDS SWIM','MAC','TSD','WAC'];
 // 跟 index-GAP3D.html 裡的預設值保持一致；Supabase 裡還沒存過資料時，這裡跟前台都會顯示這份預設值
-const BIZ_DEFAULT_LIST = [
-  'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
-  'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
-  'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
-  'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
-  'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
-];
+// 業務名單「每個品牌各自獨立」，不共用；GAP先放妳給的名單，其他品牌預設空白
+const BIZ_DEFAULT_LIST = {
+  GAP: [
+    'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
+    'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
+    'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
+    'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
+    'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
+  ],
+  ATH: [],
+  ON:  [],
+  BR:  []
+};
 const BIZ_DEFAULT_SUBMAP = {
   GS: {
     WAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
@@ -1600,8 +1612,10 @@ const BIZ_DEFAULT_SUBMAP = {
     FIT:['Serena Li 李秋宜']
   }
 };
+const BIZ_BRANDS = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY', BR: 'BANANA REPUBLIC' };
 
-let bizList = [];
+let bizList = { GAP: [], ATH: [], ON: [], BR: [] };
+let bizBrand = 'GAP';
 let bizSubMap = { GS: {}, GO: {} };
 let bizCust = 'GS';
 
@@ -1614,36 +1628,56 @@ function trkDataEntry(title) {
 
 function openBizManager() {
   const bl = trkDataEntry('bizlist');
-  bizList = BIZ_DEFAULT_LIST.slice();
-  try { if (bl && bl.content) { const arr = JSON.parse(bl.content); if (Array.isArray(arr) && arr.length) bizList = arr; } } catch (e) {}
+  bizList = JSON.parse(JSON.stringify(BIZ_DEFAULT_LIST));
+  try {
+    if (bl && bl.content) {
+      const obj = JSON.parse(bl.content);
+      if (Array.isArray(obj)) {
+        bizList.GAP = obj; // 相容改版前的舊格式（單一共用清單），當作 GAP 的清單
+      } else if (obj && typeof obj === 'object') {
+        bizList = Object.assign({ GAP: [], ATH: [], ON: [], BR: [] }, obj);
+      }
+    }
+  } catch (e) {}
 
   const sm = trkDataEntry('subbizmap');
   bizSubMap = JSON.parse(JSON.stringify(BIZ_DEFAULT_SUBMAP));
   try { if (sm && sm.content) { const obj = JSON.parse(sm.content); if (obj && Object.keys(obj).length) bizSubMap = obj; } } catch (e) {}
 
-  renderBizList();
+  switchBizBrand('GAP');
   switchBizCust('GS');
   document.getElementById('bizOverlay').classList.add('open');
 }
 function closeBizManager() { document.getElementById('bizOverlay').classList.remove('open'); }
 
+function switchBizBrand(b) {
+  bizBrand = b;
+  Object.keys(BIZ_BRANDS).forEach(k => {
+    const el = document.getElementById('bizBrand' + k);
+    if (el) el.className = 'btn ' + (b === k ? 'btn-primary' : 'btn-ghost');
+  });
+  renderBizList();
+}
+
 function renderBizList() {
-  document.getElementById('bizListBox').innerHTML = bizList.map((n, i) => `
+  const list = bizList[bizBrand] || [];
+  document.getElementById('bizListBox').innerHTML = list.map((n, i) => `
     <div style="display:flex;gap:8px;align-items:center">
       <input value="${esc(n)}" onchange="updateBizName(${i}, this.value)" style="flex:1">
       <button class="btn btn-ghost" onclick="removeBizName(${i})" style="color:#f87171">🗑️</button>
-    </div>`).join('') || '<div style="font-size:12px;color:#94a3b8">尚未設定，於下方新增第一筆</div>';
+    </div>`).join('') || `<div style="font-size:12px;color:#94a3b8">${esc(BIZ_BRANDS[bizBrand])} 尚未設定，於下方新增第一筆</div>`;
 }
 function addBizName() {
   const el = document.getElementById('bizNewName');
   const v = el.value.trim();
   if (!v) return;
-  bizList.push(v);
+  if (!bizList[bizBrand]) bizList[bizBrand] = [];
+  bizList[bizBrand].push(v);
   el.value = '';
   renderBizList();
 }
-function updateBizName(i, v) { bizList[i] = v.trim(); }
-function removeBizName(i) { bizList.splice(i, 1); renderBizList(); }
+function updateBizName(i, v) { bizList[bizBrand][i] = v.trim(); }
+function removeBizName(i) { bizList[bizBrand].splice(i, 1); renderBizList(); }
 
 function switchBizCust(c) {
   bizCust = c;

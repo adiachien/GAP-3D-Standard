@@ -705,9 +705,9 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
       <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
 
-      <!-- 總覽摘要（本身也是拖曳上傳區，藍色＝DPC匯出檔） -->
+      <!-- 總覽摘要（本身也是拖曳上傳區，藍色＝SampleSchedule「匯出待辦」檔） -->
       <div id="trkUploadDropWrap" ondragover="trkDragOver(event,'trkUploadDropWrap')" ondragleave="trkDragLeave(event,'trkUploadDropWrap')" ondrop="trkDropFile(event,'trkUploadDropWrap',uploadTrackerExcel)" style="margin-bottom:22px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid var(--gap-blue);padding-left:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--gap-blue);letter-spacing:0.02em;margin-bottom:6px">📊 這裡丟 DPC 匯出的原始檔（有「單別」「Customer」欄位那種）</div>
+        <div style="font-size:11px;font-weight:700;color:var(--gap-blue);letter-spacing:0.02em;margin-bottom:6px">📊 這裡丟 SampleSchedule「匯出待辦」的原始檔（有「單別」「Customer」欄位那種）</div>
         <div id="trkSummary"></div>
       </div>
 
@@ -905,7 +905,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
         <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:82vh;display:flex;flex-direction:column">
           <h3 style="font-size:17px;font-weight:700;margin-bottom:14px">📖 開發追蹤・使用說明</h3>
           <div style="overflow-y:auto;flex:1;font-size:13.5px;line-height:2;color:var(--text-dim)">
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">上傳資料</strong>：拖曳檔案或點「上傳 Excel」，DPC 匯出的原始檔即可，自動篩品牌、更新給大家看。</div>
+            <div style="margin-bottom:10px"><strong style="color:var(--text)">上傳資料</strong>：拖曳檔案或點「上傳 Excel」，SampleSchedule「匯出待辦」的原始檔即可，自動篩品牌、更新給大家看。</div>
             <div style="margin-bottom:10px"><strong style="color:var(--text)">各 SUB 進單進度</strong>：已進自動算，預計款數點 ✏️ 填，未進自動算出來（紅字沒到齊、綠字到齊了）。</div>
             <div style="margin-bottom:10px"><strong style="color:var(--text)">應進清單比對</strong>：上傳業務給的清單，自動比對已進／未進，也會抓系統裡重複進單的款號。</div>
             <div style="margin-bottom:10px"><strong style="color:var(--text)">業務對照表</strong>：設定好 SUBGROUP 對應業務，之後自動帶出，不用每次手動選。</div>
@@ -3242,13 +3242,19 @@ const TRK_BOM_RE = /^D\d{6}/;   // 款號格式：D + 6碼數字
 const GAP_SUBGROUPS = ['BAC','FIT','GAC','KIDS FR','KIDS SWIM','MAC','TSD','WAC'];
 
 // 預設值：Supabase 裡還沒存過資料時使用；一旦在 admin.html 存過，就會用存過的版本蓋掉這裡
-const TRK_DEFAULT_BIZLIST = [
-  'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
-  'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
-  'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
-  'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
-  'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
-];
+// 業務名單「每個品牌各自獨立」，不共用；GAP先放妳給的名單，其他品牌預設空白，之後從admin.html各自新增
+const TRK_DEFAULT_BIZLIST = {
+  GAP: [
+    'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
+    'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
+    'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
+    'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
+    'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
+  ],
+  ATH: [],
+  ON:  [],
+  BR:  []
+};
 const TRK_DEFAULT_SUBBIZMAP = {
   GS: {
     WAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
@@ -3273,7 +3279,7 @@ const TRK_DEFAULT_SUBBIZMAP = {
 };
 
 let trkExpected  = { GAP:{}, ATH:{}, ON:{}, BR:{} };  // { GAP:{ 'D107453':{gender,subgroup,customer,owner,source,uploadedAt} }, ... }
-let trkBizList   = TRK_DEFAULT_BIZLIST.slice();
+let trkBizList   = JSON.parse(JSON.stringify(TRK_DEFAULT_BIZLIST));
 let trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
 
 let trkExpRawRows  = null;   // 目前解析中的檔案內容（array-of-arrays）
@@ -3322,10 +3328,18 @@ function loadTrackerFromEntries() {
     const ex = trkEntry('expected');
     if (ex && ex.content) trkExpected = Object.assign({ GAP:{}, ATH:{}, ON:{}, BR:{} }, JSON.parse(ex.content));
   } catch (e) {}
-  trkBizList = TRK_DEFAULT_BIZLIST.slice();
+  trkBizList = JSON.parse(JSON.stringify(TRK_DEFAULT_BIZLIST));
   try {
     const bl = trkEntry('bizlist');
-    if (bl && bl.content) { const arr = JSON.parse(bl.content); if (Array.isArray(arr) && arr.length) trkBizList = arr; }
+    if (bl && bl.content) {
+      const obj = JSON.parse(bl.content);
+      if (Array.isArray(obj)) {
+        // 相容舊格式（改版前存過的單一共用清單）：當作 GAP 的清單，其他品牌維持預設
+        trkBizList.GAP = obj;
+      } else if (obj && typeof obj === 'object') {
+        trkBizList = Object.assign({ GAP: [], ATH: [], ON: [], BR: [] }, obj);
+      }
+    }
   } catch (e) {}
   trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
   try {
@@ -3410,7 +3424,7 @@ function renderTrackerSummary() {
       document.getElementById('trkSubBlock').style.display   = '';
       document.getElementById('trkStyleBlock').style.display = 'none';
     } else {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點「📤 上傳 Excel」或直接把檔案拖曳到這個框框，丟入 DPC 匯出的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
+      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點「📤 上傳 Excel」或直接把檔案拖曳到這個框框，丟入 SampleSchedule「匯出待辦」的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
       document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
       document.getElementById('trkStyleBlock').style.display = 'none';
     }
@@ -3771,7 +3785,7 @@ async function trkExpHandleFile(file) {
     }
     if (!raw.length) { alert('檔案裡讀不到資料'); return; }
     if (trkLooksLikeDpcExport(raw)) {
-      if (!confirm('這個檔案看起來像是 DPC 匯出的原始檔（有「單別」「Customer」欄位），應該丟到上面藍框「開發追蹤」才對。\n\n仍要當作應進清單繼續處理嗎？')) return;
+      if (!confirm('這個檔案看起來像是 SampleSchedule「匯出待辦」的原始檔（有「單別」「Customer」欄位），應該丟到上面藍框「開發追蹤」才對。\n\n仍要當作應進清單繼續處理嗎？')) return;
     }
     trkExpRawRows  = raw.map(row => row.map(c => trkCell(c)));
     trkExpFileName = file.name;
@@ -3882,7 +3896,7 @@ function trkExpRefreshOwnerPriority() {
       priority = (trkSubBizMap[cust] && trkSubBizMap[cust][sub]) || [];
     }
   }
-  const rest = trkBizList.filter(n => !priority.includes(n));
+  const rest = (trkBizList[currentBrand] || []).filter(n => !priority.includes(n));
   dl.innerHTML = [...priority, ...rest].map(n => `<option value="${escHtml(n)}">`).join('');
 }
 
@@ -4165,7 +4179,7 @@ async function uploadTrackerExcel(file) {
     if (!raw.length) throw new Error('檔案裡讀不到資料列');
     if (!('單別' in raw[0]) || !('Customer' in raw[0])) {
       if (trkLooksLikeExpectedList(ws)) {
-        throw new Error('這個檔案看起來像業務給的「應進清單」，不是 DPC 匯出檔，請改丟下面「📋 應進清單比對」的橘框');
+        throw new Error('這個檔案看起來像業務給的「應進清單」，不是 SampleSchedule「匯出待辦」的檔案，請改丟下面「📋 應進清單比對」的橘框');
       }
       throw new Error('格式不符：找不到「單別」或「Customer」欄位');
     }
