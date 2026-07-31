@@ -705,10 +705,13 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       </div>
       <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
 
-      <!-- 總覽摘要（本身也是拖曳上傳區） -->
-      <div id="trkSummary" ondragover="trkDragOver(event,'trkSummary')" ondragleave="trkDragLeave(event,'trkSummary')" ondrop="trkDropFile(event,'trkSummary',uploadTrackerExcel)" style="margin-bottom:22px;border-radius:10px;transition:background .15s,outline .15s"></div>
+      <!-- 總覽摘要（本身也是拖曳上傳區，藍色＝DPC匯出檔） -->
+      <div id="trkUploadDropWrap" ondragover="trkDragOver(event,'trkUploadDropWrap')" ondragleave="trkDragLeave(event,'trkUploadDropWrap')" ondrop="trkDropFile(event,'trkUploadDropWrap',uploadTrackerExcel)" style="margin-bottom:22px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid var(--gap-blue);padding-left:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--gap-blue);letter-spacing:0.02em;margin-bottom:6px">📊 這裡丟 DPC 匯出的原始檔（有「單別」「Customer」欄位那種）</div>
+        <div id="trkSummary"></div>
+      </div>
 
-      <!-- 應進清單比對 -->
+      <!-- 應進清單比對（本身也是拖曳上傳區，橘色＝業務給的清單） -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
         <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">📋 應進清單比對</div>
         <label id="trkExpUploadZone" style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
@@ -717,7 +720,10 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
         </label>
         <button onclick="trkExpClearBrand()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本品牌應進清單</button>
       </div>
-      <div id="trkExpSummary" ondragover="trkDragOver(event,'trkExpSummary')" ondragleave="trkDragLeave(event,'trkExpSummary')" ondrop="trkDropFile(event,'trkExpSummary',trkExpHandleFile)" style="margin-bottom:14px;border-radius:10px;transition:background .15s,outline .15s"></div>
+      <div id="trkExpDropWrap" ondragover="trkDragOver(event,'trkExpDropWrap')" ondragleave="trkDragLeave(event,'trkExpDropWrap')" ondrop="trkDropFile(event,'trkExpDropWrap',trkExpHandleFile)" style="margin-bottom:14px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid #d97706;padding-left:10px">
+        <div style="font-size:11px;font-weight:700;color:#92400e;letter-spacing:0.02em;margin-bottom:6px">📋 這裡丟業務給的應進清單（格式不拘，欄位自己選）</div>
+        <div id="trkExpSummary"></div>
+      </div>
       <div id="trkExpMissingWrap" style="margin-bottom:14px"></div>
       <div id="trkExpDupWrap" style="margin-bottom:24px"></div>
 
@@ -3764,6 +3770,9 @@ async function trkExpHandleFile(file) {
       raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
     }
     if (!raw.length) { alert('檔案裡讀不到資料'); return; }
+    if (trkLooksLikeDpcExport(raw)) {
+      if (!confirm('這個檔案看起來像是 DPC 匯出的原始檔（有「單別」「Customer」欄位），應該丟到上面藍框「開發追蹤」才對。\n\n仍要當作應進清單繼續處理嗎？')) return;
+    }
     trkExpRawRows  = raw.map(row => row.map(c => trkCell(c)));
     trkExpFileName = file.name;
     trkExpOpenModal();
@@ -4108,6 +4117,29 @@ function trkDropFile(ev, id, handler) {
   if (file) handler(file);
 }
 
+// ── 丟錯框偵測（兩個上傳框長得像，內容特徵不一樣，互相提醒）──
+function trkLooksLikeExpectedList(ws) {
+  try {
+    const raw2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    let hits = 0, checked = 0;
+    for (const row of raw2D) {
+      for (const cell of row) {
+        checked++;
+        if (TRK_BOM_RE.test(String(cell || '').trim())) hits++;
+      }
+      if (checked > 6000) break;
+    }
+    return hits >= 3; // 抓到 3 個以上「D+6碼」款號，就當作像應進清單
+  } catch (e) { return false; }
+}
+function trkLooksLikeDpcExport(raw2D) {
+  for (let i = 0; i < Math.min(3, raw2D.length); i++) {
+    const row = raw2D[i].map(c => String(c || '').trim());
+    if (row.includes('單別') && row.includes('Customer')) return true;
+  }
+  return false;
+}
+
 // ── Excel 上傳解析 ─────────────────────────────
 function trkCell(v) {
   if (v instanceof Date) {
@@ -4131,7 +4163,12 @@ async function uploadTrackerExcel(file) {
     const ws  = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
     if (!raw.length) throw new Error('檔案裡讀不到資料列');
-    if (!('單別' in raw[0]) || !('Customer' in raw[0])) throw new Error('格式不符：找不到「單別」或「Customer」欄位');
+    if (!('單別' in raw[0]) || !('Customer' in raw[0])) {
+      if (trkLooksLikeExpectedList(ws)) {
+        throw new Error('這個檔案看起來像業務給的「應進清單」，不是 DPC 匯出檔，請改丟下面「📋 應進清單比對」的橘框');
+      }
+      throw new Error('格式不符：找不到「單別」或「Customer」欄位');
+    }
 
     const rows = raw
       .filter(r => String(r['單別']).trim() === TRK_ORDER_TYPE
