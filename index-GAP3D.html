@@ -506,6 +506,16 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── 搜尋跳轉高亮：外框脈動，不改變背景色 ── */
+@keyframes searchJumpPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,78,216,0); }
+  50%      { box-shadow: 0 0 0 4px rgba(29,78,216,0.45); }
+}
+.search-jump-highlight {
+  animation: searchJumpPulse 0.7s ease-in-out 2;
+  border-color: #1d4ed8 !important;
+}
+
 /* ── QC GRID ── */
 .qc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 12px; }
 .qc-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
@@ -530,7 +540,8 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   max-height: 0;
   transition: max-height 0.3s ease, padding 0.2s ease;
 }
-.grid-expand-row.open { max-height: 1000px; }
+/* max-height 上限改由 JS 動態計算實際內容高度後設定 inline style，
+   避免圖片較多（例如超過 4 張）時被這裡寫死的高度裁掉、看不到後面幾張圖 */
 .grid-expand-inner {
   padding: 0 20px;
   transition: padding 0.2s ease;
@@ -1606,6 +1617,19 @@ function renderCardGrid(entries, groupLabel) {
   return `<div class="card-grid-section">${label}<div class="card-grid" id="${gridId}">${items}${expandRow}</div></div>`;
 }
 
+// 展開／收合共用：高度改用實際內容量測（scrollHeight），
+// 不再寫死 max-height 上限——這樣不管卡片裡塞了幾張圖都不會被裁掉
+function openExpandRow(expandRow) {
+  expandRow.classList.add('open');
+  requestAnimationFrame(() => {
+    expandRow.style.maxHeight = expandRow.scrollHeight + 'px';
+  });
+}
+function closeExpandRow(expandRow) {
+  expandRow.classList.remove('open');
+  expandRow.style.maxHeight = '';
+}
+
 function toggleCardExpand(entryId, gridId) {
   const e = allEntries.find(x => String(x.id) === String(entryId));
   if (!e) return;
@@ -1616,7 +1640,7 @@ function toggleCardExpand(entryId, gridId) {
 
   // 如果點的是已展開的卡 → 收合
   if (expandedCardId === entryId) {
-    expandRow.classList.remove('open');
+    closeExpandRow(expandRow);
     card.classList.remove('expanded');
     expandedCardId = null;
     return;
@@ -1633,7 +1657,7 @@ function toggleCardExpand(entryId, gridId) {
     </div>
     ${renderCard(e)}`;
 
-  expandRow.classList.add('open');
+  openExpandRow(expandRow);
   card.classList.add('expanded');
   expandedCardId = entryId;
 
@@ -1644,7 +1668,7 @@ function toggleCardExpand(entryId, gridId) {
 function collapseCard(entryId, gridId) {
   const expandRow = document.getElementById(gridId + '-expand');
   const card = document.getElementById('gc-' + entryId);
-  if (expandRow) expandRow.classList.remove('open');
+  if (expandRow) closeExpandRow(expandRow);
   if (card) card.classList.remove('expanded');
   expandedCardId = null;
 }
@@ -2503,7 +2527,7 @@ function selectStageTab(pageKey, stageKey) {
           }).join('');
 
           return `
-            <div class="check-item" onclick="if(event.target.tagName!=='A'&&event.target.tagName!=='BUTTON')toggleCheck(this)">
+            <div class="check-item" id="check-entry-${e.id}" onclick="if(event.target.tagName!=='A'&&event.target.tagName!=='BUTTON')toggleCheck(this)">
               <input type="checkbox" onclick="event.stopPropagation();this.parentElement.classList.toggle('done',this.checked)">
               <div style="flex:1">
                 <div style="font-size:16px;font-weight:600">${escHtml(e.title)}</div>
@@ -2959,7 +2983,7 @@ function toggleAcCard(entryId, gridId) {
   const card      = document.getElementById('ac-gc-' + entryId);
 
   if (expandedAcCardId === entryId) {
-    expandRow.classList.remove('open');
+    closeExpandRow(expandRow);
     card.classList.remove('expanded');
     expandedAcCardId = null;
     return;
@@ -2974,7 +2998,7 @@ function toggleAcCard(entryId, gridId) {
     </div>
     ${renderCard(e)}`;
 
-  expandRow.classList.add('open');
+  openExpandRow(expandRow);
   card.classList.add('expanded');
   expandedAcCardId = entryId;
 
@@ -2984,7 +3008,7 @@ function toggleAcCard(entryId, gridId) {
 function collapseAcCard(entryId, gridId) {
   const expandRow = document.getElementById(gridId + '-expand');
   const card      = document.getElementById('ac-gc-' + entryId);
-  if (expandRow) expandRow.classList.remove('open');
+  if (expandRow) closeExpandRow(expandRow);
   if (card) card.classList.remove('expanded');
   expandedAcCardId = null;
 }
@@ -3093,13 +3117,75 @@ function handleSearch(q) {
       content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
     });
     return `
-      <div class="result-card" onclick="showSection('${section?.slug}')">
+      <div class="result-card" onclick="jumpToSearchEntry('${e.id}')">
         <div class="result-section">📂 ${section?.name || ''}</div>
         <div class="result-title">${escHtml(e.title)}</div>
         <div class="result-body">${content}</div>
       </div>
     `;
   }).join('');
+}
+
+// ── 搜尋結果 → 定位到該筆條目 ─────────────────────
+function jumpToSearchEntry(entryId) {
+  const e = allEntries.find(x => String(x.id) === String(entryId));
+  if (!e) return;
+  const section = allSections.find(s => s.id === e.section_id);
+  if (!section) return;
+
+  const stageSlugs = ['prefit', 'details', 'checklist', 'closet'];
+  if (stageSlugs.includes(section.slug)) {
+    const stages = entryStages(e);
+    // 優先跳去目前選的 Stage；不在裡面就跳這筆條目所屬的第一個 Stage
+    const targetStage = stages.includes(currentStageKey) ? currentStageKey : (stages[0] || 'proto');
+    showSectionWithStage(section.slug, targetStage);
+    setTimeout(() => locateAndHighlightEntry(entryId), 200);
+  } else {
+    showSection(section.slug);
+    setTimeout(() => locateAndHighlightEntry(entryId), 150);
+  }
+}
+
+function locateAndHighlightEntry(entryId) {
+  // 1. 一般卡片／兩欄卡（直接顯示，非縮圖）
+  const directCard = document.getElementById('entry-' + entryId);
+  if (directCard) { scrollAndPulse(directCard); return; }
+
+  // 2. 一般縮圖卡（需要先展開）
+  const gc = document.getElementById('gc-' + entryId);
+  if (gc) {
+    const gridId = gc.closest('.card-grid')?.id;
+    if (gridId) {
+      if (expandedCardId !== entryId) toggleCardExpand(String(entryId), gridId);
+      setTimeout(() => {
+        const expandRow = document.getElementById(gridId + '-expand');
+        scrollAndPulse(expandRow || gc);
+      }, 350);
+      return;
+    }
+  }
+
+  // 3. 帳號密碼／CLOSET登入 縮圖卡
+  const acgc = document.getElementById('ac-gc-' + entryId);
+  if (acgc) {
+    if (expandedAcCardId !== entryId) toggleAcCard(String(entryId), 'ac-grid');
+    setTimeout(() => {
+      const expandRow = document.getElementById('ac-grid-expand');
+      scrollAndPulse(expandRow || acgc);
+    }, 350);
+    return;
+  }
+
+  // 4. Checklist 項目
+  const chk = document.getElementById('check-entry-' + entryId);
+  if (chk) { scrollAndPulse(chk); return; }
+}
+
+function scrollAndPulse(el) {
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('search-jump-highlight');
+  setTimeout(() => el.classList.remove('search-jump-highlight'), 1500);
 }
 
 // ── UI helpers ─────────────────────────────────
