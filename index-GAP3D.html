@@ -1177,14 +1177,18 @@ const GAP3D_CACHE = 'gap3d_cache_v1';
 
 function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
+  // 隱藏系統分類（group_name 以 _ 開頭，例如 tracker-data／stage-config／links）
+  // 不該被 hash 直接打開，也不該當成預設落地頁——只有 accounts 是例外（有獨立寫死的入口）
+  const isRoutable = s => !(s.group_name || '').startsWith('_') || s.slug === 'accounts';
   if (hash === 'feedback') {
     showFeedback();
   } else if (hash === 'tracker') {
     showTracker();
-  } else if (hash && allSections.find(s => s.slug === hash)) {
+  } else if (hash && allSections.find(s => s.slug === hash && isRoutable(s))) {
     showSection(hash, false);
   } else if (allSections.length) {
-    showSection(allSections[0].slug, false);
+    const first = allSections.find(isRoutable) || allSections[0];
+    showSection(first.slug, false);
   }
 }
 
@@ -1458,7 +1462,7 @@ function renderCard(e) {
     // 有文字說明時，圖擺右邊搭配閱讀
     body = `
       <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:4px">
-        <div style="flex:2;min-width:320px">${content}</div>
+        <div style="flex:2;min-width:320px">${figLinks(content, e)}</div>
         ${renderCardImages(e, 'stack')}
       </div>
     `;
@@ -1773,28 +1777,58 @@ function getStageCfg() {
 // ── 圖片放大（lightbox，支援上一張／下一張瀏覽整組圖）──
 let imgZoomList = [];
 let imgZoomIdx = 0;
+let imgZoomTitle = '';
 
-function openImgZoom(list, idx) {
+function imgZoomJump(i) { imgZoomIdx = i; updateImgZoomView(); }
+function imgZoomFit() { imgZoomSetScale(1); }
+function imgZoomActual() {
+  const img = document.getElementById('imgZoomImg');
+  if (!img || !img.clientWidth) return;
+  imgZoomSetScale(Math.min(6, Math.max(1, img.naturalWidth / img.clientWidth)));
+}
+
+function openImgZoom(list, idx, title) {
   imgZoomList = list;
   imgZoomIdx = idx;
+  imgZoomTitle = title || '';
   const ov = document.createElement('div');
   ov.id = 'imgZoomOverlay';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden';
   ov.innerHTML = `
-    <div style="position:relative;width:99vw;height:96vh;display:flex;align-items:center;justify-content:center;overflow:hidden" onclick="event.stopPropagation()">
-      <img id="imgZoomImg" style="max-width:99vw;max-height:96vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block;cursor:grab;user-select:none;touch-action:none">
-      <div style="position:absolute;top:-30px;left:0;color:rgba(255,255,255,0.75);font-size:12px;font-family:'DM Mono',monospace">滾輪縮放，拖曳移動；雙擊重置</div>
+    <div style="position:relative;width:99vw;height:96vh;display:flex;flex-direction:column;gap:10px" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+        <div id="imgZoomTitle" style="color:#fff;font-size:15px;font-weight:600"></div>
+        <div style="color:rgba(255,255,255,0.5);font-size:11.5px;font-family:'DM Mono',monospace">← → 換圖 · 滾輪縮放 · 拖曳移動 · 雙擊重置 · Esc 關閉</div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <button onclick="imgZoomFit()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">符合寬度</button>
+          <button onclick="imgZoomActual()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">100%</button>
+          <button onclick="closeImgZoom()" title="關閉" style="width:30px;height:30px;border-radius:50%;background:#fff;border:none;color:#111;font-size:16px;cursor:pointer;line-height:1">✕</button>
+        </div>
+      </div>
+      <div style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <img id="imgZoomImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);display:block;cursor:grab;user-select:none;touch-action:none">
+        ${list.length > 1 ? `
+          <button onclick="imgZoomNav(-1)" title="上一張" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">‹</button>
+          <button onclick="imgZoomNav(1)" title="下一張" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">›</button>
+        ` : ''}
+      </div>
       ${list.length > 1 ? `
-        <button onclick="imgZoomNav(-1)" title="上一張" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">‹</button>
-        <button onclick="imgZoomNav(1)" title="下一張" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">›</button>
-        <div id="imgZoomCounter" style="position:absolute;bottom:-64px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.85);font-size:13px;font-family:'DM Mono',monospace"></div>
+        <div id="imgZoomStrip" style="flex-shrink:0;display:flex;gap:6px;justify-content:center;overflow-x:auto;padding:2px">
+          ${list.map((u, i) => `
+            <div data-strip="${i}" title="圖${i + 1}" onclick="imgZoomJump(${i})" style="position:relative;width:104px;height:66px;flex-shrink:0;background:#1f1f1f;border:2px solid transparent;border-radius:5px;overflow:hidden;cursor:pointer">
+              <img src="${escHtml(u)}" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block">
+              <div style="position:absolute;top:2px;left:2px;background:rgba(0,0,0,0.65);color:#fff;font-size:9.5px;font-weight:700;padding:0 4px;border-radius:3px;font-family:'DM Mono',monospace">${i + 1}</div>
+            </div>`).join('')}
+        </div>
       ` : ''}
-      <button onclick="closeImgZoom()" title="關閉" style="position:absolute;top:-16px;right:-16px;width:30px;height:30px;border-radius:50%;background:#fff;border:none;color:#111;font-size:16px;cursor:pointer;line-height:1;z-index:2">✕</button>
-      <div style="position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(20,20,20,0.75);padding:6px 16px;border-radius:20px;z-index:2" onclick="event.stopPropagation()">
-        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale-0.5)">🔍－</span>
-        <input id="imgZoomSlider" type="range" min="1" max="6" step="0.1" value="1" oninput="imgZoomSetScale(parseFloat(this.value))" style="width:140px;accent-color:#ff5a3c;cursor:pointer">
-        <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale+0.5)">🔍＋</span>
-        <span id="imgZoomPct" style="color:rgba(255,255,255,0.6);font-size:12px;font-family:'DM Mono',monospace;width:38px">100%</span>
+      <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:14px">
+        <div id="imgZoomCounter" style="color:rgba(255,255,255,0.8);font-size:12.5px;font-family:'DM Mono',monospace;min-width:80px;text-align:right"></div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(20,20,20,0.75);padding:6px 16px;border-radius:20px">
+          <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale-0.5)">🔍－</span>
+          <input id="imgZoomSlider" type="range" min="1" max="6" step="0.1" value="1" oninput="imgZoomSetScale(parseFloat(this.value))" style="width:140px;accent-color:#ff5a3c;cursor:pointer">
+          <span style="color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer" onclick="imgZoomSetScale(imgZoomScale+0.5)">🔍＋</span>
+          <span id="imgZoomPct" style="color:rgba(255,255,255,0.6);font-size:12px;font-family:'DM Mono',monospace;width:38px">100%</span>
+        </div>
       </div>
     </div>
   `;
@@ -1871,6 +1905,12 @@ function updateImgZoomView() {
   img.src = imgZoomList[imgZoomIdx];
   const counter = document.getElementById('imgZoomCounter');
   if (counter) counter.textContent = `圖 ${imgZoomIdx + 1} / ${imgZoomList.length}`;
+  const tEl = document.getElementById('imgZoomTitle');
+  if (tEl) tEl.textContent = imgZoomTitle ? `${imgZoomTitle}　·　圖 ${imgZoomIdx + 1}` : `圖 ${imgZoomIdx + 1}`;
+  const strip = document.getElementById('imgZoomStrip');
+  if (strip) strip.querySelectorAll('[data-strip]').forEach(s => {
+    s.style.borderColor = Number(s.dataset.strip) === imgZoomIdx ? '#ff5a3c' : 'transparent';
+  });
   applyImgZoomTransform();
 }
 function imgZoomNav(delta) {
@@ -1891,20 +1931,114 @@ function closeImgZoom() {
 
 // 卡片圖片縮圖列：每張標上「圖N」對應內文的圖片編號，方便對照，不用逐張點開
 const __imgLists = {};
+const __imgTitles = {};
+const __albumSel = {};
+
+// 相簿式：一張主圖（不裁切）＋底下小縮圖；右欄 sticky 釘住，滾內文時圖不會跑掉
+function renderCardAlbum(e) {
+  const n = e.images.length;
+  __albumSel[e.id] = 0;
+  const thumbs = e.images.map((u, i) => `
+    <div data-album-thumb="${i}" title="圖${i + 1}" onclick="event.stopPropagation();albumSelect('${e.id}',${i})"
+      style="position:relative;aspect-ratio:1;background:#f3f4f6;border:2px solid ${i === 0 ? 'var(--brand-accent)' : 'transparent'};border-radius:6px;overflow:hidden;cursor:pointer">
+      <img src="${escHtml(u)}" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block">
+      <div style="position:absolute;top:2px;left:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:9.5px;font-weight:700;padding:0 4px;border-radius:3px;font-family:'DM Mono',monospace">${i + 1}</div>
+    </div>`).join('');
+  return `
+    <div id="album-${e.id}" data-album="${e.id}" style="flex:0 0 340px;align-self:flex-start;position:sticky;top:8px;display:flex;flex-direction:column;gap:8px;background:#fff;z-index:1">
+      <div title="點擊放大" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],__albumSel['${e.id}']||0,__imgTitles['${e.id}'])"
+        style="position:relative;height:240px;background:#f3f4f6;border:1px solid rgba(0,0,0,0.08);border-radius:8px;overflow:hidden;cursor:zoom-in">
+        <img id="albumMain-${e.id}" src="${escHtml(e.images[0])}" style="width:100%;height:100%;object-fit:contain;display:block">
+        <div id="albumBadge-${e.id}" style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace">圖1</div>
+        <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.92);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
+      </div>
+      ${n > 1 ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">${thumbs}</div>` : ''}
+      <div id="albumCap-${e.id}" style="font-size:11.5px;color:var(--text-muted)">圖 1 / ${n}${n > 1 ? '　·　點縮圖或內文的「圖N」切換' : ''}</div>
+    </div>`;
+}
+
+function albumSelect(id, i, fromScroll) {
+  const list = __imgLists[id];
+  if (!list || !list[i] || __albumSel[id] === i) return;
+  __albumSel[id] = i;
+  const main = document.getElementById('albumMain-' + id);
+  if (main) main.src = list[i];
+  const badge = document.getElementById('albumBadge-' + id);
+  if (badge) badge.textContent = '圖' + (i + 1);
+  const cap = document.getElementById('albumCap-' + id);
+  if (cap) cap.textContent = `圖 ${i + 1} / ${list.length}　·　${fromScroll ? '已跟隨內文位置' : '點縮圖或內文的「圖N」切換'}`;
+  const box = document.getElementById('album-' + id);
+  if (box) box.querySelectorAll('[data-album-thumb]').forEach(t => {
+    t.style.borderColor = Number(t.dataset.albumThumb) === i ? 'var(--brand-accent)' : 'transparent';
+  });
+  const card = document.getElementById('entry-' + id);
+  if (card) card.querySelectorAll('[data-fig]').forEach(s => {
+    const on = Number(s.dataset.fig) === i + 1;
+    s.style.background = on ? 'rgba(255,90,60,0.14)' : 'transparent';
+    s.style.borderColor = on ? 'var(--brand-accent)' : 'rgba(0,0,0,0.15)';
+  });
+}
+
+// 內文中的「圖N」變成可點的標籤，點了右欄主圖就換
+function figLinks(html, e) {
+  if (!e.images || e.images.length < 2) return html;
+  // 只處理標籤外的文字，避免把 chip 塞進 href／title 等屬性值裡
+  return String(html).split(/(<[^>]*>)/).map(part => {
+    if (part.startsWith('<')) return part;
+    return part.replace(/圖\s?(\d{1,2})/g, (m, d) => {
+      const i = parseInt(d, 10);
+      if (!(i >= 1 && i <= e.images.length)) return m;
+      return `<span data-fig="${i}" title="切換到圖${i}" onclick="event.stopPropagation();albumSelect('${e.id}',${i - 1})" style="cursor:pointer;border:1px solid rgba(0,0,0,0.15);border-radius:4px;padding:0 4px;font-weight:600;color:#b91c1c;white-space:nowrap;transition:background .12s">圖${i}</span>`;
+    });
+  }).join('');
+}
+
+// 滾動時，主圖自動跟著內文目前這一段的「圖N」
+function syncAlbumsOnScroll() {
+  const main = document.querySelector('main');
+  if (!main) return;
+  const line = main.getBoundingClientRect().top + main.clientHeight * 0.35;
+  document.querySelectorAll('[data-album]').forEach(box => {
+    const id = box.dataset.album;
+    const card = document.getElementById('entry-' + id);
+    if (!card) return;
+    const chips = card.querySelectorAll('[data-fig]');
+    if (!chips.length) return;
+    let pick = chips[0];
+    chips.forEach(c => { if (c.getBoundingClientRect().top <= line) pick = c; });
+    albumSelect(id, Number(pick.dataset.fig) - 1, true);
+  });
+}
+(function bindAlbumScroll() {
+  const start = () => {
+    const main = document.querySelector('main');
+    if (!main) return;
+    let raf = 0;
+    main.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; syncAlbumsOnScroll(); });
+    }, { passive: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+
 function renderCardImages(e, mode) {
   if (!e.images || !e.images.length) return '';
   __imgLists[e.id] = e.images;
-  const stack = mode === 'stack';
+  __imgTitles[e.id] = e.title || '';
+  if (mode === 'stack') return renderCardAlbum(e);
+  const stack = false;
   const grid = mode === 'grid';
   const thumbStyle = stack
     ? 'width:100%;height:220px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
     : grid
-    ? 'width:220px;height:220px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
-    : 'width:132px;height:132px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block';
+    ? 'width:220px;height:220px;object-fit:contain;background:#f3f4f6;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block'
+    : 'width:132px;height:132px;object-fit:contain;background:#f3f4f6;border-radius:8px;border:1px solid rgba(0,0,0,0.08);display:block';
   const labelSize = stack || grid ? '13px' : '11px';
   const labelPad = stack || grid ? '2px 9px' : '1px 7px';
   const items = e.images.map((u, i) => `
-    <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],${i})" title="點擊放大">
+    <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],${i},__imgTitles['${e.id}'])" title="點擊放大">
       <img src="${escHtml(u)}" loading="lazy" style="${thumbStyle}">
       <div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:${labelSize};font-weight:700;padding:${labelPad};border-radius:4px;font-family:'DM Mono',monospace">圖${i + 1}</div>
       <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
@@ -4457,7 +4591,7 @@ function renderFeedbackList(data) {
         <div id="fb-view-${f.id}">
           <div style="display:flex;gap:14px;align-items:flex-start">
             ${f.image_url ? `
-              <div style="flex-shrink:0;position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],0)" title="點擊放大">
+              <div style="flex-shrink:0;position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],0,'意見回饋圖片')" title="點擊放大">
                 <img src="${escHtml(f.image_url)}" loading="lazy" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
                 <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
               </div>
