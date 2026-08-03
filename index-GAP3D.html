@@ -1686,9 +1686,9 @@ function linkify(text) {
 // ── 重點標記：**粗體** ==螢光== !!紅字!!（在 escHtml 之後套用）──
 function fmtMarks(t) {
   return String(t || '')
-    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/==([^=\n]+)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
-    .replace(/!!([^!\n]+)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
+    .replace(/\*\*([^\n]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/==([^\n]+?)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
+    .replace(/!!([^\n]+?)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
 }
 // 條目所屬 Stage（相容：null / '' / 'proto' / 'proto,la' / 陣列）
 function entryStages(e) {
@@ -1701,9 +1701,9 @@ function entryHasNoStage(e) { return entryStages(e).length === 0; }
 // 移除標記符號（供複製、預覽摘要、搜尋顯示用）
 function stripMarks(t) {
   return String(t || '')
-    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
-    .replace(/==([^=\n]+)==/g, '$1')
-    .replace(/!!([^!\n]+)!!/g, '$1');
+    .replace(/\*\*([^\n]+?)\*\*/g, '$1')
+    .replace(/==([^\n]+?)==/g, '$1')
+    .replace(/!!([^\n]+?)!!/g, '$1');
 }
 
 // ── Stage 設定（可由後台編輯，讀不到時用預設值）──
