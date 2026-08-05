@@ -935,7 +935,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
     <div class="page" id="page-feedback">
       <div class="page-header">
         <div class="page-title">💬 留言板</div>
-        <div class="page-desc">遇到問題或有想法都可以留言，支援貼上截圖（Ctrl+V）或拖曳圖片</div>
+        <div class="page-desc">遇到問題或有想法都可以留言，支援貼上截圖（Ctrl+V）或拖曳圖片（最多 2 張）</div>
       </div>
 
       <!-- 新增留言 -->
@@ -956,18 +956,15 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6"
           onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)"></textarea>
 
-        <div id="fbImagePreview" style="display:none;margin-top:8px;position:relative;width:fit-content">
-          <img id="fbPreviewImg" style="max-height:160px;max-width:100%;border-radius:6px;border:1px solid var(--border)">
-          <button onclick="clearFbImage()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1">✕</button>
-        </div>
+        <div id="fbImagePreview" style="display:none;margin-top:8px;gap:8px;flex-wrap:wrap"></div>
 
         <div id="fbDropZone"
           style="margin-top:8px;border:1.5px dashed var(--border);border-radius:7px;padding:12px;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer"
           onclick="document.getElementById('fbFileInput').click()"
           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-          📎 點擊或拖曳圖片到這裡上傳
+          📎 點擊或拖曳圖片到這裡上傳（最多 2 張）
         </div>
-        <input type="file" id="fbFileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+        <input type="file" id="fbFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
 
         <div style="display:flex;justify-content:flex-end;margin-top:10px">
           <button onclick="submitFeedback()"
@@ -4449,7 +4446,7 @@ async function exportTrackerExcel() {
 }
 
 // ── Feedback / 留言板 ───────────────────────────
-let fbImageFile = null;
+let fbImageFiles = []; // 最多 2 張
 let fbCurrentFilter = 'all';        // 分類篩選
 let fbCurrentStatusFilter = 'all';  // 狀態篩選：all / 待改善 / 已改善
 let allFeedbackData = [];
@@ -4559,7 +4556,8 @@ function renderFeedbackList(data) {
     const status = f.status || '待改善';
     const sc = fbStatusColors[status] || fbStatusColors['待改善'];
     // 留言板圖片沿用全站共用的縮放檢視器（滾輪縮放／拖曳／雙擊重置），與其他頁面的圖片操作一致
-    if (f.image_url) __imgLists['fb-' + f.id] = [f.image_url];
+    const fbImgs = [f.image_url, f.image_url2].filter(Boolean);
+    if (fbImgs.length) __imgLists['fb-' + f.id] = fbImgs;
     return `
       <div class="card" style="margin-bottom:10px" id="fb-${f.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -4590,10 +4588,14 @@ function renderFeedbackList(data) {
         </div>
         <div id="fb-view-${f.id}">
           <div style="display:flex;gap:14px;align-items:flex-start">
-            ${f.image_url ? `
-              <div style="flex-shrink:0;position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],0,'意見回饋圖片')" title="點擊放大">
-                <img src="${escHtml(f.image_url)}" loading="lazy" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
-                <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
+            ${fbImgs.length ? `
+              <div style="flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap">
+                ${fbImgs.map((url, i) => `
+                  <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],${i},'意見回饋圖片')" title="點擊放大">
+                    <img src="${escHtml(url)}" loading="lazy" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
+                    <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
+                  </div>
+                `).join('')}
               </div>
             ` : ''}
             ${f.content ? `
@@ -4602,6 +4604,8 @@ function renderFeedbackList(data) {
           </div>
         </div>
         <div id="fb-edit-${f.id}" style="display:none">
+          <input id="fb-edit-author-${f.id}" value="${escHtml(f.author||'')}" placeholder="名字（可不填）"
+            style="width:150px;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:16px;color:var(--text);font-family:inherit;outline:none;margin-bottom:8px;display:block">
           <textarea id="fb-edit-text-${f.id}"
             style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6">${escHtml(f.content||'')}</textarea>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
@@ -4657,25 +4661,27 @@ async function submitFeedback() {
   const content  = document.getElementById('fbContent').value.trim();
   const category = document.getElementById('fbCategory').value;
 
-  if (!content && !fbImageFile) {
+  if (!content && !fbImageFiles.length) {
     alert('請輸入留言內容或上傳圖片');
     return;
   }
 
-  let image_url = null;
-  if (fbImageFile) {
-    const ext = fbImageFile.name?.split('.').pop() || 'png';
-    const filename = `${Date.now()}.${ext}`;
+  const uploadedUrls = [];
+  for (const file of fbImageFiles) {
+    const ext = file.name?.split('.').pop() || 'png';
+    const filename = `${Date.now()}_${uploadedUrls.length}.${ext}`;
     const { error: upErr } = await sb.storage
       .from('feedback-images')
-      .upload(filename, fbImageFile, { contentType: fbImageFile.type });
+      .upload(filename, file, { contentType: file.type });
     if (upErr) { alert('圖片上傳失敗：' + upErr.message); return; }
     const { data: urlData } = sb.storage.from('feedback-images').getPublicUrl(filename);
-    image_url = urlData.publicUrl;
+    uploadedUrls.push(urlData.publicUrl);
   }
 
   const { error } = await sb.from('feedback').insert({
-    author, content, image_url, category,
+    author, content, category,
+    image_url: uploadedUrls[0] || null,
+    image_url2: uploadedUrls[1] || null,
     brand: currentBrand,
     status: '待改善',
   });
@@ -4737,7 +4743,8 @@ async function exportFeedbackExcel() {
       { header: '分類',   key: 'cat',     width: 12 },
       { header: '狀態',   key: 'status',  width: 10 },
       { header: '內容',   key: 'content', width: 50 },
-      { header: '圖片',   key: 'image',   width: 30 },
+      { header: '圖片1',  key: 'image',   width: 30 },
+      { header: '圖片2',  key: 'image2',  width: 30 },
     ];
     ws.getRow(1).font = { bold: true };
     ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
@@ -4754,19 +4761,22 @@ async function exportFeedbackExcel() {
       });
       ws.getRow(rowIdx).alignment = { vertical: 'top', wrapText: true };
 
-      if (f.image_url) {
+      const imgCols = ['F', 'G'];
+      const imgUrls = [f.image_url, f.image_url2].filter(Boolean);
+      for (let imgIdx = 0; imgIdx < imgUrls.length; imgIdx++) {
+        const url = imgUrls[imgIdx];
         try {
-          const base64 = await urlToBase64(f.image_url);
+          const base64 = await urlToBase64(url);
           const ext = (base64.match(/^data:image\/(\w+);/) || [,'png'])[1].toLowerCase();
           const imgExt = ['png','jpeg','jpg','gif'].includes(ext) ? (ext === 'jpg' ? 'jpeg' : ext) : 'png';
           const imgId = wb.addImage({ base64, extension: imgExt });
           ws.addImage(imgId, {
-            tl: { col: 5, row: rowIdx - 1 },
+            tl: { col: 5 + imgIdx, row: rowIdx - 1 },
             ext: { width: 180, height: 180 },
           });
           ws.getRow(rowIdx).height = 140;
         } catch (imgErr) {
-          ws.getCell(`F${rowIdx}`).value = f.image_url; // 圖片抓取失敗時退回連結
+          ws.getCell(`${imgCols[imgIdx]}${rowIdx}`).value = url; // 圖片抓取失敗時退回連結
         }
       }
     }
@@ -4793,9 +4803,8 @@ function handlePaste(e) {
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
-      setFbImage(item.getAsFile());
       e.preventDefault();
-      break;
+      if (!addFbImage(item.getAsFile())) break;
     }
   }
 }
@@ -4803,8 +4812,10 @@ function handlePaste(e) {
 function handleDrop(e) {
   e.preventDefault();
   handleDragLeave(e);
-  const file = e.dataTransfer?.files?.[0];
-  if (file?.type.startsWith('image/')) setFbImage(file);
+  const files = Array.from(e.dataTransfer?.files || []).filter(f => f.type.startsWith('image/'));
+  for (const file of files) {
+    if (!addFbImage(file)) break;
+  }
 }
 
 function handleDragOver(e) {
@@ -4819,25 +4830,51 @@ function handleDragLeave(e) {
 }
 
 function handleFileSelect(e) {
-  const file = e.target.files?.[0];
-  if (file) setFbImage(file);
+  const files = Array.from(e.target.files || []);
+  for (const file of files) {
+    if (!addFbImage(file)) break;
+  }
+  e.target.value = '';
 }
 
-function setFbImage(file) {
-  fbImageFile = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('fbPreviewImg').src = e.target.result;
-    document.getElementById('fbImagePreview').style.display = 'block';
+// 最多可貼 2 張圖，超過時提示並忽略多餘的
+function addFbImage(file) {
+  if (fbImageFiles.length >= 2) {
+    alert('最多只能貼 2 張圖');
+    return false;
+  }
+  fbImageFiles.push(file);
+  renderFbImagePreview();
+  if (fbImageFiles.length >= 2) {
     document.getElementById('fbDropZone').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+  }
+  return true;
 }
 
-function clearFbImage() {
-  fbImageFile = null;
-  document.getElementById('fbImagePreview').style.display = 'none';
-  document.getElementById('fbDropZone').style.display = 'block';
+function renderFbImagePreview() {
+  const box = document.getElementById('fbImagePreview');
+  if (!fbImageFiles.length) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  box.style.display = 'flex';
+  box.innerHTML = fbImageFiles.map((file, i) => `
+    <div style="position:relative">
+      <img src="${URL.createObjectURL(file)}" style="max-height:160px;max-width:220px;border-radius:6px;border:1px solid var(--border);display:block">
+      <button onclick="clearFbImage(${i})" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1">✕</button>
+    </div>
+  `).join('');
+}
+
+function clearFbImage(index) {
+  if (typeof index === 'number') {
+    fbImageFiles.splice(index, 1);
+  } else {
+    fbImageFiles = [];
+  }
+  renderFbImagePreview();
+  document.getElementById('fbDropZone').style.display = fbImageFiles.length >= 2 ? 'none' : 'block';
   document.getElementById('fbFileInput').value = '';
 }
 
@@ -4853,11 +4890,12 @@ function cancelEdit(id) {
 
 async function saveEdit(id) {
   const content = document.getElementById('fb-edit-text-' + id).value.trim();
-  const { error } = await sb.from('feedback').update({ content }).eq('id', id);
+  const author  = document.getElementById('fb-edit-author-' + id).value.trim() || '匿名';
+  const { error } = await sb.from('feedback').update({ content, author }).eq('id', id);
   if (error) { alert('儲存失敗：' + error.message); return; }
   // update local data
   const item = allFeedbackData.find(f => f.id === id);
-  if (item) item.content = content;
+  if (item) { item.content = content; item.author = author; }
   renderFeedbackList(allFeedbackData);
 }
 
