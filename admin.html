@@ -225,6 +225,7 @@ header h1 { font-size:14px; font-weight:500; }
     <div class="admin-title">內容管理</div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost" onclick="openStageCfg()">🎬 Stage 設定</button>
+      <button class="btn btn-ghost" onclick="openCpCfg()">🎨 非正單設定</button>
       <button class="btn btn-ghost" onclick="openBizManager()">👥 業務名單</button>
       <button class="btn btn-ghost" id="tourBtnAccounts" onclick="openAccountsManager()">🔑 帳號管理</button>
       <button class="btn btn-ghost" id="tourBtnSections" onclick="openSectionManager()">⚙️ 管理分類</button>
@@ -497,6 +498,61 @@ header h1 { font-size:14px; font-weight:500; }
         <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
         <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 非正單設定（各色 3D 定位）Modal -->
+<div class="overlay" id="cpCfgOverlay">
+  <div class="modal" style="width:840px;max-height:88vh;overflow-y:auto">
+    <h3>🎨 非正單流程設定（各色 3D 定位）</h3>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;line-height:1.6">
+      設定左側導覽「📸 非正單流程 → 各色 3D 定位」頁面的五個步驟內容（目前僅 GAP 品牌有非正單流程）。<br>
+      文字欄位支援 **粗體**、==螢光==、!!紅字!! 標記。
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">① 確認款式資訊</div>
+    <div class="path-list" id="cpStep1List"></div>
+    <button class="add-path-btn" onclick="cpAddStep1()">＋ 新增項目</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">② 製作</div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="cpStep2List"></div>
+    <button class="add-path-btn" onclick="cpAddStep2()">＋ 新增項目</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">③ 需要發 mail 嗎？</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:6px">✉️ 需要發 mail 的情況</div>
+        <div class="path-list" id="cpMailList"></div>
+        <button class="add-path-btn" onclick="cpAddMail()">＋ 新增</button>
+        <div class="field" style="margin-top:10px"><label>發給</label><input id="cpMailSendTo" placeholder="例如：發給：業務 ＋ YY 確認外觀"></div>
+        <div class="field"><label>主管／備註（可用 **粗體**）</label><input id="cpMailManager" placeholder="例如：**YY 主管：周育君（不 CC 小芬姊）**"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#6ee7b7;margin-bottom:6px">✅ 不用發 mail 的情況</div>
+        <div class="path-list" id="cpNoMailList"></div>
+        <button class="add-path-btn" onclick="cpAddNoMail()">＋ 新增</button>
+        <div class="field" style="margin-top:10px"><label>備註</label><input id="cpNoMailNote" placeholder="例如：直接結單"></div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">④ 出圖規範</div>
+    <div class="path-list" id="cpStep4NotesList"></div>
+    <button class="add-path-btn" onclick="cpAddStep4Note()">＋ 新增注意事項</button>
+    <div class="field" style="margin-top:12px">
+      <label>AI 拍照腳本路徑</label>
+      <input id="cpScriptPath" placeholder="\\192.168.1.220\3ddb\... 或（路徑待補）" style="font-family:'DM Mono',monospace">
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin:10px 0 6px">拍照角度表（款式情況／出圖方式／張數）</div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="cpPhotoTableList"></div>
+    <button class="add-path-btn" onclick="cpAddPhotoRow()">＋ 新增一列</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">⑤ 系統結單標籤</div>
+    <input id="cpStep5Label" placeholder="例如：系統結單（不上 CLO-SET）">
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCpCfg()">關閉</button>
+      <button class="btn btn-primary" onclick="saveCpCfg()">💾 儲存</button>
     </div>
   </div>
 </div>
@@ -1572,6 +1628,166 @@ async function copyStageCfg() {
   const ok = await scSaveBrand(target, collectStageCfg());
   if (!ok) return;
   showToast('已複製到 ' + scBrandName(target) + ' ✓ 可切換過去微調', 'success');
+}
+
+// ── 非正單流程設定（各色 3D 定位，目前僅 GAP）──
+// 與前台 index-GAP3D.html 的 CP_DEFAULTS 保持一致；Supabase 裡還沒存過資料時，這裡跟前台都會顯示這份預設值
+const CP_DEFAULTS = {
+  step1: [
+    '查群組資料確認有沒有做過（款號查詢時**刪掉季節後綴**）',
+    '看業務備註確認要做哪一色，只做基碼',
+    '半年以上沒做過的款 → 疊版確認有沒有改版'
+  ],
+  step2: [
+    { item:'壓線', needed:false, note:'除非特殊要求' },
+    { item:'Puckering', needed:true, note:'每款都要加' },
+    { item:'鈕扣換色', needed:true, note:'有鈕扣的款才做' }
+  ],
+  mailItems: ['和 YY 串聯的款', '花版複雜'],
+  mailSendTo: '發給：業務 ＋ YY 確認外觀',
+  mailManager: '**YY 主管：周育君（不 CC 小芬姊）**',
+  noMailItems: ['簡單 LOGO 定位', '直接 Follow 2D'],
+  noMailNote: '直接結單',
+  step4Notes: ['隱藏人台，透明背景，開高渲', '不併圖，分開提供'],
+  scriptPath: '（路徑待補）',
+  photoTable: [
+    { situation:'正面 AW', method:'正面照', count:'1 張' },
+    { situation:'側邊 AW', method:'正面 ＋ 側面', count:'2 張' },
+    { situation:'對條格 ／ 前後都有 AW', method:'三面照', count:'3 張' }
+  ],
+  step5Label: '系統結單（不上 CLO-SET）'
+};
+
+function cpLoad() {
+  const sec = allSections.find(s => s.slug === 'informal-color-config');
+  let saved = null;
+  if (sec) {
+    const e = allEntries.find(x => x.section_id === sec.id && x.title === 'COLORPLACEMENT_CONFIG');
+    if (e && e.content) { try { saved = JSON.parse(e.content); } catch (err) {} }
+  }
+  return Object.assign({}, CP_DEFAULTS, saved || {});
+}
+
+function cpSimpleRow(containerId, val) {
+  const div = document.createElement('div');
+  div.className = 'path-item';
+  div.innerHTML = `<input type="text" value="${esc(val||'')}"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px">✕</button>`;
+  document.getElementById(containerId).appendChild(div);
+}
+function cpAddStep1(v='')     { cpSimpleRow('cpStep1List', v); }
+function cpAddMail(v='')      { cpSimpleRow('cpMailList', v); }
+function cpAddNoMail(v='')    { cpSimpleRow('cpNoMailList', v); }
+function cpAddStep4Note(v='') { cpSimpleRow('cpStep4NotesList', v); }
+function cpGetSimpleList(containerId) {
+  return [...document.querySelectorAll('#'+containerId+' input')].map(i=>i.value.trim()).filter(Boolean);
+}
+
+function cpAddStep2(row) {
+  row = row || {item:'',needed:false,note:''};
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.innerHTML = `
+    <input type="text" placeholder="項目" value="${esc(row.item||'')}" style="flex:1.2">
+    <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);white-space:nowrap;flex-shrink:0"><input type="checkbox" class="cp-s2-needed" ${row.needed?'checked':''} style="accent-color:var(--official)">需要做</label>
+    <input type="text" placeholder="備註" value="${esc(row.note||'')}" style="flex:1.6">
+    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px;flex-shrink:0">✕</button>
+  `;
+  document.getElementById('cpStep2List').appendChild(div);
+}
+function cpGetStep2() {
+  return [...document.querySelectorAll('#cpStep2List > div')].map(row => {
+    const inputs = row.querySelectorAll('input[type=text]');
+    const needed = row.querySelector('.cp-s2-needed').checked;
+    return { item: inputs[0].value.trim(), needed, note: inputs[1].value.trim() };
+  }).filter(r => r.item);
+}
+
+function cpAddPhotoRow(row) {
+  row = row || {situation:'',method:'',count:''};
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.innerHTML = `
+    <input type="text" placeholder="款式情況" value="${esc(row.situation||'')}" style="flex:1.4">
+    <input type="text" placeholder="出圖方式" value="${esc(row.method||'')}" style="flex:1.2">
+    <input type="text" placeholder="張數" value="${esc(row.count||'')}" style="width:90px;flex-shrink:0">
+    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px;flex-shrink:0">✕</button>
+  `;
+  document.getElementById('cpPhotoTableList').appendChild(div);
+}
+function cpGetPhotoTable() {
+  return [...document.querySelectorAll('#cpPhotoTableList > div')].map(row => {
+    const inputs = row.querySelectorAll('input[type=text]');
+    return { situation: inputs[0].value.trim(), method: inputs[1].value.trim(), count: inputs[2].value.trim() };
+  }).filter(r => r.situation);
+}
+
+function openCpCfg() {
+  const cfg = cpLoad();
+  document.getElementById('cpStep1List').innerHTML = '';
+  cfg.step1.forEach(v => cpAddStep1(v));
+  document.getElementById('cpStep2List').innerHTML = '';
+  cfg.step2.forEach(r => cpAddStep2(r));
+  document.getElementById('cpMailList').innerHTML = '';
+  cfg.mailItems.forEach(v => cpAddMail(v));
+  document.getElementById('cpMailSendTo').value = cfg.mailSendTo || '';
+  document.getElementById('cpMailManager').value = cfg.mailManager || '';
+  document.getElementById('cpNoMailList').innerHTML = '';
+  cfg.noMailItems.forEach(v => cpAddNoMail(v));
+  document.getElementById('cpNoMailNote').value = cfg.noMailNote || '';
+  document.getElementById('cpStep4NotesList').innerHTML = '';
+  cfg.step4Notes.forEach(v => cpAddStep4Note(v));
+  document.getElementById('cpScriptPath').value = cfg.scriptPath || '';
+  document.getElementById('cpPhotoTableList').innerHTML = '';
+  cfg.photoTable.forEach(r => cpAddPhotoRow(r));
+  document.getElementById('cpStep5Label').value = cfg.step5Label || '';
+  document.getElementById('cpCfgOverlay').classList.add('open');
+}
+function closeCpCfg() { document.getElementById('cpCfgOverlay').classList.remove('open'); }
+
+async function ensureHiddenSection(slug, name, sortOrder) {
+  let sec = allSections.find(s => s.slug === slug);
+  if (!sec) {
+    const { data, error } = await sb.from('sections')
+      .insert({ slug, name, group_name: '_hidden', sort_order: sortOrder })
+      .select().single();
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return null; }
+    sec = data;
+    allSections.push(sec);
+  }
+  return sec;
+}
+
+async function saveCpCfg() {
+  const cfg = {
+    step1:       cpGetSimpleList('cpStep1List'),
+    step2:       cpGetStep2(),
+    mailItems:   cpGetSimpleList('cpMailList'),
+    mailSendTo:  document.getElementById('cpMailSendTo').value.trim(),
+    mailManager: document.getElementById('cpMailManager').value.trim(),
+    noMailItems: cpGetSimpleList('cpNoMailList'),
+    noMailNote:  document.getElementById('cpNoMailNote').value.trim(),
+    step4Notes:  cpGetSimpleList('cpStep4NotesList'),
+    scriptPath:  document.getElementById('cpScriptPath').value.trim(),
+    photoTable:  cpGetPhotoTable(),
+    step5Label:  document.getElementById('cpStep5Label').value.trim() || CP_DEFAULTS.step5Label,
+  };
+
+  const sec = await ensureHiddenSection('informal-color-config', '非正單設定資料', 996);
+  if (!sec) return;
+  // 順便建立「非正單 Fit 內容」分類，之後可在「新增條目」選這個分類新增 Fit（非正單）子頁內容
+  await ensureHiddenSection('informal-fit', '非正單 Fit 內容', 997);
+
+  const title = 'COLORPLACEMENT_CONFIG';
+  const content = JSON.stringify(cfg);
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+
+  showToast('已儲存非正單流程設定 ✓', 'success');
+  await loadData();
+  renderSectionTabs();
 }
 
 // ── 業務名單／SUBGROUP對照（給開發追蹤・應進清單比對用）──
