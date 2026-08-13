@@ -745,6 +745,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           📤 上傳應進清單
           <input id="trkExpFileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="trkExpHandleFile(this.files[0]);this.value=''">
         </label>
+        <button onclick="trkExpOpenManualAdd()" style="background:rgba(217,119,6,0.1);border:1px solid rgba(217,119,6,0.3);color:#92400e;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">✏️ 手動新增款號</button>
         <button onclick="trkExpClearBrand()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本品牌應進清單</button>
       </div>
       <div id="trkExpDropWrap" ondragover="trkDragOver(event,'trkExpDropWrap')" ondragleave="trkDragLeave(event,'trkExpDropWrap')" ondrop="trkDropFile(event,'trkExpDropWrap',trkExpHandleFile)" style="margin-bottom:14px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid #d97706;padding-left:10px">
@@ -922,6 +923,48 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           </div>
         </div>
       </div>
+      <!-- 手動新增單一款號（業務先口頭說了但資料還沒來時用）-->
+      <div id="trkExpManualAddModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:220;align-items:center;justify-content:center">
+        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">✏️ 手動新增款號</h3>
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:18px">業務先說了款號、正式資料還沒進來時，先登記在這裡，之後款號一進單就會自動從「未進」消失，跟上傳應進清單是同一份資料</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">款號（格式：D + 6碼數字）*</label>
+              <input id="trkManAddBom" placeholder="例如 D123456" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:'DM Mono',monospace;outline:none">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Gender（可留空）</label>
+              <input id="trkManAddGender" list="trkGenderDatalist" placeholder="例如 Womens" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            </div>
+            <div id="trkManAddSubBlock" style="display:none">
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">SUBGROUP（可留空）</label>
+              <select id="trkManAddSub" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
+            </div>
+            <div id="trkManAddCustomerBlock" style="display:none">
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">GS 還是 GO？（可留空）</label>
+              <div style="display:flex;gap:14px;font-size:12.5px;color:var(--text)">
+                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value=""> 不指定</label>
+                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value="GS"> GAP 正貨（GS）</label>
+                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value="GO"> GAP OUTLET（GO）</label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務（可留空）</label>
+              <input id="trkManAddOwner" list="trkBizDatalist" placeholder="從清單選，或直接手動輸入" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">備註（可留空）</label>
+              <input id="trkManAddNote" placeholder="例如：業務口頭告知，預計8月中資料才會來" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+            <button onclick="closeTrkExpManualAddModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="trkExpManualAddSave()" style="background:#d97706;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">新增</button>
+          </div>
+        </div>
+      </div>
+
       <datalist id="trkBizDatalist"></datalist>
       <datalist id="trkGenderDatalist">
         <option value="Mens"><option value="Womens"><option value="Girls"><option value="Boys"><option value="Baby"><option value="Kids">
@@ -4138,6 +4181,60 @@ async function trkExpDeleteBom(enc) {
   renderTrkExpected();
 }
 
+// ── 手動新增單一款號（併入同一份應進清單資料）─────
+function trkExpOpenManualAdd() {
+  const isGap = currentBrand === 'GAP';
+  document.getElementById('trkManAddBom').value = '';
+  document.getElementById('trkManAddGender').value = '';
+  document.getElementById('trkManAddOwner').value = '';
+  document.getElementById('trkManAddNote').value = '';
+  document.getElementById('trkManAddSubBlock').style.display = isGap ? '' : 'none';
+  document.getElementById('trkManAddCustomerBlock').style.display = isGap ? '' : 'none';
+  document.getElementById('trkManAddSub').innerHTML =
+    '<option value="">（不指定）</option>' + GAP_SUBGROUPS.map(s => `<option value="${s}">${s}</option>`).join('');
+  const noCust = document.querySelector('input[name="trkManAddCustomer"][value=""]');
+  if (noCust) noCust.checked = true;
+  document.getElementById('trkExpManualAddModal').style.display = 'flex';
+  document.getElementById('trkManAddBom').focus();
+}
+
+function closeTrkExpManualAddModal() {
+  document.getElementById('trkExpManualAddModal').style.display = 'none';
+}
+
+async function trkExpManualAddSave() {
+  const raw = document.getElementById('trkManAddBom').value.trim();
+  const m = raw.match(TRK_BOM_RE);
+  if (!m) { alert('款號格式不對，需要是「D + 6碼數字」，例如 D123456'); return; }
+  const bom = m[0];
+  const isGap = currentBrand === 'GAP';
+
+  const existing = trkExpected[currentBrand] || {};
+  if (existing[bom] && !confirm(`「${bom}」已經在應進清單裡了，確定要覆蓋更新嗎？`)) return;
+
+  const record = {
+    bom,
+    gender: document.getElementById('trkManAddGender').value.trim(),
+    subgroup: isGap ? document.getElementById('trkManAddSub').value : '',
+    customer: isGap ? (document.querySelector('input[name="trkManAddCustomer"]:checked')?.value || '') : '',
+    owner: document.getElementById('trkManAddOwner').value.trim(),
+    note: document.getElementById('trkManAddNote').value.trim(),
+    source: '手動新增',
+    uploadedAt: new Date().toISOString()
+  };
+
+  existing[bom] = record;
+  trkExpected[currentBrand] = existing;
+  try {
+    await saveTrkEntry('expected', trkExpected);
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+    return;
+  }
+  closeTrkExpManualAddModal();
+  renderTrkExpected();
+}
+
 // ── 應進清單比對：比對邏輯 + 渲染 ────────────────
 function trkExpBomKeyOfStyle(style) {
   const m = String(style || '').match(TRK_BOM_RE);
@@ -4203,7 +4300,11 @@ function renderTrkExpected() {
           </tr></thead>
           <tbody>${cmp.missing.map(m => `
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600">${escHtml(m.bom)}</td>
+              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600">
+                ${escHtml(m.bom)}
+                ${m.info.source === '手動新增' ? '<span style="margin-left:6px;font-size:10.5px;font-weight:600;color:#92400e;background:rgba(217,119,6,0.12);border-radius:8px;padding:1px 7px;font-family:inherit">✏️ 手動</span>' : ''}
+                ${m.info.note ? `<div style="font-size:11.5px;color:var(--text-dim);font-weight:400;font-family:inherit;margin-top:2px">📝 ${escHtml(m.info.note)}</div>` : ''}
+              </td>
               <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.gender || '—')}</td>
               ${isGap ? `<td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.subgroup || '—')}</td>` : ''}
               <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.owner || '—')}</td>
