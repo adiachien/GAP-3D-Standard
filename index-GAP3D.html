@@ -314,6 +314,22 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   display: block;
 }
 
+/* 點擊文字即可複製，取代舊的獨立「複製」按鈕 */
+.copy-value {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition: opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.copy-value:hover { opacity: 0.7; }
+.copy-value:active { opacity: 0.5; }
+
 .highlight-box {
   background: rgba(185,28,28,0.05);
   border: 1px solid rgba(185,28,28,0.18);
@@ -1395,16 +1411,11 @@ function renderCard(e) {
             style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">
             🔗 開啟
           </a>
-        ` : `
-          <button class="copy-btn" data-path="${escHtml(value)}"
-            style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
-            📋 copy
-          </button>
-        `}
+        ` : ''}
         ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
         ${isUrl
           ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
-          : `<span style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all">${escHtml(value)}</span>`
+          : `<button class="copy-value" data-path="${escHtml(value)}" title="點擊複製" style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all;flex:1">📋 ${escHtml(value)}</button>`
         }
         <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結"
           style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px"
@@ -1434,13 +1445,17 @@ function renderCard(e) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${fmtMarks(escHtml(leftTitle))}</div>
-            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(leftBody))}</pre>
-            <button class="copy-btn" data-path="${escHtml(stripMarks(leftBody))}" style="margin-top:10px;background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-value" data-path="${escHtml(stripMarks(leftBody))}" title="點擊複製" style="display:block;width:100%">
+              <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(leftBody))}</pre>
+              <div style="margin-top:8px;font-size:11px;color:#166534;opacity:0.7">📋 點擊複製</div>
+            </button>
           </div>
           <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${fmtMarks(escHtml(rightTitle))}</div>
-            <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(rightBody))}</pre>
-            <button class="copy-btn" data-path="${escHtml(stripMarks(rightBody))}" style="margin-top:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#92400e;padding:5px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-value" data-path="${escHtml(stripMarks(rightBody))}" title="點擊複製" style="display:block;width:100%">
+              <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(rightBody))}</pre>
+              <div style="margin-top:8px;font-size:11px;color:#92400e;opacity:0.7">📋 點擊複製</div>
+            </button>
           </div>
         </div>
         ${renderCardImages(e)}
@@ -2466,13 +2481,11 @@ function renderAvatarPage(section, entries) {
             <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
               ${isUrl ? `
                 <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">🔗 開啟</a>
-              ` : `
-                <button class="copy-btn" data-path="${escHtml(value)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 copy</button>
-              `}
+              ` : ''}
               ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
               ${isUrl
                 ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
-                : `<span class="path-block" style="flex:1;margin:0">${escHtml(value)}</span>`
+                : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點擊複製" style="flex:1;margin:0">📋 ${escHtml(value)}</button>`
               }
               <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
             </div>
@@ -2625,10 +2638,10 @@ function renderAthSampleScheduleBanner() {
         </div>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--text-dim);margin-bottom:2px">3. 內文</div>
-          <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
-            <button class="copy-btn" data-path="${escHtml(mailBody)}" style="flex-shrink:0;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);color:#dc2626;padding:4px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">📋 copy</button>
+          <button class="copy-value" data-path="${escHtml(mailBody)}" title="點擊複製" style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;width:100%">
+            <span style="flex-shrink:0;color:#dc2626;font-size:13px">📋</span>
             <div style="font-size:15px;color:var(--text);flex:1;min-width:220px">${escHtml(mailBody)}</div>
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -2683,13 +2696,11 @@ function selectStageTab(pageKey, stageKey) {
               <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 24px">
                 ${isUrl ? `
                   <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
-                ` : `
-                  <button class="copy-btn" data-path="${escHtml(value)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit">📋 copy</button>
-                `}
+                ` : ''}
                 ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
                 ${isUrl
                   ? `<span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>`
-                  : `<span class="path-block" style="margin:0;flex:1">${escHtml(value)}</span>`
+                  : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點擊複製" style="margin:0;flex:1">📋 ${escHtml(value)}</button>`
                 }
                 <button onclick="event.stopPropagation();openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
               </div>`;
@@ -2878,8 +2889,7 @@ function renderColorPlacementContent() {
     </ul>
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em">AI 拍照腳本路徑</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 12px">
-      <button class="copy-btn" data-path="${escHtml(cfg.scriptPath)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all">${escHtml(cfg.scriptPath)}</span>
+      <button class="copy-value" data-path="${escHtml(cfg.scriptPath)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all;flex:1">📋 ${escHtml(cfg.scriptPath)}</button>
     </div>
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">拍照角度</div>
     <table style="border-collapse:collapse;font-size:14px;width:100%">
@@ -3299,15 +3309,13 @@ async function showAccountsContent() {
         ${a.username ? `
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">帳號</span>
-            <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1">${escHtml(a.username)}</span>
-            <button class="copy-btn" data-path="${escHtml(a.username)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-value" data-path="${escHtml(a.username)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1">📋 ${escHtml(a.username)}</button>
           </div>
         ` : ''}
         ${a.password ? `
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">密碼</span>
-            <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1;letter-spacing:0.08em">${escHtml(a.password)}</span>
-            <button class="copy-btn" data-path="${escHtml(a.password)}" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit">📋 copy</button>
+            <button class="copy-value" data-path="${escHtml(a.password)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1;letter-spacing:0.08em">📋 ${escHtml(a.password)}</button>
           </div>
         ` : ''}
         ${a.note ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px">${escHtml(a.note)}</div>` : ''}
@@ -4798,9 +4806,9 @@ function formatDate(iso) {
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
-// ── Global copy button handler ─────────────────
+// ── Global copy handler：點擊任何 .copy-value 即複製 ──
 document.addEventListener('click', e => {
-  const btn = e.target.closest('.copy-btn');
+  const btn = e.target.closest('.copy-value');
   if (!btn) return;
   const path = btn.getAttribute('data-path');
   if (!path) return;
