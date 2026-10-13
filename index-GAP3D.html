@@ -757,13 +757,15 @@ body.edit-mode .em-hide { display:none !important; }
 .av-group { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:12px; background:#fff; }
 .av-group-name { font-weight:700; font-size:15px; margin-bottom:8px; color:var(--text); }
 .av-path { width:100%; margin:0 0 10px; text-align:left; }
-.av-sizes { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
-.av-size { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg-page); text-align:left; cursor:pointer; font-family:inherit; }
-.av-size:hover { border-color:#1d4ed8; }
-.av-size.av-base { background:var(--brand-accent-soft); border-color:var(--brand-border-soft); }
-.av-size-label { font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:6px; }
+.av-sizes { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.av-size { display:flex; align-items:center; gap:14px; width:100%; padding:9px 14px; border:none; border-bottom:1px solid var(--border); background:#fff; text-align:left; cursor:pointer; font-family:inherit; }
+.av-size:last-child { border-bottom:none; }
+.av-size:hover { background:var(--bg-page); }
+.av-size.av-base { background:var(--brand-accent-soft); }
+.av-size-label { flex:0 0 120px; font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:6px; }
 .av-base-tag { font-size:10.5px; font-weight:700; background:var(--brand-accent); color:#fff; padding:1px 7px; border-radius:10px; }
-.av-size-code { font-family:'DM Mono',monospace; font-size:12px; color:var(--text-dim); word-break:break-all; }
+.av-size-code { flex:1; min-width:0; font-family:'DM Mono',monospace; font-size:13px; color:#1d4ed8; word-break:break-all; }
+.av-size-code.av-empty { color:var(--text-muted); }
 .av-editor { margin-top:12px; border:1px dashed rgba(29,78,216,0.45); border-radius:10px; padding:14px; background:rgba(29,78,216,0.03); }
 .av-ed-top { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; font-weight:700; color:#1d4ed8; }
 .av-ed-group { border:1px solid var(--border); border-radius:8px; padding:10px; margin-top:10px; background:#fff; }
@@ -2454,7 +2456,7 @@ function avViewHtml(groups) {
             ${rows.map(r => `
               <button class="copy-value av-size ${r.base ? 'av-base' : ''}" data-path="${escHtml(r.code || r.size || '')}" title="點選複製人台代號">
                 <span class="av-size-label">${escHtml(r.size || '')}${r.base ? '<span class="av-base-tag">基碼</span>' : ''}</span>
-                <span class="av-size-code">${escHtml(r.code || '')}</span>
+                <span class="av-size-code ${r.code ? '' : 'av-empty'}">${r.code ? '📋 ' + escHtml(r.code) : '－'}</span>
               </button>`).join('')}
           </div>` : ''}
       </div>`;
