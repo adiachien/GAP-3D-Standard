@@ -314,7 +314,7 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   display: block;
 }
 
-/* 點擊文字即可複製，取代舊的獨立「複製」按鈕 */
+/* 點選文字即可複製，取代舊的獨立「複製」按鈕 */
 .copy-value {
   cursor: pointer;
   border: none;
@@ -629,6 +629,156 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 .brand-tag-BR  { background: rgba(138,116,82,0.08); color: #8A7452; border: 1px solid rgba(138,116,82,0.3); }
 .brand-tag-SHARED { background: rgba(100,116,139,0.08); color: #475569; border: 1px solid rgba(100,116,139,0.25); }
 </style>
+
+<style>
+/* ══════════ 主頁編輯模式 ══════════ */
+body:not(.edit-mode) .em-only { display:none !important; }
+.btn-admin.em-on { background:#1d4ed8 !important; color:#fff !important; border-color:#1d4ed8 !important; }
+
+.em-actions { display:inline-flex; gap:4px; margin-left:auto; flex-shrink:0; }
+.em-actions button { width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:#fff; color:var(--text-dim); cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; font-family:inherit; transition:all .12s; }
+.em-actions button:hover { color:#1d4ed8; border-color:#1d4ed8; }
+.em-actions button.em-del:hover { color:#b91c1c; border-color:#b91c1c; }
+.grid-card { position:relative; }
+.grid-card > .em-actions { position:absolute; top:6px; right:6px; z-index:2; }
+body.edit-mode .card { outline:1px dashed rgba(29,78,216,0.25); outline-offset:2px; }
+
+.em-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(29,78,216,0.06); border:1px dashed rgba(29,78,216,0.4); border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; }
+.em-bar .em-bar-label { font-weight:700; color:#1d4ed8; margin-right:4px; }
+.em-btn { padding:6px 12px; border-radius:7px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.em-btn:hover { border-color:#1d4ed8; color:#1d4ed8; }
+.em-btn.primary { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
+.em-btn.primary:hover { background:#1e40af; color:#fff; }
+.em-list { width:100%; display:none; flex-direction:column; gap:4px; margin-top:6px; }
+.em-list.open { display:flex; }
+.em-row { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:7px 10px; }
+.em-row-title { flex:1; min-width:0; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.em-row-meta { font-size:11.5px; color:var(--text-muted); white-space:nowrap; }
+.em-row.em-hidden-brand { opacity:.55; }
+
+#emDock { position:fixed; right:20px; bottom:20px; z-index:2500; display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:calc(100vw - 40px); background:#0f172a; color:#fff; border-radius:12px; padding:8px 10px; box-shadow:0 10px 30px rgba(0,0,0,0.25); font-size:12.5px; }
+#emDock .em-dock-label { font-weight:700; padding:0 6px; white-space:nowrap; }
+#emDock button { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:7px; padding:6px 10px; cursor:pointer; font-family:inherit; font-size:12.5px; white-space:nowrap; }
+#emDock button:hover { background:rgba(255,255,255,0.18); }
+#emDock button.done { background:#1d4ed8; border-color:#1d4ed8; }
+
+/* ── 編輯視窗（原後台的視窗，改成主頁亮色）── */
+#emRoot { --text-faint:#94a3b8; --ok:#15803d; font-family:'Noto Sans TC',sans-serif; color:var(--text); }
+#emRoot .overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:3000; align-items:center; justify-content:center; }
+#emRoot .overlay.open { display:flex; }
+#emRoot #accountEditOverlay, #emRoot #sectionEditOverlay { z-index:3100; }
+#emRoot #confirmOverlay { z-index:3200; }
+#emRoot .modal { background:#fff; border:1px solid var(--border); border-radius:12px; padding:28px 32px; width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; color:var(--text); box-shadow:0 20px 50px rgba(0,0,0,0.2); }
+#emRoot .modal h3 { font-size:16px; font-weight:700; margin-bottom:20px; }
+#emRoot .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+#emRoot .btn { padding:8px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; white-space:nowrap; }
+#emRoot .btn-primary { background:#1d4ed8; color:#fff; }
+#emRoot .btn-primary:hover { background:#1e40af; }
+#emRoot .btn-danger { background:rgba(185,28,28,0.08); color:#b91c1c; border:1px solid rgba(185,28,28,0.25); }
+#emRoot .btn-danger:hover { background:rgba(185,28,28,0.15); }
+#emRoot .btn-ghost { background:#fff; color:var(--text-dim); border:1px solid var(--border); text-decoration:none; display:inline-flex; align-items:center; }
+#emRoot .btn-ghost:hover { color:var(--text); border-color:#94a3b8; }
+#emRoot .icon-btn { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:#fff; color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; }
+#emRoot .field { margin-bottom:14px; }
+#emRoot .field label { font-size:12px; color:var(--text-dim); display:block; margin-bottom:5px; }
+#emRoot input:not([type=checkbox]):not([type=color]):not([type=file]), #emRoot textarea, #emRoot select {
+  width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:7px; padding:8px 12px; font-size:13px; color:var(--text); font-family:inherit; outline:none; }
+#emRoot input:focus, #emRoot textarea:focus, #emRoot select:focus { border-color:#3b82f6; background:#fff; }
+#emRoot textarea { resize:vertical; line-height:1.6; }
+#emRoot .field textarea { min-height:90px; }
+#emRoot #scCopyTarget { width:auto; }
+#emRoot details { background:var(--bg-page) !important; }
+#emRoot .protected-banner { display:flex; align-items:flex-start; gap:8px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); color:#92400e; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; line-height:1.5; }
+#emRoot .brand-strip { height:3px; border-radius:3px 3px 0 0; margin:-28px -32px 20px; transition:background 0.15s; }
+#emRoot .brand-warning { display:none; align-items:flex-start; gap:8px; font-size:12px; padding:9px 12px; border-radius:8px; margin:-6px 0 14px; line-height:1.5; }
+#emRoot .brand-warning.show { display:flex; }
+#emRoot .brand-warning.bw-shared { background:rgba(100,116,139,0.08); border:1px solid rgba(100,116,139,0.25); color:#334155; }
+#emRoot .brand-warning.bw-gap { background:rgba(0,42,92,0.06); border:1px solid rgba(0,42,92,0.25); color:#002A5C; }
+#emRoot .brand-warning.bw-ath { background:rgba(108,91,135,0.08); border:1px solid rgba(108,91,135,0.3); color:#453a59; }
+#emRoot .brand-warning.bw-on  { background:rgba(0,87,184,0.07); border:1px solid rgba(0,87,184,0.3); color:#0057B8; }
+#emRoot .brand-warning.bw-br  { background:rgba(138,116,82,0.08); border:1px solid rgba(138,116,82,0.3); color:#5f4f36; }
+#emRoot .brand-chip-group { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
+#emRoot .brand-chip { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:#fff; color:var(--text-dim); cursor:pointer; transition:all 0.12s; margin:0; }
+#emRoot .brand-chip input { display:none; }
+#emRoot .brand-chip .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#emRoot .brand-chip:has(input:checked) { color:#fff; border-color:transparent; }
+#emRoot .brand-chip:has(input:checked)[data-brand="GAP"] { background:#002A5C; }
+#emRoot .brand-chip:has(input:checked)[data-brand="ATH"] { background:#6C5B87; }
+#emRoot .brand-chip:has(input:checked)[data-brand="ON"] { background:#0057B8; }
+#emRoot .brand-chip:has(input:checked)[data-brand="BR"] { background:#8A7452; }
+#emRoot .path-list { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+#emRoot .path-item { display:flex; gap:6px; }
+#emRoot .path-item input { flex:1; font-family:'DM Mono',monospace; font-size:12px; }
+#emRoot .add-path-btn { font-size:12px; padding:5px 10px; border-radius:5px; border:1px dashed #94a3b8; background:none; color:var(--text-dim); cursor:pointer; font-family:inherit; }
+#emRoot .add-path-btn:hover { color:#1d4ed8; border-color:#1d4ed8; }
+#emRoot .confirm-modal { width:380px; text-align:left; }
+#emRoot .confirm-modal .cm-icon { font-size:22px; margin-bottom:10px; }
+#emRoot .confirm-modal p { font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:4px; }
+#emRoot .confirm-modal h3 { margin-bottom:10px; }
+#emRoot .preview-stage { background:var(--bg-page); border:1px solid var(--border); }
+#emToast { position:fixed; bottom:80px; right:24px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:13px; color:var(--text); z-index:3500; transform:translateY(10px); opacity:0; transition:all 0.2s; pointer-events:none; box-shadow:0 6px 20px rgba(0,0,0,0.12); max-width:420px; }
+#emToast.show { transform:translateY(0); opacity:1; }
+#emToast.success { border-color:rgba(22,101,52,0.35); color:#166534; }
+#emToast.error   { border-color:rgba(185,28,28,0.35); color:#b91c1c; }
+/* ── 卡片編輯:左表單右預覽 ── */
+#emRoot .modal.modal-entry { width: min(1120px, 96vw); }
+.entry-edit-grid { display: grid; grid-template-columns: 1fr 430px; gap: 22px; align-items: start; }
+@media (max-width: 980px) { .entry-edit-grid { grid-template-columns: 1fr; } }
+.preview-col { position: sticky; top: 0; }
+.entry-edit-grid.preview-hidden { grid-template-columns: 1fr; }
+.entry-edit-grid.preview-hidden .preview-col { display: none; }
+.preview-head { font-size: 12px; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+/* 亮色舞台=前台的樣子;背景刻意與後台不同,提醒這是「前台會呈現的結果」 */
+.preview-stage { background: #f8f9fb; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; min-height: 200px; }
+.pv-card { background: #fff; border: 1px solid #dde1e9; border-radius: 12px; padding: 16px 18px; color: #0f172a; font-size: 14px; }
+.pv-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.pv-title { font-weight: 700; font-size: 15.5px; flex: 1; }
+.pv-badge { font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
+.pv-official { background: rgba(29,78,216,0.08); color: #1d4ed8; border: 1px solid rgba(29,78,216,0.25); }
+.pv-internal { background: rgba(202,138,4,0.1); color: #92400e; border: 1px solid rgba(202,138,4,0.3); }
+.pv-warning  { background: rgba(185,28,28,0.08); color: #b91c1c; border: 1px solid rgba(185,28,28,0.3); }
+.pv-brand { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; vertical-align: middle; margin-right: 3px; }
+.pv-brand-GAP { background: rgba(0,42,92,0.08); color: #002A5C; border: 1px solid rgba(0,42,92,0.25); }
+.pv-brand-ATH { background: rgba(108,91,135,0.08); color: #6C5B87; border: 1px solid rgba(108,91,135,0.3); }
+.pv-brand-ON  { background: rgba(0,87,184,0.08); color: #0057B8; border: 1px solid rgba(0,87,184,0.3); }
+.pv-brand-BR  { background: rgba(138,116,82,0.08); color: #8A7452; border: 1px solid rgba(138,116,82,0.3); }
+.pv-brand-SHARED { background: rgba(100,116,139,0.08); color: #475569; border: 1px solid rgba(100,116,139,0.25); }
+.pv-content { white-space: pre-wrap; line-height: 1.75; color: #1e293b; }
+.pv-paths { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.pv-path { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.pv-pill { flex-shrink: 0; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 14px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #334155; }
+.pv-path code { color: #475569; word-break: break-all; background: none; font-size: 11.5px; }
+.pv-hint { font-size: 11.5px; color: #94a3b8; margin-top: 10px; line-height: 1.6; }
+</style>
+
+<style>
+/* ── 人台尺碼 ── */
+body.edit-mode .em-hide { display:none !important; }
+.av-group { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:12px; background:#fff; }
+.av-group-name { font-weight:700; font-size:15px; margin-bottom:8px; color:var(--text); }
+.av-path { width:100%; margin:0 0 10px; text-align:left; }
+.av-sizes { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+.av-size { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg-page); text-align:left; cursor:pointer; font-family:inherit; }
+.av-size:hover { border-color:#1d4ed8; }
+.av-size.av-base { background:var(--brand-accent-soft); border-color:var(--brand-border-soft); }
+.av-size-label { font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:6px; }
+.av-base-tag { font-size:10.5px; font-weight:700; background:var(--brand-accent); color:#fff; padding:1px 7px; border-radius:10px; }
+.av-size-code { font-family:'DM Mono',monospace; font-size:12px; color:var(--text-dim); word-break:break-all; }
+.av-editor { margin-top:12px; border:1px dashed rgba(29,78,216,0.45); border-radius:10px; padding:14px; background:rgba(29,78,216,0.03); }
+.av-ed-top { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; font-weight:700; color:#1d4ed8; }
+.av-ed-group { border:1px solid var(--border); border-radius:8px; padding:10px; margin-top:10px; background:#fff; }
+.av-ed-line { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.av-ed-lbl { font-size:11px; color:var(--text-muted); width:32px; flex-shrink:0; }
+.av-editor input:not([type=radio]) { flex:1; min-width:0; border:1px solid var(--border); border-radius:6px; padding:6px 9px; font-size:13px; font-family:inherit; background:#fff; color:var(--text); }
+.av-editor input:focus { outline:none; border-color:#3b82f6; }
+.av-ed-path, .av-ed-code { font-family:'DM Mono',monospace !important; font-size:12px !important; }
+.av-ed-hint { font-size:11px; color:var(--text-muted); margin:4px 0 2px; }
+.av-ed-row { display:flex; align-items:center; gap:6px; margin-top:5px; padding:4px; border-radius:6px; }
+.av-ed-row.av-base { background:#e8f0fe; }
+.av-ed-row .av-ed-size { flex:0 0 100px !important; }
+.av-x { flex-shrink:0; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 8px; font-size:12px; cursor:pointer; color:#c0392b; font-family:inherit; white-space:nowrap; }
+.av-add { margin-top:6px; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 10px; font-size:12px; cursor:pointer; color:#555; font-family:inherit; }
+</style>
 </head>
 <body>
 
@@ -664,7 +814,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
     <div class="stage-indicator" id="stageIndicator" onclick="jumpToCurrentStage()" title="回到目前 Stage 的樣品種類頁面"></div>
-    <a id="editBtn" href="admin.html" class="btn-admin">✏️ 後台編輯</a>
+    <button id="editBtn" type="button" class="btn-admin" onclick="toggleEditMode()" style="font-family:inherit;cursor:pointer">✏️ 編輯模式</button>
   </div>
 </header>
 
@@ -711,285 +861,6 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
       <div class="loading"><div class="spinner"></div>載入中…</div>
     </div>
 
-    <!-- 開發追蹤頁 -->
-    <div class="page" id="page-tracker">
-      <div class="page-header">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div class="page-title">📊 開發追蹤</div>
-          <button onclick="openTrkHelp()" title="使用說明" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1">？</button>
-        </div>
-        <div class="page-desc" id="trkPageDesc">3D單 進度</div>
-      </div>
-
-      <!-- 更新時間 + 匯出 + 上傳 -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <div id="trkUpdatedAt" style="font-size:13px;color:var(--text-dim);flex:1"></div>
-        <button onclick="exportTrackerExcel()" style="background:rgba(22,101,52,0.08);border:1px solid rgba(22,101,52,0.2);color:#166534;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">📥 匯出 Excel</button>
-        <label id="trkUploadZone" style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
-          📤 上傳 Excel
-          <input id="trkFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadTrackerExcel(this.files[0]);this.value=''">
-        </label>
-      </div>
-      <div id="trkUploadStatus" style="display:none;font-size:13px;margin-bottom:12px"></div>
-
-      <!-- 總覽摘要（本身也是拖曳上傳區，藍色＝SampleSchedule「匯出待辦」檔） -->
-      <div id="trkUploadDropWrap" ondragover="trkDragOver(event,'trkUploadDropWrap')" ondragleave="trkDragLeave(event,'trkUploadDropWrap')" ondrop="trkDropFile(event,'trkUploadDropWrap',uploadTrackerExcel)" style="margin-bottom:22px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid var(--gap-blue);padding-left:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--gap-blue);letter-spacing:0.02em;margin-bottom:6px">📊 這裡丟 SampleSchedule「匯出待辦」的原始檔（有「單別」「Customer」欄位那種）</div>
-        <div id="trkSummary"></div>
-      </div>
-
-      <!-- 應進清單比對（本身也是拖曳上傳區，橘色＝業務給的清單） -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-        <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">📋 應進清單比對</div>
-        <label id="trkExpUploadZone" style="display:inline-flex;align-items:center;background:var(--gap-blue);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
-          📤 上傳應進清單
-          <input id="trkExpFileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="trkExpHandleFile(this.files[0]);this.value=''">
-        </label>
-        <button onclick="trkExpOpenManualAdd()" style="background:rgba(217,119,6,0.1);border:1px solid rgba(217,119,6,0.3);color:#92400e;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">✏️ 手動新增款號</button>
-        <button onclick="trkExpClearBrand()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本品牌應進清單</button>
-      </div>
-      <div id="trkExpDropWrap" ondragover="trkDragOver(event,'trkExpDropWrap')" ondragleave="trkDragLeave(event,'trkExpDropWrap')" ondrop="trkDropFile(event,'trkExpDropWrap',trkExpHandleFile)" style="margin-bottom:14px;border-radius:10px;transition:background .15s,outline .15s;border-left:3px solid #d97706;padding-left:10px">
-        <div style="font-size:11px;font-weight:700;color:#92400e;letter-spacing:0.02em;margin-bottom:6px">📋 這裡丟業務給的應進清單（格式不拘，欄位自己選）</div>
-        <div id="trkExpSummary"></div>
-      </div>
-      <div id="trkExpMissingWrap" style="margin-bottom:14px"></div>
-      <div id="trkExpDupWrap" style="margin-bottom:24px"></div>
-
-      <!-- 各 SUB 進單進度：標題與按鈕永遠顯示（即使還沒上傳Excel、還沒任何資料，也要能點「業務對照表」開始登記） -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-        <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">📦 各 SUB 進單進度</div>
-        <button onclick="openTrkOwnerMap()" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">⚙️ 業務對照表</button>
-        <button onclick="clearTrkSubManualAll()" style="background:rgba(148,163,184,0.1);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:inherit">🧹 清空本輪預計／備註</button>
-      </div>
-      <div id="trkSubBlock">
-        <div class="card" style="margin-bottom:24px;overflow-x:auto;padding:6px 0">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="border-bottom:2px solid var(--border)">
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">SUBGROUP</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">已進</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">業務</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">預計</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">未進</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">備註</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">狀態分佈</th>
-                <th style="padding:10px 12px"></th>
-              </tr>
-            </thead>
-            <tbody id="trkSubBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 各款進度 -->
-      <div id="trkStyleBlock">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-          <div style="font-size:16px;font-weight:700;color:var(--text);flex:1">🧵 各款進度 <span id="trkStyleCount" style="font-size:13px;font-weight:500;color:var(--text-dim)"></span></div>
-          <select id="trkFilterSub" onchange="renderTrackerStyles()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            <option value="">全部 SUB</option>
-          </select>
-          <select id="trkFilterStatus" onchange="renderTrackerStyles()" style="background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            <option value="">全部狀態</option>
-          </select>
-        </div>
-        <div class="card" style="overflow-x:auto;padding:6px 0">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="border-bottom:2px solid var(--border)">
-                <th onclick="sortTrkStyles('Style')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">Style <span id="trksort-Style"></span></th>
-                <th onclick="sortTrkStyles('SUBGROUP')" style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">SUBGROUP <span id="trksort-SUBGROUP"></span></th>
-                <th onclick="sortTrkStyles('狀態')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">狀態 <span id="trksort-狀態"></span></th>
-                <th onclick="sortTrkStyles('需求日')" style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none">需求日 <span id="trksort-需求日"></span></th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">Customer</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">單別</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">3D次</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">類型</th>
-                <th style="text-align:center;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">尺碼</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">客樣種類</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">負責人</th>
-                <th style="text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;white-space:nowrap">Miro</th>
-                <th style="padding:10px 12px"></th>
-              </tr>
-            </thead>
-            <tbody id="trkStyleBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 負責人 / Miro 編輯 Modal -->
-      <div id="trkManualModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯款資訊</h3>
-          <div id="trkManualStyle" style="font-size:13px;color:var(--text-dim);margin-bottom:18px;font-family:'DM Mono',monospace"></div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">負責人</label><input id="trkOwnerInput" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Miro 連結</label><input id="trkMiroInput" placeholder="https://miro.com/..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-            <button onclick="closeTrkManual()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="saveTrkManual()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUB 進單資訊編輯 Modal（業務／預計款數／備註）-->
-      <div id="trkSubManualModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯 SUB 進單資訊</h3>
-          <div id="trkSubManualName" style="font-size:13px;color:var(--text-dim);margin-bottom:18px;font-family:'DM Mono',monospace"></div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務（會自動帶對照表，這裡可覆蓋）</label><input id="trkSubOwnerInput" list="trkOwnerDatalist" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">預計進單款數</label><input id="trkSubExpectedInput" type="number" min="0" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">備註</label><input id="trkSubNoteInput" placeholder="例如：業務說明天補" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-            <button onclick="closeTrkSubManual()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="saveTrkSubManual()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBGROUP ↔ 業務 對照表管理 Modal -->
-      <div id="trkOwnerMapModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">⚙️ SUBGROUP ↔ 業務 對照表</h3>
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">固定用的名單，設定好之後「各SUB進單進度」會自動帶出業務名字</div>
-          <div id="trkOwnerMapList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
-          <div style="display:flex;gap:8px;margin-bottom:14px">
-            <input id="trkOwnerMapNewSub" placeholder="SUBGROUP 名稱" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            <input id="trkOwnerMapNewOwner" placeholder="業務名字" list="trkOwnerDatalist" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            <button onclick="addTrkOwnerMapRow()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">＋新增</button>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button onclick="closeTrkOwnerMap()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">關閉</button>
-          </div>
-        </div>
-      </div>
-      <datalist id="trkOwnerDatalist"></datalist>
-
-      <!-- 應進清單設定 Modal -->
-      <div id="trkExpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:220;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">📋 應進清單設定</h3>
-          <div id="trkExpFileInfo" style="font-size:12px;color:var(--text-dim);margin-bottom:16px"></div>
-          <div style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;padding-right:4px">
-
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">款號欄位（自動偵測，格式：D + 6碼數字）</label>
-              <select id="trkExpColBom" onchange="trkExpRecount()" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
-              <div id="trkExpBomCount" style="font-size:12px;color:var(--text-dim);margin-top:4px"></div>
-            </div>
-
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Gender</label>
-              <div style="display:flex;gap:14px;margin-bottom:6px;font-size:12.5px;color:var(--text)">
-                <label style="cursor:pointer"><input type="radio" name="trkExpGenderMode" value="col" onchange="trkExpToggleMode('gender')" checked> 從欄位選</label>
-                <label style="cursor:pointer"><input type="radio" name="trkExpGenderMode" value="manual" onchange="trkExpToggleMode('gender')"> 整份手動輸入一個值</label>
-              </div>
-              <select id="trkExpColGender" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
-              <input id="trkExpManualGender" list="trkGenderDatalist" placeholder="例如 Womens" style="display:none;width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            </div>
-
-            <div id="trkExpSubgroupBlock" style="display:none">
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">SUBGROUP</label>
-              <div style="display:flex;gap:14px;margin-bottom:6px;font-size:12.5px;color:var(--text)">
-                <label style="cursor:pointer"><input type="radio" name="trkExpSubMode" value="col" onchange="trkExpToggleMode('sub')" checked> 從欄位選</label>
-                <label style="cursor:pointer"><input type="radio" name="trkExpSubMode" value="manual" onchange="trkExpToggleMode('sub')"> 整份手動輸入一個值</label>
-              </div>
-              <select id="trkExpColSub" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
-              <select id="trkExpManualSub" onchange="trkExpRefreshOwnerPriority()" style="display:none;width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
-            </div>
-
-            <div id="trkExpCustomerBlock" style="display:none">
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">這批是 GS 還是 GO？（決定業務優先名單、也會記錄下來）</label>
-              <div style="display:flex;gap:14px;font-size:12.5px;color:var(--text)">
-                <label style="cursor:pointer"><input type="radio" name="trkExpCustomer" value="GS" checked onchange="trkExpRefreshOwnerPriority()"> GAP 正貨（GS）</label>
-                <label style="cursor:pointer"><input type="radio" name="trkExpCustomer" value="GO" onchange="trkExpRefreshOwnerPriority()"> GAP OUTLET（GO）</label>
-              </div>
-            </div>
-
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務名（這批全部款號都算這位業務，可從清單選或手動輸入新名字）</label>
-              <input id="trkExpOwnerInput" list="trkBizDatalist" placeholder="從清單選，或直接手動輸入" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            </div>
-
-            <div id="trkExpPreviewWrap"></div>
-            <div id="trkExpOverwriteWrap"></div>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
-            <button onclick="closeTrkExpModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="trkExpPreview()" style="background:rgba(0,42,92,0.06);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">產生預覽</button>
-            <button id="trkExpConfirmBtn" onclick="trkExpConfirmSave()" disabled style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;opacity:0.5">確認存檔</button>
-          </div>
-        </div>
-      </div>
-      <!-- 手動新增單一款號（業務先口頭說了但資料還沒來時用）-->
-      <div id="trkExpManualAddModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:220;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:440px;max-width:95vw">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">✏️ 手動新增款號</h3>
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:18px">業務先說了款號、正式資料還沒進來時，先登記在這裡，之後款號一進單就會自動從「未進」消失，跟上傳應進清單是同一份資料</div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">款號（格式：D + 6碼數字）*</label>
-              <input id="trkManAddBom" placeholder="例如 D123456" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:'DM Mono',monospace;outline:none">
-            </div>
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">Gender（可留空）</label>
-              <input id="trkManAddGender" list="trkGenderDatalist" placeholder="例如 Womens" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            </div>
-            <div id="trkManAddSubBlock" style="display:none">
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">SUBGROUP（可留空）</label>
-              <select id="trkManAddSub" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></select>
-            </div>
-            <div id="trkManAddCustomerBlock" style="display:none">
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">GS 還是 GO？（可留空）</label>
-              <div style="display:flex;gap:14px;font-size:12.5px;color:var(--text)">
-                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value=""> 不指定</label>
-                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value="GS"> GAP 正貨（GS）</label>
-                <label style="cursor:pointer"><input type="radio" name="trkManAddCustomer" value="GO"> GAP OUTLET（GO）</label>
-              </div>
-            </div>
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">業務（可留空）</label>
-              <input id="trkManAddOwner" list="trkBizDatalist" placeholder="從清單選，或直接手動輸入" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            </div>
-            <div>
-              <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">備註（可留空）</label>
-              <input id="trkManAddNote" placeholder="例如：業務口頭告知，預計8月中資料才會來" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-            <button onclick="closeTrkExpManualAddModal()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-            <button onclick="trkExpManualAddSave()" style="background:#d97706;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">新增</button>
-          </div>
-        </div>
-      </div>
-
-      <datalist id="trkBizDatalist"></datalist>
-      <datalist id="trkGenderDatalist">
-        <option value="Mens"><option value="Womens"><option value="Girls"><option value="Boys"><option value="Baby"><option value="Kids">
-      </datalist>
-
-      <!-- 使用說明 Modal -->
-      <div id="trkHelpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:82vh;display:flex;flex-direction:column">
-          <h3 style="font-size:17px;font-weight:700;margin-bottom:14px">📖 開發追蹤・使用說明</h3>
-          <div style="overflow-y:auto;flex:1;font-size:13.5px;line-height:2;color:var(--text-dim)">
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">上傳資料</strong>：拖曳檔案或點「上傳 Excel」，SampleSchedule「匯出待辦」的原始檔即可，自動篩品牌、更新給大家看。</div>
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">各 SUB 進單進度</strong>：已進自動算，預計款數點 ✏️ 填，未進自動算出來（紅字沒到齊、綠字到齊了）。</div>
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">應進清單比對</strong>：上傳業務給的清單，自動比對已進／未進，也會抓系統裡重複進單的款號。</div>
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">業務對照表</strong>：設定好 SUBGROUP 對應業務，之後自動帶出，不用每次手動選。</div>
-            <div style="margin-bottom:10px"><strong style="color:var(--text)">清空本輪</strong>：週期結束要重新開始時點這個，只清預計款數／備註，其他設定不動。</div>
-            <div style="color:#b91c1c"><strong>常見問題</strong>：已進數字不對，通常是 SUBGROUP 名稱打法跟 Excel 裡不一致，照 Excel 實際寫法改一下就好。</div>
-
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-top:18px">
-            <button onclick="closeTrkHelp()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">知道了</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 留言板頁 -->
     <div class="page" id="page-feedback">
       <div class="page-header">
@@ -1021,7 +892,7 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
           style="margin-top:8px;border:1.5px dashed var(--border);border-radius:7px;padding:12px;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer"
           onclick="document.getElementById('fbFileInput').click()"
           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-          📎 點擊或拖曳圖片到這裡上傳（最多 2 張）
+          📎 點選或拖曳圖片到這裡上傳（最多 2 張）
         </div>
         <input type="file" id="fbFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
 
@@ -1119,6 +990,10 @@ window.addEventListener('hashchange', () => {
     document.getElementById('brandGate').style.display = 'flex';
   } else {
     document.getElementById('brandGate').style.display = 'none';
+    // 由 showSection／showFeedback 自己改的網址已經畫好了，不要再畫一次
+    const h = location.hash.replace('#', '');
+    if (h === 'feedback' && document.getElementById('page-feedback').classList.contains('active')) return;
+    if (h && h === currentSlug && document.getElementById('page-content').classList.contains('active')) return;
     routeFromHash();
   }
 });
@@ -1163,7 +1038,7 @@ function brandOk(e) {
   return !list.length || list.includes('ALL') || list.includes(currentBrand);
 }
 
-// 品牌專屬徽章（共用條目不顯示；多品牌條目顯示多個獨立徽章並排）
+// 品牌專屬徽章（共用卡片不顯示；多品牌卡片顯示多個獨立徽章並排）
 function brandBadge(e) {
   const list = brandList(e).filter(b => b !== 'ALL' && BRAND_INFO[b]);
   const allBrandKeys = Object.keys(BRAND_INFO).filter(b => BRAND_INFO[b].enabled);
@@ -1211,10 +1086,6 @@ function setBrand(b) {
   const hash = window.location.hash.replace('#', '');
   const q = document.getElementById('searchInput')?.value || '';
   if (q.trim()) { handleSearch(q); return; }
-  if (hash === 'tracker') {
-    document.getElementById('nav-tracker')?.classList.add('active');
-    renderTrackerAll(); return;
-  }
   if (hash === 'feedback') {
     document.getElementById('nav-feedback')?.classList.add('active');
     loadFeedback(); // 留言板依品牌分開，切換品牌要重新載入
@@ -1222,29 +1093,27 @@ function setBrand(b) {
   }
   // ATHLETA / OLD NAVY 沒有非正單：若正停在非正單頁，跳回第一個可見分類
   if (!hasInformal() && currentSlug === 'informal') {
-    const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
-    if (first) { showSection(first.slug); return; }
+    showSection(HOME_SLUG); return;
   }
   if (currentSlug) showSection(currentSlug);
 }
 
 // ── Init ───────────────────────────────────────
 const GAP3D_CACHE = 'gap3d_cache_v1';
+const HOME_SLUG = 'stages'; // 首頁：樣品種類
 
 function routeFromHash() {
   const hash = window.location.hash.replace('#', '');
-  // 隱藏系統分類（group_name 以 _ 開頭，例如 tracker-data／stage-config／links）
+  // 隱藏系統分類（group_name 以 _ 開頭，例如 stage-config／links）
   // 不該被 hash 直接打開，也不該當成預設落地頁——只有 accounts 是例外（有獨立寫死的入口）
   const isRoutable = s => !(s.group_name || '').startsWith('_') || s.slug === 'accounts';
   if (hash === 'feedback') {
     showFeedback();
-  } else if (hash === 'tracker') {
-    showTracker();
   } else if (hash && allSections.find(s => s.slug === hash && isRoutable(s))) {
     showSection(hash, false);
   } else if (allSections.length) {
-    const first = allSections.find(isRoutable) || allSections[0];
-    showSection(first.slug, false);
+    const home = allSections.find(s => s.slug === HOME_SLUG) || allSections.find(isRoutable) || allSections[0];
+    showSection(home.slug, false);
   }
 }
 
@@ -1318,12 +1187,6 @@ function renderNav() {
     </div>
   `;
     }).join('') + `
-    <div class="section-group" style="margin-top:4px">
-      <div class="group-label">開發追蹤</div>
-      <div class="nav-item" id="nav-tracker" onclick="showTracker()">
-        <span class="nav-icon">📊</span>開發追蹤
-      </div>
-    </div>
     <div class="section-group" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
       <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
         <span class="nav-icon">💬</span>留言板（即時回饋）
@@ -1348,23 +1211,20 @@ function showSectionWithStage(slug, stageKey) {
 function showSection(slug, applyStageMemory = true) {
   // ATHLETA / OLD NAVY 沒有非正單流程
   if (!hasInformal() && slug === 'informal') {
-    const first = allSections.find(sec => !(sec.group_name || '').startsWith('_') && sec.slug !== 'accounts' && sec.slug !== 'informal');
-    if (first) slug = first.slug; else return;
+    if (allSections.some(sec => sec.slug === HOME_SLUG)) slug = HOME_SLUG; else return;
   }
   currentSlug = slug;
 
-  // 儲存 hash
-  window.location.hash = slug;
+  // 儲存 hash（品牌選擇畫面開著時不改網址，否則 hashchange 會把選擇畫面關掉）
+  if (location.hash !== '#choose-brand') window.location.hash = slug;
 
   // hide all pages, show content
   document.getElementById('searchInput').value = '';
   document.getElementById('page-search').classList.remove('active');
   document.getElementById('page-feedback').classList.remove('active');
-  document.getElementById('page-tracker').classList.remove('active');
   document.getElementById('page-content').classList.add('active');
 
   // update edit button link
-  document.getElementById('editBtn').href = `admin.html?section=${slug}`;
 
   // nav highlight
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1425,7 +1285,7 @@ function renderSection(section, entries) {
       <div class="page-title">${section.icon || ''} ${section.name}</div>
     </div>
     ${!entries.length
-      ? '<div class="loading" style="padding:40px 0">此分類尚無內容，請至後台新增</div>'
+      ? '<div class="loading" style="padding:40px 0">此分類尚無內容</div>'
       : pathEntries.map(e => renderCard(e)).join('') + renderCardGrid(otherEntries)
     }
   `;
@@ -1458,9 +1318,9 @@ function renderCard(e) {
         ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
         ${isUrl
           ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
-          : `<button class="copy-value" data-path="${escHtml(value)}" title="點擊複製" style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all;flex:1">📋 ${escHtml(value)}</button>`
+          : `<button class="copy-value" data-path="${escHtml(value)}" title="點選複製" style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all;flex:1">📋 ${escHtml(value)}</button>`
         }
-        <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結"
+        <button onclick="openPathEdit('${e.id}',${idx})" class="em-only" title="編輯路徑／連結"
           style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px"
           onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
       </div>
@@ -1488,16 +1348,16 @@ function renderCard(e) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#166534;margin-bottom:8px">${fmtMarks(escHtml(leftTitle))}</div>
-            <button class="copy-value" data-path="${escHtml(stripMarks(leftBody))}" title="點擊複製" style="display:block;width:100%">
+            <button class="copy-value" data-path="${escHtml(stripMarks(leftBody))}" title="點選複製" style="display:block;width:100%">
               <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(leftBody))}</pre>
-              <div style="margin-top:8px;font-size:11px;color:#166534;opacity:0.7">📋 點擊複製</div>
+              <div style="margin-top:8px;font-size:11px;color:#166534;opacity:0.7">📋 點選複製</div>
             </button>
           </div>
           <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px">
             <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:8px">${fmtMarks(escHtml(rightTitle))}</div>
-            <button class="copy-value" data-path="${escHtml(stripMarks(rightBody))}" title="點擊複製" style="display:block;width:100%">
+            <button class="copy-value" data-path="${escHtml(stripMarks(rightBody))}" title="點選複製" style="display:block;width:100%">
               <pre style="font-family:inherit;font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0">${fmtMarks(escHtml(rightBody))}</pre>
-              <div style="margin-top:8px;font-size:11px;color:#92400e;opacity:0.7">📋 點擊複製</div>
+              <div style="margin-top:8px;font-size:11px;color:#92400e;opacity:0.7">📋 點選複製</div>
             </button>
           </div>
         </div>
@@ -1542,6 +1402,7 @@ function renderCard(e) {
 
 // ── 前台即時編輯（免跳後台）──────────────────
 function editBtnHtml(id) {
+  return (typeof emActionsHtml === 'function') ? emActionsHtml(id) : '';
   return `<button onclick="event.stopPropagation();startEditCard('${id}')" title="編輯此卡片"
     style="margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:27px;height:27px;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:all .12s"
     onmouseover="this.style.color='var(--gap-blue)';this.style.borderColor='var(--gap-blue)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">✏️</button>`;
@@ -1663,6 +1524,7 @@ function renderCardGrid(entries, groupLabel) {
       : (e.paths?.length ? e.paths[0].split('｜').pop().slice(0,50) : ''));
     return `
       <div class="grid-card" id="gc-${e.id}" onclick="toggleCardExpand('${e.id}','${gridId}')">
+        ${typeof emActionsHtml === 'function' ? emActionsHtml(e.id) : ''}
         <div class="grid-card-icon" style="background:${ic.bg};color:${ic.color}">${em}</div>
         <div class="grid-card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
         <div class="grid-card-preview">${escHtml(preview)}</div>
@@ -1745,7 +1607,7 @@ function fmtMarks(t) {
     .replace(/==([^\n]+?)==/g, '<mark style="background:#fde047;color:#1a1a1a;padding:0 3px;border-radius:3px">$1</mark>')
     .replace(/!!([^\n]+?)!!/g, '<span style="color:#dc2626;font-weight:600">$1</span>');
 }
-// 條目所屬 Stage（相容：null / '' / 'proto' / 'proto,la' / 陣列）
+// 卡片所屬 Stage（相容：null / '' / 'proto' / 'proto,la' / 陣列）
 function entryStages(e) {
   if (!e || e.stage == null || e.stage === '') return [];
   return Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s => s.trim()).filter(Boolean);
@@ -1794,7 +1656,7 @@ const BRAND_STAGE_OVERRIDES = {
   // Proto／LA／Fit／RS 的 MC、Pose、Colorways 皆與 GAP 預設值一致，不需覆寫
   BR: {
     block: { active: true, mc: true,
-             pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請至後台補上）',
+             pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法）',
              colorways: '灰色' },
   },
 };
@@ -1891,7 +1753,7 @@ function openImgZoom(list, idx, title) {
     <div style="position:relative;width:99vw;height:96vh;display:flex;flex-direction:column;gap:10px" onclick="event.stopPropagation()">
       <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
         <div id="imgZoomTitle" style="color:#fff;font-size:15px;font-weight:600"></div>
-        <div style="color:rgba(255,255,255,0.5);font-size:11.5px;font-family:'DM Mono',monospace">← → 換圖 · 滾輪縮放 · 拖曳移動 · 雙擊重置 · Esc 關閉</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:11.5px;font-family:'DM Mono',monospace">← → 換圖 · 滾輪縮放 · 拖曳移動 · 點兩下還原 · Esc 關閉</div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
           <button onclick="imgZoomFit()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">符合寬度</button>
           <button onclick="imgZoomActual()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">100%</button>
@@ -2039,7 +1901,7 @@ function renderCardAlbum(e) {
     </div>`).join('');
   return `
     <div id="album-${e.id}" data-album="${e.id}" style="flex:0 0 340px;align-self:flex-start;position:sticky;top:8px;display:flex;flex-direction:column;gap:8px;background:#fff;z-index:1">
-      <div title="點擊放大" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],__albumSel['${e.id}']||0,__imgTitles['${e.id}'])"
+      <div title="點選放大" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],__albumSel['${e.id}']||0,__imgTitles['${e.id}'])"
         style="position:relative;height:240px;background:#f3f4f6;border:1px solid rgba(0,0,0,0.08);border-radius:8px;overflow:hidden;cursor:zoom-in">
         <img id="albumMain-${e.id}" src="${escHtml(e.images[0])}" style="width:100%;height:100%;object-fit:contain;display:block">
         <div id="albumBadge-${e.id}" style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace">圖1</div>
@@ -2059,7 +1921,7 @@ function albumSelect(id, i, fromScroll) {
   const badge = document.getElementById('albumBadge-' + id);
   if (badge) badge.textContent = '圖' + (i + 1);
   const cap = document.getElementById('albumCap-' + id);
-  if (cap) cap.textContent = `圖 ${i + 1} / ${list.length}　·　${fromScroll ? '已跟隨內文位置' : '點縮圖或內文的「圖N」切換'}`;
+  if (cap) cap.textContent = `圖 ${i + 1} / ${list.length}　·　${fromScroll ? '隨內文捲動切換' : '點縮圖或內文的「圖N」切換'}`;
   const box = document.getElementById('album-' + id);
   if (box) box.querySelectorAll('[data-album-thumb]').forEach(t => {
     t.style.borderColor = Number(t.dataset.albumThumb) === i ? 'var(--brand-accent)' : 'transparent';
@@ -2131,7 +1993,7 @@ function renderCardImages(e, mode) {
   const labelSize = stack || grid ? '13px' : '11px';
   const labelPad = stack || grid ? '2px 9px' : '1px 7px';
   const items = e.images.map((u, i) => `
-    <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],${i},__imgTitles['${e.id}'])" title="點擊放大">
+    <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['${e.id}'],${i},__imgTitles['${e.id}'])" title="點選放大">
       <img src="${escHtml(u)}" loading="lazy" style="${thumbStyle}">
       <div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:${labelSize};font-weight:700;padding:${labelPad};border-radius:4px;font-family:'DM Mono',monospace">圖${i + 1}</div>
       <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
@@ -2455,7 +2317,7 @@ function selectStage(key) {
       </div>
       ${stageEntries.length
         ? stageEntries.map(e => renderCard(e)).join('')
-        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
+        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項</div>'
       }
       ${laFlowchartHtml}
     `;
@@ -2471,7 +2333,7 @@ function selectStage(key) {
       </div>
       ${stageEntries.length
         ? stageEntries.map(e => renderCard(e)).join('')
-        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項，請至後台新增</div>'
+        : '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無注意事項</div>'
       }
       ${laFlowchartHtml}
     `;
@@ -2496,57 +2358,186 @@ function switchStageTab(btn, panelId) {
 function renderAvatarPage(section, entries) {
   const cats  = entries.filter(e => e.sort_order <= 5);
   const notes = entries.filter(e => e.sort_order > 5);
+  let act = cats.findIndex(e => String(e.id) === String(__avActiveId));
+  if (act < 0) act = 0;
   return `
     <div class="page-header">
       <div class="page-title">👤 ${section.name}</div>
-      <div class="page-desc">點選 Category 查看人台路徑與尺碼資訊</div>
+      <div class="page-desc">路徑、人台代號點一下即可複製</div>
     </div>
     <div class="type-tabs">
       ${cats.map((e,i) => `
-        <button class="type-tab ${i===0?'active':''}" onclick="switchAvatarTab(this,'avp-${i}')">
+        <button class="type-tab ${i===act?'active':''}" onclick="switchAvatarTab(this,'avp-${i}','${e.id}')">
           ${escHtml(e.title)}
         </button>
       `).join('')}
     </div>
-    ${cats.map((e,i) => `
-      <div id="avp-${i}" class="tab-panel ${i===0?'active':''}">
+    ${cats.map((e,i) => {
+      const groups = avLoad(e);
+      return `
+      <div id="avp-${i}" class="tab-panel ${i===act?'active':''}">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">${escHtml(e.title)}</div>
+            <div class="card-title">${escHtml(e.title)} ${brandBadge(e)}</div>
             <span class="badge badge-official">官方規範</span>
+            ${editBtnHtml(e.id)}
           </div>
-          ${(e.paths||[]).map((p,idx)=>{
-            const hasSep = p.includes('｜');
-            const label  = hasSep ? p.split('｜')[0].trim() : '';
-            const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
-            const isUrl  = value.startsWith('http');
-            return `
-            <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-              ${isUrl ? `
-                <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(29,78,216,0.2);color:#1d4ed8;padding:3px 10px;border-radius:4px;font-size:12px;font-family:inherit;white-space:nowrap;text-decoration:none">🔗 開啟</a>
-              ` : ''}
-              ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
-              ${isUrl
-                ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
-                : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點擊複製" style="flex:1;margin:0">📋 ${escHtml(value)}</button>`
-              }
-              <button onclick="openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
-            </div>
-          `;}).join('')}
-          <div class="card-content">${fmtMarks(escHtml(e.content||''))}</div>
+          <div class="em-hide">${groups ? avViewHtml(groups) : avLegacyPathsHtml(e)}</div>
+          ${avEditorHtml(e, groups)}
+          ${e.content ? `<div class="card-content" style="margin-top:14px">${fmtMarks(escHtml(e.content))}</div>` : ''}
           ${renderCardImages(e)}
         </div>
-      </div>
-    `).join('')}
+      </div>`;
+    }).join('')}
     ${notes.map(e => renderCard(e)).join('')}
   `;
 }
 
-function switchAvatarTab(btn, panelId) {
+let __avActiveId = null;
+function switchAvatarTab(btn, panelId, entryId) {
+  __avActiveId = entryId || null;
   btn.closest('.type-tabs').querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('[id^="avp-"]').forEach(p => p.classList.remove('active'));
   document.getElementById(panelId)?.classList.add('active');
+}
+
+// ── 人台：尺碼群組（每個 Category 可有多個群組；群組＝名稱＋人台路徑＋尺碼列表＋基碼）──
+// 資料存在隱藏分類 avatar-config，卡片標題 AVATAR_<Category卡片id>，內容 JSON {groups:[{name,path,rows:[{size,code,base}]}]}
+function avCfgEntry(entryId) {
+  const sec = allSections.find(x => x.slug === 'avatar-config');
+  if (!sec) return null;
+  return allEntries.find(x => x.section_id === sec.id && x.title === 'AVATAR_' + entryId) || null;
+}
+function avLoad(e) {
+  const c = avCfgEntry(e.id);
+  if (c && c.content) {
+    try { const o = JSON.parse(c.content); if (o && Array.isArray(o.groups)) return o.groups; } catch (err) {}
+  }
+  return null;
+}
+// 還沒設定過的 Category：先用原本的路徑帶入編輯器當起點
+function avSeed(e) {
+  const g = (e.paths || []).map(p => {
+    const i = p.indexOf('｜');
+    return { name: i > -1 ? p.slice(0, i).trim() : '全尺碼', path: i > -1 ? p.slice(i + 1).trim() : p.trim(), rows: [] };
+  });
+  return g.length ? g : [{ name: '全尺碼', path: '', rows: [] }];
+}
+
+function avLegacyPathsHtml(e) {
+  return (e.paths || []).map((p, idx) => {
+    const hasSep = p.includes('｜');
+    const label  = hasSep ? p.split('｜')[0].trim() : '';
+    const value  = hasSep ? p.split('｜').slice(1).join('｜').trim() : p.trim();
+    const isUrl  = value.startsWith('http');
+    return `
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+        ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
+        ${isUrl
+          ? `<a href="${escHtml(value)}" target="_blank" style="font-size:12px;color:#1d4ed8;word-break:break-all">🔗 ${escHtml(value)}</a>`
+          : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點選複製" style="flex:1;margin:0">📋 ${escHtml(value)}</button>`}
+      </div>`;
+  }).join('');
+}
+
+function avViewHtml(groups) {
+  if (!groups.length) return '<div style="color:var(--text-muted);font-size:14px;padding:8px 0">尚未設定尺碼群組</div>';
+  return groups.map(g => {
+    const rows = g.rows || [];
+    return `
+      <div class="av-group">
+        <div class="av-group-name">${escHtml(g.name || '')}</div>
+        ${g.path ? `<button class="path-block copy-value av-path" data-path="${escHtml(g.path)}" title="點選複製人台路徑">📋 ${escHtml(g.path)}</button>` : ''}
+        ${rows.length ? `
+          <div class="av-sizes">
+            ${rows.map(r => `
+              <button class="copy-value av-size ${r.base ? 'av-base' : ''}" data-path="${escHtml(r.code || r.size || '')}" title="點選複製人台代號">
+                <span class="av-size-label">${escHtml(r.size || '')}${r.base ? '<span class="av-base-tag">基碼</span>' : ''}</span>
+                <span class="av-size-code">${escHtml(r.code || '')}</span>
+              </button>`).join('')}
+          </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+let __avGid = 0;
+function avRowHtml(gid, r) {
+  r = r || {};
+  return `<div class="av-ed-row${r.base ? ' av-base' : ''}">
+    <input type="radio" name="avb-${gid}" class="av-ed-base" ${r.base ? 'checked' : ''} title="設為基碼" onchange="avBaseChanged(this)">
+    <input class="av-ed-size" value="${escHtml(r.size || '')}" placeholder="尺碼">
+    <input class="av-ed-code" value="${escHtml(r.code || '')}" placeholder="人台代號（如 TCE-WMS0010-2009）">
+    <button type="button" class="av-x" onclick="this.closest('.av-ed-row').remove()" title="刪除此尺碼">✕</button>
+  </div>`;
+}
+function avGroupEdHtml(g) {
+  const gid = 'g' + (++__avGid);
+  return `<div class="av-ed-group" data-gid="${gid}">
+    <div class="av-ed-line">
+      <input class="av-ed-name" value="${escHtml(g.name || '')}" placeholder="群組名稱（如 全尺碼、Plus、Husky）" style="font-weight:700">
+      <button type="button" class="av-x" onclick="avRemoveGroup(this)">✕ 刪除群組</button>
+    </div>
+    <div class="av-ed-line">
+      <span class="av-ed-lbl">路徑</span>
+      <input class="av-ed-path" value="${escHtml(g.path || '')}" placeholder="人台位置路徑 \\\\192.168.1.220\\3ddb\\...">
+    </div>
+    <div class="av-ed-hint">尺碼（點圓點設基碼）</div>
+    <div class="av-ed-rows">${(g.rows || []).map(r => avRowHtml(gid, r)).join('')}</div>
+    <button type="button" class="av-add" onclick="avAddRow(this)">＋ 新增尺碼</button>
+  </div>`;
+}
+function avEditorHtml(e, groups) {
+  const gs = groups || avSeed(e);
+  return `<div class="av-editor em-only" id="aved-${e.id}">
+    <div class="av-ed-top">
+      <span>✏️ 編輯人台尺碼${groups ? '' : '<span style="color:#b45309;font-weight:400">（已帶入原本的路徑）</span>'}</span>
+      <button type="button" class="em-btn primary" onclick="avSave('${e.id}')">💾 儲存</button>
+    </div>
+    <div class="av-ed-groups">${gs.map(avGroupEdHtml).join('')}</div>
+    <button type="button" class="em-btn" style="margin-top:10px" onclick="avAddGroup(this)">＋ 新增尺碼群組</button>
+  </div>`;
+}
+function avAddRow(btn) {
+  const g = btn.closest('.av-ed-group');
+  g.querySelector('.av-ed-rows').insertAdjacentHTML('beforeend', avRowHtml(g.dataset.gid, {}));
+  g.querySelector('.av-ed-rows').lastElementChild.querySelector('.av-ed-size').focus();
+}
+function avAddGroup(btn) {
+  btn.closest('.av-editor').querySelector('.av-ed-groups').insertAdjacentHTML('beforeend', avGroupEdHtml({ name: '新群組', path: '', rows: [] }));
+}
+function avRemoveGroup(btn) {
+  if (confirm('確定刪除這個尺碼群組？')) btn.closest('.av-ed-group').remove();
+}
+function avBaseChanged(radio) {
+  radio.closest('.av-ed-rows').querySelectorAll('.av-ed-row').forEach(r => r.classList.toggle('av-base', r.contains(radio)));
+}
+async function avSave(entryId) {
+  const box = document.getElementById('aved-' + entryId);
+  if (!box) return;
+  const groups = [...box.querySelectorAll('.av-ed-group')].map(g => ({
+    name: g.querySelector('.av-ed-name').value.trim(),
+    path: g.querySelector('.av-ed-path').value.trim(),
+    rows: [...g.querySelectorAll('.av-ed-row')].map(r => ({
+      size: r.querySelector('.av-ed-size').value.trim(),
+      code: r.querySelector('.av-ed-code').value.trim(),
+      base: r.querySelector('.av-ed-base').checked,
+    })).filter(r => r.size || r.code),
+  })).filter(g => g.name || g.path || g.rows.length);
+
+  const sec = await ensureHiddenSection('avatar-config', '人台尺碼資料', 995);
+  if (!sec) return;
+  const title = 'AVATAR_' + entryId;
+  const content = JSON.stringify({ groups });
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  __avActiveId = entryId;
+  await loadData();
+  emAfterChange();
+  showToast('人台資料已儲存 ✓', 'success');
 }
 
 // ── 路徑／連結 前台編輯（登入即可編輯，全站通用）──
@@ -2681,7 +2672,7 @@ function renderAthSampleScheduleBanner() {
         </div>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--text-dim);margin-bottom:2px">3. 內文</div>
-          <button class="copy-value" data-path="${escHtml(mailBody)}" title="點擊複製" style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;width:100%">
+          <button class="copy-value" data-path="${escHtml(mailBody)}" title="點選複製" style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;width:100%">
             <span style="flex-shrink:0;color:#dc2626;font-size:13px">📋</span>
             <div style="font-size:15px;color:var(--text);flex:1;min-width:220px">${escHtml(mailBody)}</div>
           </button>
@@ -2709,7 +2700,7 @@ function selectStageTab(pageKey, stageKey) {
   if (stageKey === 'proto' && pageKey !== 'cl') {
     const athBanner = (pageKey === 'cs' && currentBrand === 'ATH') ? renderAthSampleScheduleBanner() : '';
     if (!stageEntries.length) {
-      container.innerHTML = athBanner || '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
+      container.innerHTML = athBanner || '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容</div>';
       return;
     }
     const pathEntries = stageEntries.filter(e => e.title && (e.title.includes('路徑') || e.title.includes('連結')));
@@ -2723,7 +2714,7 @@ function selectStageTab(pageKey, stageKey) {
 
   if (pageKey === 'cl') {
     if (!stageEntries.length) {
-      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無 Checklist，請至後台新增</div>';
+      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無 Checklist</div>';
       return;
     }
     const id = `cl-${stageKey}`;
@@ -2743,9 +2734,9 @@ function selectStageTab(pageKey, stageKey) {
                 ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
                 ${isUrl
                   ? `<span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>`
-                  : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點擊複製" style="margin:0;flex:1">📋 ${escHtml(value)}</button>`
+                  : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點選複製" style="margin:0;flex:1">📋 ${escHtml(value)}</button>`
                 }
-                <button onclick="event.stopPropagation();openPathEdit('${e.id}',${idx})" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
+                <button onclick="event.stopPropagation();openPathEdit('${e.id}',${idx})" class="em-only" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
               </div>`;
           }).join('');
 
@@ -2760,12 +2751,12 @@ function selectStageTab(pageKey, stageKey) {
             </div>`;
         }).join('')}
       </div>
-      <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 重置</button>
+      <button class="reset-btn" onclick="resetChecklist('${id}')">↺ 還原</button>
     `;
     bindChecklistEvents();
   } else {
     if (!stageEntries.length) {
-      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容，請至後台新增</div>';
+      container.innerHTML = '<div class="card" style="color:var(--text-dim);font-size:16px;text-align:center;padding:20px">此 Stage 尚無內容</div>';
     } else {
       const pathEntries = stageEntries.filter(e => e.title && (e.title.includes('路徑') || e.title.includes('連結')));
       const otherEntries = stageEntries.filter(e => !pathEntries.includes(e));
@@ -2856,7 +2847,7 @@ function renderInformalPage(section, entries) {
       </div>
       ${fitEntries.length
         ? fitEntries.map(e => renderCard(e)).join('')
-        : '<div class="card" style="color:var(--text-dim);font-size:15px;text-align:center;padding:30px">尚無內容，請至後台新增</div>'
+        : '<div class="card" style="color:var(--text-dim);font-size:15px;text-align:center;padding:30px">尚無內容</div>'
       }
     </div>
   `;
@@ -2932,7 +2923,7 @@ function renderColorPlacementContent() {
     </ul>
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em">AI 拍照腳本路徑</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 12px">
-      <button class="copy-value" data-path="${escHtml(cfg.scriptPath)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all;flex:1">📋 ${escHtml(cfg.scriptPath)}</button>
+      <button class="copy-value" data-path="${escHtml(cfg.scriptPath)}" title="點選複製" style="font-family:'DM Mono',monospace;font-size:12px;color:#1d4ed8;word-break:break-all;flex:1">📋 ${escHtml(cfg.scriptPath)}</button>
     </div>
     <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.06em">拍照角度</div>
     <table style="border-collapse:collapse;font-size:14px;width:100%">
@@ -2988,7 +2979,7 @@ function renderAccountsPage(section, entries) {
 
   const gridHtml = entries.length
     ? `<div class="card-grid" id="${acGridId}">${gridItems}${expandRow}</div>`
-    : '<div class="card" style="color:var(--text-dim);text-align:center;padding:30px">尚無帳號資料，請至後台新增</div>';
+    : '<div class="card" style="color:var(--text-dim);text-align:center;padding:30px">尚無帳號資料</div>';
 
   return `
     <div class="page-header">
@@ -3045,7 +3036,7 @@ function renderQuickLinks() {
   return `
     <div class="page-header" style="margin-top:8px">
       <div class="page-title" style="font-size:19px">🔗 GAP INC 常用連結</div>
-      <div class="page-desc" style="font-size:14px">點擊開新分頁 · 內容可於後台「常用連結」分類編輯</div>
+      <div class="page-desc" style="font-size:14px">點選開新分頁</div>
     </div>
     <div class="card-grid">
       ${items.map(e => {
@@ -3192,7 +3183,7 @@ function handleSearch(q) {
     const section = allSections.find(s => s.id === e.section_id);
     let content = escHtml(stripMarks(e.content || ''));
     kws.forEach(k => {
-      content = content.replace(new RegExp(k, 'gi'), m => `<mark>${m}</mark>`);
+      content = content.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`);
     });
     return `
       <div class="result-card" onclick="jumpToSearchEntry('${e.id}')">
@@ -3204,7 +3195,7 @@ function handleSearch(q) {
   }).join('');
 }
 
-// ── 搜尋結果 → 定位到該筆條目 ─────────────────────
+// ── 搜尋結果 → 定位到該筆卡片 ─────────────────────
 function jumpToSearchEntry(entryId) {
   const e = allEntries.find(x => String(x.id) === String(entryId));
   if (!e) return;
@@ -3214,7 +3205,7 @@ function jumpToSearchEntry(entryId) {
   const stageSlugs = ['prefit', 'details', 'checklist', 'closet'];
   if (stageSlugs.includes(section.slug)) {
     const stages = entryStages(e);
-    // 優先跳去目前選的 Stage；不在裡面就跳這筆條目所屬的第一個 Stage
+    // 優先跳去目前選的 Stage；不在裡面就跳這筆卡片所屬的第一個 Stage
     const targetStage = stages.includes(currentStageKey) ? currentStageKey : (stages[0] || 'proto');
     showSectionWithStage(section.slug, targetStage);
     setTimeout(() => locateAndHighlightEntry(entryId), 200);
@@ -3352,1100 +3343,19 @@ async function showAccountsContent() {
         ${a.username ? `
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">帳號</span>
-            <button class="copy-value" data-path="${escHtml(a.username)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1">📋 ${escHtml(a.username)}</button>
+            <button class="copy-value" data-path="${escHtml(a.username)}" title="點選複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1">📋 ${escHtml(a.username)}</button>
           </div>
         ` : ''}
         ${a.password ? `
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:12px;color:var(--text-dim);width:48px;flex-shrink:0">密碼</span>
-            <button class="copy-value" data-path="${escHtml(a.password)}" title="點擊複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1;letter-spacing:0.08em">📋 ${escHtml(a.password)}</button>
+            <button class="copy-value" data-path="${escHtml(a.password)}" title="點選複製" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex:1;letter-spacing:0.08em">📋 ${escHtml(a.password)}</button>
           </div>
         ` : ''}
         ${a.note ? `<div style="font-size:13px;color:var(--text-dim);margin-top:4px">${escHtml(a.note)}</div>` : ''}
       </div>
     </div>
   `).join('');
-}
-
-// ── 開發追蹤（Excel 匯入版）────────────────────
-const TRK_SECTION_SLUG = 'tracker-data';
-const TRK_CUSTOMERS    = ['GAP(GAP)', 'GAP OUTLET(GAP)', 'ATHLETA(GAP)', 'Old Navy(GAP)'];
-const TRK_ORDER_TYPE   = '3D單';
-// 依 Customer 字串判斷品牌（進度分開追蹤）
-function trkBrandOf(r) {
-  const c = String(r['Customer'] || '').toUpperCase();
-  if (c.includes('ATHLETA'))  return 'ATH';
-  if (c.includes('OLD NAVY')) return 'ON';
-  return 'GAP';
-}
-// 目前品牌的款資料
-function trkBrandRows() { return trkRows.filter(r => trkBrandOf(r) === currentBrand); }
-// 品牌顯示名（tracker 標題用）
-function trkBrandLabel() {
-  if (currentBrand === 'ATH') return 'ATHLETA';
-  if (currentBrand === 'ON')  return 'OLD NAVY';
-  return 'GAP / GAP OUTLET';
-}
-const TRK_COLS = ['單別','狀態','Customer','SUBGROUP','Style','需求日','3D次','類型','尺碼','客樣種類'];
-
-let trkRows       = [];   // 匯入的款資料
-let trkManual     = {};   // { Style: { owner, miro } } 手動欄位（重新上傳不會被洗掉）
-let trkSubManual  = {};   // { SUBGROUP: { owner, expected, note } } 本輪進單資料（手動保留，不會自動清空）
-let trkOwnerMap   = {};   // { SUBGROUP: 業務 } 固定對照表
-let trkUploadedAt = null;
-let trkSubList    = [];
-let trkEditingStyle = null;
-let trkEditingSub   = null;
-let trkSortCol = '需求日';
-let trkSortAsc = true;
-
-// ── 應進清單比對 ────────────────────────────────
-const TRK_BOM_RE = /^D\d{6}/;   // 款號格式：D + 6碼數字
-const GAP_SUBGROUPS = ['BAC','FIT','GAC','KIDS FR','KIDS SWIM','MAC','TSD','WAC'];
-
-// 預設值：Supabase 裡還沒存過資料時使用；一旦在 admin.html 存過，就會用存過的版本蓋掉這裡
-// 業務名單「每個品牌各自獨立」，不共用；GAP先放妳給的名單，其他品牌預設空白，之後從admin.html各自新增
-const TRK_DEFAULT_BIZLIST = {
-  GAP: [
-    'Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎',
-    'Serena Li 李秋宜','Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭',
-    'Adela Liu 劉佳好','Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞',
-    'Jenny Hsieh 謝佳霓','Liane Tu 涂莉雯','Iris Shih 石硯林','Cerita Lai 賴若琦',
-    'Vera Chang 張捷茵','Phoebe Kao 高仲芸'
-  ],
-  ATH: [],
-  ON:  [],
-  BR:  []
-};
-const TRK_DEFAULT_SUBBIZMAP = {
-  GS: {
-    WAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
-    MAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
-    GAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
-    BAC:['Demi Chen 陳奕心','Benny Wu 吳聲佑','Claire Peng 彭子庭','Adela Liu 劉佳好'],
-    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
-    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
-    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
-    FIT:['Serena Li 李秋宜']
-  },
-  GO: {
-    WAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
-    MAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
-    GAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
-    BAC:['Carol Chang 張雅雯','Emily Wen 溫惠娟','Rene Feng 馮元貞','Jenny Hsieh 謝佳霓'],
-    TSD:['Cerita Lai 賴若琦','Vera Chang 張捷茵','Phoebe Kao 高仲芸'],
-    'KIDS FR':['Carol Chang 張雅雯','Liane Tu 涂莉雯','Iris Shih 石硯林'],
-    'KIDS SWIM':['Rosa Wu 吳季芳','Avis Chen 陳宥安','Jessie Han 韓瑀','Baron Huang 黃柏閎'],
-    FIT:['Serena Li 李秋宜']
-  }
-};
-
-let trkExpected  = { GAP:{}, ATH:{}, ON:{}, BR:{} };  // { GAP:{ 'D107453':{gender,subgroup,customer,owner,source,uploadedAt} }, ... }
-let trkBizList   = JSON.parse(JSON.stringify(TRK_DEFAULT_BIZLIST));
-let trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
-
-let trkExpRawRows  = null;   // 目前解析中的檔案內容（array-of-arrays）
-let trkExpFileName = '';
-let trkExpParsed   = null;   // 產生預覽後的 [{bom,gender,subgroup,customer,owner,source,uploadedAt}]
-
-// XLSX 動態載入（用到才載，加快開頁速度）
-function loadXLSX() {
-  if (window.XLSX) return Promise.resolve(window.XLSX);
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
-    s.onload  = () => resolve(window.XLSX);
-    s.onerror = () => reject(new Error('XLSX library 載入失敗，請檢查網路'));
-    document.head.appendChild(s);
-  });
-}
-
-function trkSection() { return allSections.find(s => s.slug === TRK_SECTION_SLUG); }
-function trkEntry(title) {
-  const sec = trkSection();
-  if (!sec) return null;
-  return allEntries.find(e => e.section_id === sec.id && e.title === title) || null;
-}
-
-function loadTrackerFromEntries() {
-  trkRows = []; trkManual = {}; trkSubManual = {}; trkOwnerMap = {}; trkUploadedAt = null;
-  try {
-    const imp = trkEntry('import');
-    if (imp && imp.content) {
-      const j = JSON.parse(imp.content);
-      trkRows       = j.rows || [];
-      trkUploadedAt = j.uploadedAt || null;
-    }
-  } catch (e) {}
-  try {
-    const man = trkEntry('manual');
-    if (man && man.content) trkManual = JSON.parse(man.content) || {};
-  } catch (e) {}
-  try {
-    const sm = trkEntry('submanual');
-    if (sm && sm.content) trkSubManual = JSON.parse(sm.content) || {};
-  } catch (e) {}
-  trkExpected = { GAP:{}, ATH:{}, ON:{}, BR:{} };
-  try {
-    const ex = trkEntry('expected');
-    if (ex && ex.content) trkExpected = Object.assign({ GAP:{}, ATH:{}, ON:{}, BR:{} }, JSON.parse(ex.content));
-  } catch (e) {}
-  trkBizList = JSON.parse(JSON.stringify(TRK_DEFAULT_BIZLIST));
-  try {
-    const bl = trkEntry('bizlist');
-    if (bl && bl.content) {
-      const obj = JSON.parse(bl.content);
-      if (Array.isArray(obj)) {
-        // 相容舊格式（改版前存過的單一共用清單）：當作 GAP 的清單，其他品牌維持預設
-        trkBizList.GAP = obj;
-      } else if (obj && typeof obj === 'object') {
-        trkBizList = Object.assign({ GAP: [], ATH: [], ON: [], BR: [] }, obj);
-      }
-    }
-  } catch (e) {}
-  trkSubBizMap = TRK_DEFAULT_SUBBIZMAP;
-  try {
-    const sbm = trkEntry('subbizmap');
-    if (sbm && sbm.content) { const obj = JSON.parse(sbm.content); if (obj && Object.keys(obj).length) trkSubBizMap = obj; }
-  } catch (e) {}
-  try {
-    const om = trkEntry('ownermap');
-    if (om && om.content) trkOwnerMap = JSON.parse(om.content) || {};
-  } catch (e) {}
-}
-
-function showTracker() {
-  document.getElementById('searchInput').value = '';
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-tracker').classList.add('active');
-  document.getElementById('nav-tracker').classList.add('active');
-  window.location.hash = 'tracker';
-  renderTrackerAll();
-}
-
-function openTrkHelp() {
-  document.getElementById('trkHelpModal').style.display = 'flex';
-}
-
-function closeTrkHelp() {
-  document.getElementById('trkHelpModal').style.display = 'none';
-}
-
-function renderTrackerAll() {
-  loadTrackerFromEntries();
-  const up = document.getElementById('trkUpdatedAt');
-  up.textContent = trkUploadedAt
-    ? '資料更新：' + new Date(trkUploadedAt).toLocaleString('zh-TW', { hour12: false })
-    : '';
-  renderTrackerSummary();
-  renderTrkOwnerDatalist();
-  renderTrackerSubs();
-  renderTrackerFilters();
-  renderTrackerStyles();
-  renderTrkExpected();
-}
-
-// 狀態顏色：常見狀態固定色，其餘依關鍵字分類
-const TRK_STATUS_COLORS = {
-  '待進行': { bg:'rgba(148,163,184,0.15)', color:'#475569' },
-  '待製版': { bg:'rgba(217,119,6,0.1)',    color:'#92400e' },
-  '製版中': { bg:'rgba(29,78,216,0.08)',   color:'#1d4ed8' },
-  '進行中': { bg:'rgba(8,145,178,0.1)',    color:'#0e7490' },
-  '未審核': { bg:'rgba(100,116,139,0.1)',  color:'#64748b' },
-};
-function trkStatusColor(st) {
-  st = String(st || '');
-  if (TRK_STATUS_COLORS[st]) return TRK_STATUS_COLORS[st];
-  if (st.includes('澄清')) return { bg:'rgba(185,28,28,0.08)', color:'#991b1b' };
-  if (st.includes('完成') || st.includes('結')) return { bg:'rgba(22,101,52,0.08)', color:'#166534' };
-  return { bg:'rgba(109,40,217,0.08)', color:'#5b21b6' };
-}
-
-function trkStatusCounts(rows) {
-  const c = {};
-  rows.forEach(r => { const s = r['狀態'] || '未填'; c[s] = (c[s] || 0) + 1; });
-  return Object.entries(c).sort((a, b) => b[1] - a[1]);
-}
-
-function trkChips(counts) {
-  return counts.map(([s, n]) => {
-    const sc = trkStatusColor(s);
-    return `<span style="display:inline-flex;align-items:center;gap:5px;background:${sc.bg};color:${sc.color};border-radius:14px;padding:3px 11px;font-size:12px;font-weight:600;white-space:nowrap">${escHtml(s)} ${n}</span>`;
-  }).join(' ');
-}
-
-function renderTrackerSummary() {
-  const el = document.getElementById('trkSummary');
-  const desc = document.getElementById('trkPageDesc');
-  if (desc) desc.textContent = `${trkBrandLabel()}・3D單 進度`;
-  const hasPreData = Object.keys(trkOwnerMap).length > 0 || Object.keys(trkSubManual).length > 0;
-  if (!trkRows.length) {
-    if (hasPreData) {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">📝 尚未上傳 Excel，目前是預先登記的「預計款數」，已進單數量會顯示 0，等匯入 Excel（可直接拖曳到這個框框）後自動帶出實際款數</div>';
-      document.getElementById('trkSubBlock').style.display   = '';
-      document.getElementById('trkStyleBlock').style.display = 'none';
-    } else {
-      el.innerHTML = '<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">尚未上傳資料，點「📤 上傳 Excel」或直接把檔案拖曳到這個框框，丟入 SampleSchedule「匯出待辦」的原始檔即可<br><span style="font-size:12px">（程式會自動篩選 GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）</span><br><span style="font-size:12px">還沒開始進單也沒關係，可以先點「⚙️ 業務對照表」或直接在下方登記「預計款數」</span></div>';
-      document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
-      document.getElementById('trkStyleBlock').style.display = 'none';
-    }
-    return;
-  }
-  const rows = trkBrandRows();
-  if (!rows.length) {
-    el.innerHTML = `<div class="card" style="text-align:center;padding:36px;color:var(--text-dim);font-size:14px">目前上傳的資料中沒有 <strong>${trkBrandLabel()}</strong> 的 3D單<br><span style="font-size:12px">（左上切換品牌可查看其他品牌進度）</span></div>`;
-    document.getElementById('trkSubBlock').style.display   = hasPreData ? '' : 'none';
-    document.getElementById('trkStyleBlock').style.display = 'none';
-    return;
-  }
-  document.getElementById('trkSubBlock').style.display   = '';
-  document.getElementById('trkStyleBlock').style.display = '';
-  el.innerHTML = `
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <span style="font-size:16px;font-weight:700;color:var(--text)">🗂 ${trkBrandLabel()}・3D單</span>
-        <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:3px 12px;font-size:13px;font-weight:700">${rows.length} 款</span>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${trkChips(trkStatusCounts(rows))}</div>
-    </div>`;
-}
-
-function renderTrackerSubs() {
-  const tbody = document.getElementById('trkSubBody');
-  const groups = {};
-  trkBrandRows().forEach(r => {
-    const g = r['SUBGROUP'] || '(未填)';
-    (groups[g] = groups[g] || []).push(r);
-  });
-  // 開發季剛開始、還沒匯入Excel時，讓已建好業務對照表／已填預計款數的SUB也能先顯示出來，方便先登記預計款數
-  if (!trkRows.length) {
-    new Set([...Object.keys(trkOwnerMap), ...Object.keys(trkSubManual)]).forEach(g => {
-      if (!groups[g]) groups[g] = [];
-    });
-  }
-  trkSubList = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
-  tbody.innerHTML = trkSubList.map(([g, rs], i) => {
-    const sm = trkSubManual[g] || {};
-    const owner = (sm.owner !== undefined && sm.owner !== '') ? sm.owner : (trkOwnerMap[g] || '');
-    const hasExpected = sm.expected !== undefined && sm.expected !== null && sm.expected !== '';
-    const remain = hasExpected ? Math.max(0, Number(sm.expected) - rs.length) : null;
-    const remainColor = remain === null ? 'var(--text-dim)' : (remain > 0 ? '#b91c1c' : '#166534');
-    const enc = encodeURIComponent(g);
-    return `
-    <tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:11px 12px;font-weight:600;color:var(--text);cursor:pointer" onclick="trkFilterBySubIdx(${i})" title="點擊查看此 SUB 的款明細">${escHtml(g)}</td>
-      <td style="padding:11px 12px;text-align:center;font-weight:700;color:var(--text)">${rs.length}</td>
-      <td style="padding:11px 12px;color:var(--text-dim);white-space:nowrap">${owner ? escHtml(owner) : '—'}</td>
-      <td style="padding:11px 12px;text-align:center;color:var(--text)">${hasExpected ? escHtml(String(sm.expected)) : '—'}</td>
-      <td style="padding:11px 12px;text-align:center;font-weight:700;color:${remainColor}">${remain === null ? '—' : remain}</td>
-      <td style="padding:11px 12px;color:var(--text-dim)">${escHtml(sm.note || '')}</td>
-      <td style="padding:11px 12px">${trkChips(trkStatusCounts(rs))}</td>
-      <td style="padding:11px 12px"><button onclick="openTrkSubManual('${enc}')" title="編輯業務／預計款數／備註" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
-    </tr>`;
-  }).join('');
-}
-
-function trkFilterBySubIdx(i) {
-  const g = trkSubList[i] ? trkSubList[i][0] : '';
-  const sel = document.getElementById('trkFilterSub');
-  sel.value = (g === '(未填)') ? '' : g;
-  renderTrackerStyles();
-  document.getElementById('trkStyleBlock').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ── SUB 進單資訊（業務／預計款數／備註）─────────
-function openTrkSubManual(enc) {
-  trkEditingSub = decodeURIComponent(enc);
-  const sm = trkSubManual[trkEditingSub] || {};
-  document.getElementById('trkSubManualName').textContent = trkEditingSub;
-  document.getElementById('trkSubOwnerInput').value = (sm.owner !== undefined && sm.owner !== '') ? sm.owner : (trkOwnerMap[trkEditingSub] || '');
-  document.getElementById('trkSubExpectedInput').value = (sm.expected === undefined || sm.expected === null) ? '' : sm.expected;
-  document.getElementById('trkSubNoteInput').value = sm.note || '';
-  document.getElementById('trkSubManualModal').style.display = 'flex';
-}
-
-function closeTrkSubManual() {
-  document.getElementById('trkSubManualModal').style.display = 'none';
-  trkEditingSub = null;
-}
-
-async function saveTrkSubManual() {
-  if (!trkEditingSub) return;
-  const owner    = document.getElementById('trkSubOwnerInput').value.trim();
-  const expected = document.getElementById('trkSubExpectedInput').value.trim();
-  const note     = document.getElementById('trkSubNoteInput').value.trim();
-  if (owner || expected !== '' || note) {
-    trkSubManual[trkEditingSub] = { owner, expected: expected === '' ? null : Number(expected), note };
-  } else {
-    delete trkSubManual[trkEditingSub];
-  }
-  try {
-    await saveTrkEntry('submanual', trkSubManual);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  closeTrkSubManual();
-  renderTrackerSubs();
-  renderTrkOwnerDatalist();
-}
-
-async function clearTrkSubManualAll() {
-  const subsInBrand = new Set(trkBrandRows().map(r => r['SUBGROUP'] || '(未填)'));
-  const affected = [...subsInBrand].filter(g => trkSubManual[g] && (trkSubManual[g].expected != null || trkSubManual[g].note));
-  if (!affected.length) { alert('目前品牌沒有需要清空的預計款數／備註'); return; }
-  if (!confirm(`確定要清空目前品牌 ${affected.length} 個 SUB 的「預計款數／備註」嗎？業務對照表不會受影響。`)) return;
-  affected.forEach(g => {
-    const owner = trkSubManual[g].owner;
-    if (owner) trkSubManual[g] = { owner };
-    else delete trkSubManual[g];
-  });
-  try {
-    await saveTrkEntry('submanual', trkSubManual);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  renderTrackerSubs();
-}
-
-// ── SUBGROUP ↔ 業務 對照表 ─────────────────────
-function openTrkOwnerMap() {
-  renderTrkOwnerMapList();
-  document.getElementById('trkOwnerMapModal').style.display = 'flex';
-}
-
-function closeTrkOwnerMap() {
-  document.getElementById('trkOwnerMapModal').style.display = 'none';
-}
-
-function renderTrkOwnerMapList() {
-  const box = document.getElementById('trkOwnerMapList');
-  const entries = Object.entries(trkOwnerMap).sort((a, b) => a[0].localeCompare(b[0]));
-  if (!entries.length) {
-    box.innerHTML = '<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:12px">尚未設定，於下方新增第一筆</div>';
-    return;
-  }
-  box.innerHTML = entries.map(([sub, owner]) => {
-    const encSub = encodeURIComponent(sub);
-    return `
-    <div style="display:flex;gap:8px;align-items:center">
-      <div style="flex:1;font-size:13px;color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(sub)}</div>
-      <input value="${escHtml(owner)}" list="trkOwnerDatalist" onchange="updateTrkOwnerMapRow('${encSub}', this.value)" style="flex:1;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-      <button onclick="deleteTrkOwnerMapRow('${encSub}')" title="刪除" style="background:none;border:none;color:#b91c1c;cursor:pointer;font-size:14px">🗑️</button>
-    </div>`;
-  }).join('');
-}
-
-async function addTrkOwnerMapRow() {
-  const sub   = document.getElementById('trkOwnerMapNewSub').value.trim();
-  const owner = document.getElementById('trkOwnerMapNewOwner').value.trim();
-  if (!sub || !owner) { alert('請填寫 SUBGROUP 名稱和業務名字'); return; }
-  trkOwnerMap[sub] = owner;
-  try {
-    await saveTrkEntry('ownermap', trkOwnerMap);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  document.getElementById('trkOwnerMapNewSub').value = '';
-  document.getElementById('trkOwnerMapNewOwner').value = '';
-  renderTrkOwnerMapList();
-  renderTrkOwnerDatalist();
-  renderTrackerSubs();
-}
-
-async function updateTrkOwnerMapRow(encSub, newOwner) {
-  const sub = decodeURIComponent(encSub);
-  newOwner = newOwner.trim();
-  if (!newOwner) { await deleteTrkOwnerMapRow(encSub); return; }
-  trkOwnerMap[sub] = newOwner;
-  try {
-    await saveTrkEntry('ownermap', trkOwnerMap);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  renderTrkOwnerDatalist();
-  renderTrackerSubs();
-}
-
-async function deleteTrkOwnerMapRow(encSub) {
-  const sub = decodeURIComponent(encSub);
-  delete trkOwnerMap[sub];
-  try {
-    await saveTrkEntry('ownermap', trkOwnerMap);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  renderTrkOwnerMapList();
-  renderTrkOwnerDatalist();
-  renderTrackerSubs();
-}
-
-function renderTrkOwnerDatalist() {
-  const dl = document.getElementById('trkOwnerDatalist');
-  if (!dl) return;
-  const names = new Set(Object.values(trkOwnerMap).filter(Boolean));
-  Object.values(trkSubManual).forEach(sm => { if (sm && sm.owner) names.add(sm.owner); });
-  dl.innerHTML = [...names].sort().map(n => `<option value="${escHtml(n)}">`).join('');
-}
-
-function renderTrackerFilters() {
-  const subs  = [...new Set(trkBrandRows().map(r => r['SUBGROUP']).filter(Boolean))].sort();
-  const stats = trkStatusCounts(trkBrandRows()).map(([s]) => s);
-  const fs = document.getElementById('trkFilterSub');
-  const cs = fs.value;
-  fs.innerHTML = '<option value="">全部 SUB</option>' +
-    subs.map(s => `<option value="${escHtml(s)}" ${cs === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
-  const ft = document.getElementById('trkFilterStatus');
-  const ct = ft.value;
-  ft.innerHTML = '<option value="">全部狀態</option>' +
-    stats.map(s => `<option value="${escHtml(s)}" ${ct === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
-}
-
-function sortTrkStyles(col) {
-  if (trkSortCol === col) trkSortAsc = !trkSortAsc;
-  else { trkSortCol = col; trkSortAsc = true; }
-  ['Style','SUBGROUP','狀態','需求日'].forEach(c => {
-    const el = document.getElementById('trksort-' + c);
-    if (el) el.textContent = c === col ? (trkSortAsc ? '↑' : '↓') : '';
-  });
-  renderTrackerStyles();
-}
-
-function trkCustShort(c) { return String(c || '').replace('(GAP)', ''); }
-
-function renderTrackerStyles() {
-  const sub = document.getElementById('trkFilterSub').value;
-  const st  = document.getElementById('trkFilterStatus').value;
-  let rows = trkBrandRows().filter(r =>
-    (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
-
-  rows = [...rows].sort((a, b) => {
-    const av = a[trkSortCol] || '', bv = b[trkSortCol] || '';
-    const cmp = String(av).localeCompare(String(bv));
-    return trkSortAsc ? cmp : -cmp;
-  });
-
-  document.getElementById('trkStyleCount').textContent = `（${rows.length} 款）`;
-
-  const tbody = document.getElementById('trkStyleBody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text-dim)">無符合條件的資料</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(r => {
-    const style = r['Style'] || '';
-    const m  = trkManual[style] || {};
-    const sc = trkStatusColor(r['狀態']);
-    const enc = encodeURIComponent(style);
-    return `
-      <tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:10px 12px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;white-space:nowrap">${escHtml(style)}</td>
-        <td style="padding:10px 12px;color:var(--text);white-space:nowrap">${escHtml(r['SUBGROUP'] || '')}</td>
-        <td style="padding:10px 12px;text-align:center;white-space:nowrap"><span style="background:${sc.bg};color:${sc.color};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600">${escHtml(r['狀態'] || '')}</span></td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text);white-space:nowrap">${escHtml(r['需求日'] || '')}</td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(trkCustShort(r['Customer']))}</td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text-dim);white-space:nowrap">${escHtml(r['單別'] || '')}</td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['3D次'] || '')}</td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['類型'] || '')}</td>
-        <td style="padding:10px 12px;text-align:center;color:var(--text)">${escHtml(r['尺碼'] || '')}</td>
-        <td style="padding:10px 12px;color:var(--text)">${escHtml(r['客樣種類'] || '')}</td>
-        <td style="padding:10px 12px;color:var(--text);white-space:nowrap">${escHtml(m.owner || '')}</td>
-        <td style="padding:10px 12px;white-space:nowrap">${m.miro ? `<a href="${escHtml(m.miro)}" target="_blank" style="color:#1d4ed8;font-size:12px;text-decoration:none">🔗 Miro</a>` : '—'}</td>
-        <td style="padding:10px 12px"><button onclick="openTrkManual('${enc}')" title="編輯負責人 / Miro" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">✏️</button></td>
-      </tr>`;
-  }).join('');
-}
-
-// ── 手動欄位（負責人 / Miro）────────────────────
-function openTrkManual(enc) {
-  trkEditingStyle = decodeURIComponent(enc);
-  const m = trkManual[trkEditingStyle] || {};
-  document.getElementById('trkManualStyle').textContent = trkEditingStyle;
-  document.getElementById('trkOwnerInput').value = m.owner || '';
-  document.getElementById('trkMiroInput').value  = m.miro  || '';
-  document.getElementById('trkManualModal').style.display = 'flex';
-}
-
-function closeTrkManual() {
-  document.getElementById('trkManualModal').style.display = 'none';
-  trkEditingStyle = null;
-}
-
-async function saveTrkManual() {
-  if (!trkEditingStyle) return;
-  const owner = document.getElementById('trkOwnerInput').value.trim();
-  const miro  = document.getElementById('trkMiroInput').value.trim();
-  if (owner || miro) trkManual[trkEditingStyle] = { owner, miro };
-  else delete trkManual[trkEditingStyle];
-  try {
-    await saveTrkEntry('manual', trkManual);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  closeTrkManual();
-  renderTrackerStyles();
-}
-
-// ── Supabase 存取（存在 entries 表的隱藏 section）──
-async function ensureTrkSection() {
-  let sec = trkSection();
-  if (sec) return sec;
-  const { data, error } = await sb.from('sections')
-    .insert({ slug: TRK_SECTION_SLUG, name: '開發追蹤資料', group_name: '_hidden', sort_order: 999 })
-    .select().single();
-  if (error) throw error;
-  allSections.push(data);
-  return data;
-}
-
-async function saveTrkEntry(title, obj) {
-  const sec = await ensureTrkSection();
-  const existing = trkEntry(title);
-  const content = JSON.stringify(obj);
-  if (existing) {
-    const { error } = await sb.from('entries').update({ content }).eq('id', existing.id);
-    if (error) throw error;
-    existing.content = content;
-  } else {
-    const { data, error } = await sb.from('entries')
-      .insert({ section_id: sec.id, title, content, sort_order: 0 })
-      .select().single();
-    if (error) throw error;
-    allEntries.push(data);
-  }
-  // 同步更新快取，避免下次開頁看到舊資料
-  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
-}
-
-// ── 應進清單比對：上傳解析 ──────────────────────
-function colLabel(i) {
-  let s = ''; i++;
-  while (i > 0) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
-  return s;
-}
-
-async function trkExpHandleFile(file) {
-  if (!file) return;
-  try {
-    const XLSX = await loadXLSX();
-    let raw;
-    if (/\.csv$/i.test(file.name)) {
-      const text = await file.text();
-      const wb = XLSX.read(text, { type: 'string' });
-      raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
-    } else {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { cellDates: true });
-      raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
-    }
-    if (!raw.length) { alert('檔案裡讀不到資料'); return; }
-    if (trkLooksLikeDpcExport(raw)) {
-      if (!confirm('這個檔案看起來像是 SampleSchedule「匯出待辦」的原始檔（有「單別」「Customer」欄位），應該丟到上面藍框「開發追蹤」才對。\n\n仍要當作應進清單繼續處理嗎？')) return;
-    }
-    trkExpRawRows  = raw.map(row => row.map(c => trkCell(c)));
-    trkExpFileName = file.name;
-    trkExpOpenModal();
-  } catch (err) {
-    alert('讀取失敗：' + err.message);
-  }
-}
-
-function trkExpMaxCols() {
-  return trkExpRawRows.reduce((m, r) => Math.max(m, r.length), 0);
-}
-
-function trkExpDetectBomCol() {
-  const maxCols = trkExpMaxCols();
-  let best = -1, bestCount = 0;
-  for (let c = 0; c < maxCols; c++) {
-    let n = 0;
-    trkExpRawRows.forEach(r => { if (TRK_BOM_RE.test(String(r[c] || '').trim())) n++; });
-    if (n > bestCount) { bestCount = n; best = c; }
-  }
-  return { col: best, count: bestCount };
-}
-
-function trkExpColSample(c) {
-  for (const r of trkExpRawRows) {
-    const v = String(r[c] || '').trim();
-    if (v) return v.length > 24 ? v.slice(0, 24) + '…' : v;
-  }
-  return '(空)';
-}
-
-function trkExpOpenModal() {
-  const maxCols = trkExpMaxCols();
-  const { col: bomCol, count } = trkExpDetectBomCol();
-  const isGap = currentBrand === 'GAP';
-
-  const optsHtml = Array.from({ length: maxCols }, (_, c) =>
-    `<option value="${c}">${colLabel(c)}欄（例：${escHtml(trkExpColSample(c))}）</option>`).join('');
-
-  document.getElementById('trkExpFileInfo').textContent = `📄 ${trkExpFileName}（共 ${trkExpRawRows.length} 列，${trkBrandLabel()}）`;
-  document.getElementById('trkExpColBom').innerHTML = optsHtml;
-  document.getElementById('trkExpColBom').value = bomCol >= 0 ? bomCol : 0;
-  document.getElementById('trkExpColGender').innerHTML = optsHtml;
-  document.getElementById('trkExpColSub').innerHTML = optsHtml;
-
-  document.getElementById('trkExpBomCount').textContent = bomCol >= 0
-    ? `✅ 自動抓到「${colLabel(bomCol)}欄」，符合 D+6碼 格式的有 ${count} 筆`
-    : `⚠️ 沒有欄位符合 D+6碼 格式，請手動選正確的款號欄位`;
-
-  document.getElementById('trkExpSubgroupBlock').style.display = isGap ? '' : 'none';
-  document.getElementById('trkExpCustomerBlock').style.display = isGap ? '' : 'none';
-
-  document.getElementById('trkExpManualSub').innerHTML = GAP_SUBGROUPS.map(s => `<option value="${s}">${s}</option>`).join('');
-
-  document.querySelector('input[name="trkExpGenderMode"][value="col"]').checked = true;
-  document.querySelector('input[name="trkExpSubMode"][value="col"]').checked = true;
-  document.querySelector('input[name="trkExpCustomer"][value="GS"]').checked = true;
-  trkExpToggleMode('gender');
-  trkExpToggleMode('sub');
-
-  document.getElementById('trkExpOwnerInput').value = '';
-  trkExpRefreshOwnerPriority();
-
-  document.getElementById('trkExpPreviewWrap').innerHTML = '';
-  document.getElementById('trkExpOverwriteWrap').innerHTML = '';
-  document.getElementById('trkExpConfirmBtn').disabled = true;
-  document.getElementById('trkExpConfirmBtn').style.opacity = '0.5';
-  trkExpParsed = null;
-
-  document.getElementById('trkExpModal').style.display = 'flex';
-}
-
-function closeTrkExpModal() {
-  document.getElementById('trkExpModal').style.display = 'none';
-  trkExpRawRows = null;
-}
-
-function trkExpToggleMode(which) {
-  if (which === 'gender') {
-    const mode = document.querySelector('input[name="trkExpGenderMode"]:checked').value;
-    document.getElementById('trkExpColGender').style.display    = mode === 'col' ? '' : 'none';
-    document.getElementById('trkExpManualGender').style.display = mode === 'col' ? 'none' : '';
-  } else {
-    const mode = document.querySelector('input[name="trkExpSubMode"]:checked').value;
-    document.getElementById('trkExpColSub').style.display    = mode === 'col' ? '' : 'none';
-    document.getElementById('trkExpManualSub').style.display = mode === 'col' ? 'none' : '';
-    trkExpRefreshOwnerPriority();
-  }
-}
-
-function trkExpRecount() {
-  const col = Number(document.getElementById('trkExpColBom').value);
-  let n = 0;
-  trkExpRawRows.forEach(r => { if (TRK_BOM_RE.test(String(r[col] || '').trim())) n++; });
-  document.getElementById('trkExpBomCount').textContent = `符合 D+6碼 格式的有 ${n} 筆`;
-}
-
-// 依目前選的 SUBGROUP（手動模式時）+ Customer，把對應業務排到下拉最前面（其他人還在，只是排序調整）
-function trkExpRefreshOwnerPriority() {
-  const dl = document.getElementById('trkBizDatalist');
-  let priority = [];
-  if (currentBrand === 'GAP') {
-    const subMode = document.querySelector('input[name="trkExpSubMode"]:checked')?.value;
-    const cust = document.querySelector('input[name="trkExpCustomer"]:checked')?.value || 'GS';
-    if (subMode === 'manual') {
-      const sub = document.getElementById('trkExpManualSub').value;
-      priority = (trkSubBizMap[cust] && trkSubBizMap[cust][sub]) || [];
-    }
-  }
-  const rest = (trkBizList[currentBrand] || []).filter(n => !priority.includes(n));
-  dl.innerHTML = [...priority, ...rest].map(n => `<option value="${escHtml(n)}">`).join('');
-}
-
-function trkExpPreview() {
-  const bomCol = Number(document.getElementById('trkExpColBom').value);
-  const genderMode   = document.querySelector('input[name="trkExpGenderMode"]:checked').value;
-  const genderCol    = Number(document.getElementById('trkExpColGender').value);
-  const genderManual = document.getElementById('trkExpManualGender').value.trim();
-  const isGap = currentBrand === 'GAP';
-  const subMode   = isGap ? document.querySelector('input[name="trkExpSubMode"]:checked').value : null;
-  const subCol    = isGap ? Number(document.getElementById('trkExpColSub').value) : null;
-  const subManual = isGap ? document.getElementById('trkExpManualSub').value : '';
-  const customer  = isGap ? (document.querySelector('input[name="trkExpCustomer"]:checked')?.value || 'GS') : '';
-  const owner = document.getElementById('trkExpOwnerInput').value.trim();
-
-  if (!owner) { alert('請填業務名'); return; }
-  if (genderMode === 'manual' && !genderManual) { alert('請填 Gender'); return; }
-  if (isGap && subMode === 'manual' && !subManual) { alert('請選 SUBGROUP'); return; }
-
-  const seen = new Map();
-  let dupInFile = 0;
-  trkExpRawRows.forEach(r => {
-    const raw = String(r[bomCol] || '').trim();
-    const m = raw.match(TRK_BOM_RE);
-    if (!m) return;
-    const bom = m[0];
-    if (seen.has(bom)) dupInFile++;
-    seen.set(bom, {
-      bom,
-      gender:   genderMode === 'col' ? String(r[genderCol] || '').trim() : genderManual,
-      subgroup: isGap ? (subMode === 'col' ? String(r[subCol] || '').trim() : subManual) : '',
-      customer,
-      owner,
-      source: trkExpFileName,
-      uploadedAt: new Date().toISOString()
-    });
-  });
-  trkExpParsed = [...seen.values()];
-
-  if (!trkExpParsed.length) { alert('沒有抓到任何符合格式的款號，請確認款號欄位選對了'); return; }
-
-  const existing = trkExpected[currentBrand] || {};
-  const overwrite = trkExpParsed.filter(p => existing[p.bom]);
-
-  document.getElementById('trkExpPreviewWrap').innerHTML = `
-    <div class="card" style="padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">預覽：共 ${trkExpParsed.length} 筆款號${dupInFile ? `（檔案內部有 ${dupInFile} 筆款號重複列出，已自動合併只留一筆）` : ''}</div>
-      <div style="max-height:180px;overflow-y:auto;font-size:12.5px;color:var(--text-dim)">
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;padding:4px 6px">款號</th><th style="text-align:left;padding:4px 6px">Gender</th>${isGap ? '<th style="text-align:left;padding:4px 6px">SUBGROUP</th>' : ''}<th style="text-align:left;padding:4px 6px">業務</th>
-          </tr></thead>
-          <tbody>${trkExpParsed.slice(0, 200).map(p => `<tr><td style="padding:3px 6px;font-family:'DM Mono',monospace">${escHtml(p.bom)}</td><td style="padding:3px 6px">${escHtml(p.gender)}</td>${isGap ? `<td style="padding:3px 6px">${escHtml(p.subgroup)}</td>` : ''}<td style="padding:3px 6px">${escHtml(p.owner)}</td></tr>`).join('')}</tbody>
-        </table>
-        ${trkExpParsed.length > 200 ? `<div style="padding:6px">…僅預覽前200筆，實際會全部存入</div>` : ''}
-      </div>
-    </div>`;
-
-  document.getElementById('trkExpOverwriteWrap').innerHTML = !overwrite.length ? '' : `
-    <div class="card" style="padding:12px 14px;border-color:rgba(217,119,6,0.35);background:rgba(217,119,6,0.06)">
-      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 以下 ${overwrite.length} 筆款號已經在應進清單裡，這次存檔會被覆蓋更新</div>
-      <div style="max-height:160px;overflow-y:auto;font-size:12.5px;color:#92400e">
-        ${overwrite.map(p => {
-          const old = existing[p.bom];
-          const diffs = [];
-          if ((old.owner || '') !== p.owner) diffs.push(`業務：${escHtml(old.owner || '—')} → ${escHtml(p.owner)}`);
-          if ((old.gender || '') !== p.gender) diffs.push(`Gender：${escHtml(old.gender || '—')} → ${escHtml(p.gender)}`);
-          if (isGap && (old.subgroup || '') !== p.subgroup) diffs.push(`SUBGROUP：${escHtml(old.subgroup || '—')} → ${escHtml(p.subgroup)}`);
-          return `<div style="padding:3px 0;border-bottom:1px solid rgba(217,119,6,0.15)"><strong style="font-family:'DM Mono',monospace">${escHtml(p.bom)}</strong>　${diffs.length ? diffs.join('｜') : '(內容相同)'}</div>`;
-        }).join('')}
-      </div>
-    </div>`;
-
-  document.getElementById('trkExpConfirmBtn').disabled = false;
-  document.getElementById('trkExpConfirmBtn').style.opacity = '1';
-}
-
-async function trkExpConfirmSave() {
-  if (!trkExpParsed || !trkExpParsed.length) return;
-  const existing = trkExpected[currentBrand] || {};
-  const overwriteCount = trkExpParsed.filter(p => existing[p.bom]).length;
-  if (overwriteCount && !confirm(`有 ${overwriteCount} 筆款號會被覆蓋更新，確定要存檔嗎？`)) return;
-
-  trkExpParsed.forEach(p => { existing[p.bom] = p; });
-  trkExpected[currentBrand] = existing;
-  try {
-    await saveTrkEntry('expected', trkExpected);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  closeTrkExpModal();
-  renderTrkExpected();
-}
-
-async function trkExpClearBrand() {
-  const n = Object.keys(trkExpected[currentBrand] || {}).length;
-  if (!n) { alert('目前品牌沒有應進清單資料'); return; }
-  if (!confirm(`確定要清空「${trkBrandLabel()}」的應進清單（共 ${n} 筆）嗎？這個動作無法復原。`)) return;
-  trkExpected[currentBrand] = {};
-  try {
-    await saveTrkEntry('expected', trkExpected);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  renderTrkExpected();
-}
-
-async function trkExpDeleteBom(enc) {
-  const bom = decodeURIComponent(enc);
-  if (!confirm(`確定要從應進清單刪除「${bom}」嗎？`)) return;
-  delete trkExpected[currentBrand][bom];
-  try {
-    await saveTrkEntry('expected', trkExpected);
-  } catch (err) {
-    alert('刪除失敗：' + err.message);
-    return;
-  }
-  renderTrkExpected();
-}
-
-// ── 手動新增單一款號（併入同一份應進清單資料）─────
-function trkExpOpenManualAdd() {
-  const isGap = currentBrand === 'GAP';
-  document.getElementById('trkManAddBom').value = '';
-  document.getElementById('trkManAddGender').value = '';
-  document.getElementById('trkManAddOwner').value = '';
-  document.getElementById('trkManAddNote').value = '';
-  document.getElementById('trkManAddSubBlock').style.display = isGap ? '' : 'none';
-  document.getElementById('trkManAddCustomerBlock').style.display = isGap ? '' : 'none';
-  document.getElementById('trkManAddSub').innerHTML =
-    '<option value="">（不指定）</option>' + GAP_SUBGROUPS.map(s => `<option value="${s}">${s}</option>`).join('');
-  const noCust = document.querySelector('input[name="trkManAddCustomer"][value=""]');
-  if (noCust) noCust.checked = true;
-  document.getElementById('trkExpManualAddModal').style.display = 'flex';
-  document.getElementById('trkManAddBom').focus();
-}
-
-function closeTrkExpManualAddModal() {
-  document.getElementById('trkExpManualAddModal').style.display = 'none';
-}
-
-async function trkExpManualAddSave() {
-  const raw = document.getElementById('trkManAddBom').value.trim();
-  const m = raw.match(TRK_BOM_RE);
-  if (!m) { alert('款號格式不對，需要是「D + 6碼數字」，例如 D123456'); return; }
-  const bom = m[0];
-  const isGap = currentBrand === 'GAP';
-
-  const existing = trkExpected[currentBrand] || {};
-  if (existing[bom] && !confirm(`「${bom}」已經在應進清單裡了，確定要覆蓋更新嗎？`)) return;
-
-  const record = {
-    bom,
-    gender: document.getElementById('trkManAddGender').value.trim(),
-    subgroup: isGap ? document.getElementById('trkManAddSub').value : '',
-    customer: isGap ? (document.querySelector('input[name="trkManAddCustomer"]:checked')?.value || '') : '',
-    owner: document.getElementById('trkManAddOwner').value.trim(),
-    note: document.getElementById('trkManAddNote').value.trim(),
-    source: '手動新增',
-    uploadedAt: new Date().toISOString()
-  };
-
-  existing[bom] = record;
-  trkExpected[currentBrand] = existing;
-  try {
-    await saveTrkEntry('expected', trkExpected);
-  } catch (err) {
-    alert('儲存失敗：' + err.message);
-    return;
-  }
-  closeTrkExpManualAddModal();
-  renderTrkExpected();
-}
-
-// ── 應進清單比對：比對邏輯 + 渲染 ────────────────
-function trkExpBomKeyOfStyle(style) {
-  const m = String(style || '').match(TRK_BOM_RE);
-  return m ? m[0] : null;
-}
-
-function trkComputeComparison() {
-  const expected = trkExpected[currentBrand] || {};
-  const rows = trkBrandRows();
-  const matched = {};   // bom -> [row,...]
-  rows.forEach(r => {
-    const bom = trkExpBomKeyOfStyle(r['Style']);
-    if (!bom) return;
-    (matched[bom] = matched[bom] || []).push(r);
-  });
-  const missing = [];
-  const found = [];
-  Object.entries(expected).forEach(([bom, info]) => {
-    if (matched[bom] && matched[bom].length) found.push({ bom, info, rows: matched[bom] });
-    else missing.push({ bom, info });
-  });
-  const dup = Object.entries(matched)
-    .filter(([bom, rs]) => new Set(rs.map(r => r['Style'])).size >= 2)
-    .map(([bom, rs]) => ({ bom, rows: rs }));
-  return { expectedCount: Object.keys(expected).length, found, missing, dup };
-}
-
-function renderTrkExpected() {
-  const cmp = trkComputeComparison();
-  const sumEl = document.getElementById('trkExpSummary');
-  if (!sumEl) return; // 頁面尚未渲染出來時安全跳過
-  if (!cmp.expectedCount) {
-    sumEl.innerHTML = `<div class="card" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">尚未上傳「${trkBrandLabel()}」的應進清單，點「📤 上傳應進清單」或直接把檔案拖曳到這個框框開始</div>`;
-    document.getElementById('trkExpMissingWrap').innerHTML = '';
-    document.getElementById('trkExpDupWrap').innerHTML = '';
-    return;
-  }
-  const isGap = currentBrand === 'GAP';
-  const foundN = cmp.found.length, missN = cmp.missing.length, dupN = cmp.dup.length;
-
-  sumEl.innerHTML = `
-    <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px">
-      <span style="background:rgba(0,42,92,0.06);color:var(--text);border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">應進 ${cmp.expectedCount}</span>
-      <span style="background:rgba(22,101,52,0.08);color:#166534;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">已進 ${foundN}</span>
-      <span style="background:rgba(185,28,28,0.08);color:#b91c1c;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">未進 ${missN}</span>
-      ${dupN ? `<span style="background:rgba(217,119,6,0.1);color:#92400e;border-radius:14px;padding:4px 14px;font-size:13px;font-weight:700">⚠️ 疑似重複進單 ${dupN}</span>` : ''}
-    </div>`;
-
-  const missWrap = document.getElementById('trkExpMissingWrap');
-  if (!missN) {
-    missWrap.innerHTML = `<div class="card" style="text-align:center;padding:16px;color:#166534;font-size:13px">🎉 全部都已經進單了</div>`;
-  } else {
-    missWrap.innerHTML = `
-      <div style="font-size:14px;font-weight:700;color:#b91c1c;margin:14px 0 8px">❌ 未進（${missN}）</div>
-      <div class="card" style="overflow-x:auto;padding:6px 0">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr style="border-bottom:2px solid var(--border)">
-            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">款號</th>
-            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">Gender</th>
-            ${isGap ? '<th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">SUBGROUP</th>' : ''}
-            <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">業務</th>
-            <th style="padding:8px 12px"></th>
-          </tr></thead>
-          <tbody>${cmp.missing.map(m => `
-            <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600">
-                ${escHtml(m.bom)}
-                ${m.info.source === '手動新增' ? '<span style="margin-left:6px;font-size:10.5px;font-weight:600;color:#92400e;background:rgba(217,119,6,0.12);border-radius:8px;padding:1px 7px;font-family:inherit">✏️ 手動</span>' : ''}
-                ${m.info.note ? `<div style="font-size:11.5px;color:var(--text-dim);font-weight:400;font-family:inherit;margin-top:2px">📝 ${escHtml(m.info.note)}</div>` : ''}
-              </td>
-              <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.gender || '—')}</td>
-              ${isGap ? `<td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.subgroup || '—')}</td>` : ''}
-              <td style="padding:8px 12px;color:var(--text-dim)">${escHtml(m.info.owner || '—')}</td>
-              <td style="padding:8px 12px"><button onclick="trkExpDeleteBom('${encodeURIComponent(m.bom)}')" title="從應進清單刪除這筆" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px">🗑️</button></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-  }
-
-  const dupWrap = document.getElementById('trkExpDupWrap');
-  dupWrap.innerHTML = !dupN ? '' : `
-    <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">⚠️ 系統資料裡疑似重複進單（同款號對到多筆不同 Style，${dupN}）</div>
-    <div class="card" style="overflow-x:auto;padding:6px 0">
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">款號</th>
-          <th style="text-align:left;padding:8px 12px;color:var(--text-dim);font-weight:600">重複明細（Style／狀態／需求日）</th>
-        </tr></thead>
-        <tbody>${cmp.dup.map(d => `
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600;white-space:nowrap;vertical-align:top">${escHtml(d.bom)}</td>
-            <td style="padding:8px 12px;color:var(--text-dim)">${d.rows.map(r => `<div>${escHtml(r['Style'])}　${escHtml(r['狀態'] || '')}　${escHtml(r['需求日'] || '')}</div>`).join('')}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-// ── 拖曳上傳（通用，兩個框框／按鈕共用）──────────
-function trkDragOver(ev, id) {
-  ev.preventDefault();
-  const el = document.getElementById(id);
-  if (el) { el.style.outline = '2px dashed var(--gap-blue)'; el.style.outlineOffset = '-2px'; el.style.background = 'rgba(29,78,216,0.05)'; }
-}
-function trkDragLeave(ev, id) {
-  const el = document.getElementById(id);
-  if (el) { el.style.outline = 'none'; el.style.background = 'transparent'; }
-}
-function trkDropFile(ev, id, handler) {
-  ev.preventDefault();
-  trkDragLeave(ev, id);
-  const file = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
-  if (file) handler(file);
-}
-
-// ── 丟錯框偵測（兩個上傳框長得像，內容特徵不一樣，互相提醒）──
-function trkLooksLikeExpectedList(ws) {
-  try {
-    const raw2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-    let hits = 0, checked = 0;
-    for (const row of raw2D) {
-      for (const cell of row) {
-        checked++;
-        if (TRK_BOM_RE.test(String(cell || '').trim())) hits++;
-      }
-      if (checked > 6000) break;
-    }
-    return hits >= 3; // 抓到 3 個以上「D+6碼」款號，就當作像應進清單
-  } catch (e) { return false; }
-}
-function trkLooksLikeDpcExport(raw2D) {
-  for (let i = 0; i < Math.min(3, raw2D.length); i++) {
-    const row = raw2D[i].map(c => String(c || '').trim());
-    if (row.includes('單別') && row.includes('Customer')) return true;
-  }
-  return false;
-}
-
-// ── Excel 上傳解析 ─────────────────────────────
-function trkCell(v) {
-  if (v instanceof Date) {
-    const y = v.getFullYear(), m = String(v.getMonth() + 1).padStart(2, '0'), d = String(v.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-  if (v === null || v === undefined) return '';
-  return String(v).trim();
-}
-
-async function uploadTrackerExcel(file) {
-  if (!file) return;
-  const box = document.getElementById('trkUploadStatus');
-  box.style.display = 'block';
-  box.style.color = 'var(--text-dim)';
-  box.textContent = '⏳ 解析中…';
-  try {
-    const XLSX = await loadXLSX();
-    const buf = await file.arrayBuffer();
-    const wb  = XLSX.read(buf, { cellDates: true });
-    const ws  = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-    if (!raw.length) throw new Error('檔案裡讀不到資料列');
-    if (!('單別' in raw[0]) || !('Customer' in raw[0])) {
-      if (trkLooksLikeExpectedList(ws)) {
-        throw new Error('這個檔案看起來像業務給的「應進清單」，不是 SampleSchedule「匯出待辦」的檔案，請改丟下面「📋 應進清單比對」的橘框');
-      }
-      throw new Error('格式不符：找不到「單別」或「Customer」欄位');
-    }
-
-    const rows = raw
-      .filter(r => String(r['單別']).trim() === TRK_ORDER_TYPE
-                && TRK_CUSTOMERS.includes(String(r['Customer']).trim()))
-      .map(r => {
-        const o = {};
-        TRK_COLS.forEach(c => o[c] = trkCell(r[c]));
-        return o;
-      });
-    if (!rows.length) throw new Error('篩選後沒有符合的資料（GAP / GAP OUTLET / ATHLETA / OLD NAVY 的 3D單）');
-
-    const nGap = rows.filter(r => trkBrandOf(r) === 'GAP').length;
-    const nAth = rows.filter(r => trkBrandOf(r) === 'ATH').length;
-    const nOn  = rows.filter(r => trkBrandOf(r) === 'ON').length;
-    box.textContent = `☁️ 找到 ${rows.length} 款，儲存中…`;
-    await saveTrkEntry('import', { uploadedAt: new Date().toISOString(), rows });
-    box.style.color = '#166534';
-    box.textContent = `✅ 更新完成：共 ${rows.length} 款（GAP ${nGap}｜ATHLETA ${nAth}｜OLD NAVY ${nOn}）（${file.name}）`;
-    renderTrackerAll();
-  } catch (err) {
-    box.style.color = '#b91c1c';
-    box.textContent = '❌ 上傳失敗：' + err.message;
-  }
-}
-
-// ── 匯出（依目前篩選）──────────────────────────
-async function exportTrackerExcel() {
-  if (!trkBrandRows().length) { alert('目前品牌沒有資料可匯出'); return; }
-  const XLSX = await loadXLSX();
-  const sub = document.getElementById('trkFilterSub').value;
-  const st  = document.getElementById('trkFilterStatus').value;
-  const rows = trkBrandRows().filter(r =>
-    (!sub || r['SUBGROUP'] === sub) && (!st || r['狀態'] === st));
-  const header = [...TRK_COLS, '負責人', 'Miro 連結'];
-  const data = [header, ...rows.map(r => {
-    const m = trkManual[r['Style']] || {};
-    return [...TRK_COLS.map(c => r[c] || ''), m.owner || '', m.miro || ''];
-  })];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  const bn = currentBrand === 'ATH' ? 'ATHLETA' : currentBrand === 'ON' ? 'OLD NAVY' : 'GAP';
-  XLSX.utils.book_append_sheet(wb, ws, bn + ' 3D單');
-  XLSX.writeFile(wb, '開發追蹤_' + bn + '_3D單.xlsx');
 }
 
 // ── Feedback / 留言板 ───────────────────────────
@@ -4459,7 +3369,7 @@ const fbCatColors = {
   '業務':       { bg:'rgba(217,119,6,0.08)',   color:'#92400e',  border:'rgba(217,119,6,0.2)'   },
   'DPC':        { bg:'rgba(22,101,52,0.08)',   color:'#166534',  border:'rgba(22,101,52,0.2)'   },
   '客人':       { bg:'rgba(109,40,217,0.08)',  color:'#5b21b6',  border:'rgba(109,40,217,0.2)'  },
-  '其他':       { bg:'rgba(148,163,184,0.15)', color:'#cbd5e1',  border:'rgba(148,163,184,0.3)' },
+  '其他':       { bg:'rgba(148,163,184,0.15)', color:'#475569',  border:'rgba(148,163,184,0.3)' },
 };
 
 const fbStatusColors = {
@@ -4558,7 +3468,7 @@ function renderFeedbackList(data) {
     const c = fbCatColors[cat] || fbCatColors['其他'];
     const status = f.status || '待改善';
     const sc = fbStatusColors[status] || fbStatusColors['待改善'];
-    // 留言板圖片沿用全站共用的縮放檢視器（滾輪縮放／拖曳／雙擊重置），與其他頁面的圖片操作一致
+    // 留言板圖片沿用全站共用的縮放檢視器（滾輪縮放／拖曳／點兩下還原），與其他頁面的圖片操作一致
     const fbImgs = [f.image_url, f.image_url2].filter(Boolean);
     if (fbImgs.length) __imgLists['fb-' + f.id] = fbImgs;
     return `
@@ -4594,7 +3504,7 @@ function renderFeedbackList(data) {
             ${fbImgs.length ? `
               <div style="flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap">
                 ${fbImgs.map((url, i) => `
-                  <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],${i},'意見回饋圖片')" title="點擊放大">
+                  <div style="position:relative;cursor:zoom-in" onclick="event.stopPropagation();openImgZoom(__imgLists['fb-${f.id}'],${i},'意見回饋圖片')" title="點選放大">
                     <img src="${escHtml(url)}" loading="lazy" style="width:200px;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
                     <div style="position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,0.9);color:#374151;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px">🔍 放大</div>
                   </div>
@@ -4699,7 +3609,7 @@ async function submitFeedback() {
 async function deleteFeedback(id) {
   if (!confirm('確定要刪除這則留言嗎？')) return;
   await sb.from('feedback').delete().eq('id', id);
-  allFeedbackData = allFeedbackData.filter(f => f.id !== id);
+  allFeedbackData = allFeedbackData.filter(f => String(f.id) !== String(id));
   renderFeedbackList(allFeedbackData);
 }
 
@@ -4710,7 +3620,7 @@ function loadExcelJS() {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
     s.onload  = () => resolve(window.ExcelJS);
-    s.onerror = () => reject(new Error('ExcelJS library 載入失敗，請檢查網路'));
+    s.onerror = () => reject(new Error('匯出功能載入失敗，請檢查網路後重新整理'));
     document.head.appendChild(s);
   });
 }
@@ -4897,7 +3807,7 @@ async function saveEdit(id) {
   const { error } = await sb.from('feedback').update({ content, author }).eq('id', id);
   if (error) { alert('儲存失敗：' + error.message); return; }
   // update local data
-  const item = allFeedbackData.find(f => f.id === id);
+  const item = allFeedbackData.find(f => String(f.id) === String(id));
   if (item) { item.content = content; item.author = author; }
   renderFeedbackList(allFeedbackData);
 }
@@ -4907,7 +3817,7 @@ function formatDate(iso) {
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
-// ── Global copy handler：點擊任何 .copy-value 即複製 ──
+// ── Global copy handler：點選任何 .copy-value 即複製 ──
 document.addEventListener('click', e => {
   const btn = e.target.closest('.copy-value');
   if (!btn) return;
@@ -4928,6 +3838,1292 @@ document.addEventListener('click', e => {
 
 // ── Start ──────────────────────────────────────
 init();
+</script>
+
+<!-- ══════════ 主頁編輯模式 ══════════ -->
+<div id="emDock" style="display:none">
+  <span class="em-dock-label">✏️ 編輯模式</span>
+  <button onclick="openNewEntry()">＋ 新增卡片</button>
+  <button onclick="openSectionManager()">⚙️ 分類</button>
+  <button onclick="openStageCfg()">🎬 Stage</button>
+  <button onclick="openCpCfg()">🎨 非正單</button>
+  <button onclick="openAccountsManager()">🔑 帳號</button>
+  <button class="done" onclick="setEditMode(false)">✅ 完成</button>
+</div>
+<div id="emToast"></div>
+<div id="emRoot">
+<div class="overlay" id="modalOverlay">
+  <div class="modal modal-entry">
+    <div class="brand-strip" id="modalBrandStrip"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h3 id="modalTitle">新增卡片</h3>
+      <button class="icon-btn" id="previewToggleBtn" onclick="togglePreviewPane()" title="隱藏/顯示預覽">👁</button>
+    </div>
+    <div id="modalProtectedWarning"></div>
+    <div class="entry-edit-grid">
+    <div class="form-col">
+    <div class="field">
+      <label>所屬分類</label>
+      <select id="fSection"></select>
+    </div>
+    <div class="field">
+      <label>標題</label>
+      <input id="fTitle" placeholder="例如：粒子/碰撞設定">
+    </div>
+    <div class="field">
+      <label>內容（支援換行）</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+        <button type="button" onclick="wrapSel('**','**')" title="粗體" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">B</button>
+        <button type="button" onclick="wrapSel('==','==')" title="螢光筆" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:#fde047;color:#1a1a1a;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">螢光</button>
+        <button type="button" onclick="wrapSel('!!','!!')" title="紅字" style="min-width:30px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:#f87171;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">紅字</button>
+        <span style="font-size:11px;color:#94a3b8">選取文字後點按鈕，或手打 **粗體**、==螢光==、!!紅字!!</span>
+      </div>
+      <textarea id="fContent" rows="6" placeholder="詳細說明…"></textarea>
+    </div>
+    <div class="field">
+      <label>路徑（可多個）</label>
+      <div class="path-list" id="pathList"></div>
+      <button class="add-path-btn" onclick="addPathField()">＋ 新增路徑</button>
+    </div>
+    <div class="field">
+      <label>圖片（可多張）</label>
+      <div id="imgThumbList" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <input type="file" id="fImgInput" accept="image/*" multiple style="display:none" onchange="handleEntryImages(event)">
+      <button class="add-path-btn" onclick="document.getElementById('fImgInput').click()">＋ 上傳圖片</button>
+      <span id="imgUploadStatus" style="font-size:12px;color:#94a3b8;margin-left:8px"></span>
+    </div>
+    <div class="field">
+      <label>來源標籤</label>
+      <select id="fSource">
+        <option value="internal">🟡 內部SOP</option>
+        <option value="official">🔵 官方規範</option>
+        <option value="warning">🔴 重要注意</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="fBrandsLabel">適用品牌（不勾＝全品牌共用；可複選）</label>
+      <div class="brand-chip-group" id="fBrandGroup">
+        <label class="brand-chip" data-brand="GAP"><input type="checkbox" class="brand-cb" value="GAP" onchange="updateBrandWarning()"><span class="dot" style="background:#3b7dd8"></span>GAP</label>
+        <label class="brand-chip" data-brand="ATH"><input type="checkbox" class="brand-cb" value="ATH" onchange="updateBrandWarning()"><span class="dot" style="background:#a78bfa"></span>ATHLETA</label>
+        <label class="brand-chip" data-brand="ON"><input type="checkbox" class="brand-cb" value="ON" onchange="updateBrandWarning()"><span class="dot" style="background:#0057B8"></span>OLD NAVY</label>
+        <label class="brand-chip" data-brand="BR"><input type="checkbox" class="brand-cb" value="BR" onchange="updateBrandWarning()"><span class="dot" style="background:#c2a878"></span>BANANA REPUBLIC</label>
+      </div>
+      <div class="brand-warning" id="brandWarning"></div>
+    </div>
+    <div class="field" id="stageField" style="display:none">
+      <label>所屬 Stage（可複選）</label>
+      <div id="fStageGroup" style="display:flex;flex-wrap:wrap;gap:6px 14px">
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="block"     style="accent-color:var(--official)"> 3D Block</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="proto"     style="accent-color:var(--official)"> 3D Proto</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="la"        style="accent-color:var(--official)"> 3D LA</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="fit"       style="accent-color:var(--official)"> 3D Fit</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="sizeset"   style="accent-color:var(--official)"> 3D Size Set</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="reference" style="accent-color:var(--official)"> 3D RS</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer"><input type="checkbox" class="stage-cb" value="graphics"  style="accent-color:var(--official)"> 3D Graphics</label>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:6px">不勾＝只出現在「樣品種類」頁最下方；Prefit／細節／Checklist 頁至少要勾一個</div>
+    </div>
+    <div class="field">
+      <label>排序（數字越小越前面）</label>
+      <input id="fOrder" type="number" value="0">
+    </div>
+    </div><!-- /form-col -->
+    <div class="preview-col">
+      <div class="preview-head">👁 即時預覽</div>
+      <div class="preview-stage"><div id="entryPreview"></div></div>
+      <div class="pv-hint">・路徑格式「標籤｜路徑或網址」，網址（http 開頭）顯示 🔗、其餘顯示 📋 copy<br>・預覽僅供參考，以實際頁面為準</div>
+    </div>
+    </div><!-- /entry-edit-grid -->
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteBtn" onclick="confirmDeleteEntry()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 帳號管理 Modal -->
+<div class="overlay" id="accountsModalOverlay">
+  <div class="modal" style="width:680px">
+    <h3>帳號管理</h3>
+    <div style="margin:16px 0 10px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="openNewAccount()">＋ 新增帳號</button>
+    </div>
+    <div id="accountsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAccountsModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯帳號 Modal -->
+<div class="overlay" id="accountEditOverlay">
+  <div class="modal" style="width:500px">
+    <h3 id="accountEditTitle">新增帳號</h3>
+    <div class="field">
+      <label>系統名稱</label>
+      <input id="acName" placeholder="例如：GAP INC">
+    </div>
+    <div class="field">
+      <label>帳號</label>
+      <input id="acUsername" placeholder="帳號" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input id="acPassword" placeholder="密碼" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>備註（可選）</label>
+      <input id="acNote" placeholder="例如：每季更新">
+    </div>
+    <div class="field">
+      <label>排序</label>
+      <input id="acOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="acDeleteBtn" onclick="confirmDeleteAccount()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeAccountEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveAccount()">儲存</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 分類管理 Modal -->
+<div class="overlay" id="sectionModalOverlay">
+  <div class="modal" style="width:680px">
+    <h3>管理分類</h3>
+    <div style="margin:16px 0 10px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="openNewSection()">＋ 新增分類</button>
+    </div>
+    <div id="sectionList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSectionModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯分類 Modal -->
+<div class="overlay" id="sectionEditOverlay">
+  <div class="modal" style="width:500px">
+    <h3 id="sectionEditTitle">新增分類</h3>
+    <div id="sectionProtectedWarning"></div>
+    <div class="field">
+      <label>分類名稱</label>
+      <input id="seName" placeholder="例如：各色 3D 定位">
+    </div>
+    <div class="field">
+      <label>網址代稱（英文）</label>
+      <input id="seSlug" placeholder="例如：color-placement" style="font-family:'DM Mono',monospace">
+    </div>
+    <div class="field">
+      <label>群組名稱</label>
+      <input id="seGroup" placeholder="例如：非正單（不上CLO-SET）">
+    </div>
+    <div class="field">
+      <label>圖示（emoji）</label>
+      <input id="seIcon" placeholder="例如：🎨" style="width:80px">
+    </div>
+    <div class="field">
+      <label>排序（數字越小越前面）</label>
+      <input id="seOrder" type="number" value="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="seDeleteBtn" onclick="confirmDeleteSection()" style="display:none">刪除</button>
+      <button class="btn btn-ghost" onclick="closeSectionEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveSection()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stage 設定 Modal -->
+<div class="overlay" id="stageCfgOverlay">
+  <div class="modal" style="width:780px;max-height:88vh;overflow-y:auto">
+    <h3>🎬 Stage 設定（樣品種類流程）</h3>
+    <div style="display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="scBrandGAP" onclick="switchStageCfgBrand('GAP')">🔵 GAP</button>
+      <button class="btn btn-ghost" id="scBrandATH" onclick="switchStageCfgBrand('ATH')">🟣 ATHLETA</button>
+      <button class="btn btn-ghost" id="scBrandON" onclick="switchStageCfgBrand('ON')">🔷 OLD NAVY</button>
+      <button class="btn btn-ghost" id="scBrandBR" onclick="switchStageCfgBrand('BR')">🟤 BANANA REPUBLIC</button>
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
+      各品牌分開設定。⚠️ 切換品牌前請先儲存
+    </div>
+    <div id="stageCfgList"></div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="scCopyTarget" style="padding:6px 8px"></select>
+        <button class="btn btn-ghost" onclick="confirmCopyStageCfg()">📋 複製過去</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeStageCfg()">關閉</button>
+        <button class="btn btn-primary" onclick="saveStageCfg()">💾 儲存目前品牌設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 非正單設定（各色 3D 定位）Modal -->
+<div class="overlay" id="cpCfgOverlay">
+  <div class="modal" style="width:840px;max-height:88vh;overflow-y:auto">
+    <h3>🎨 非正單流程設定（各色 3D 定位）</h3>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;line-height:1.6">
+      「各色 3D 定位」頁的五個步驟（僅 GAP）。文字可用 **粗體**、==螢光==、!!紅字!!
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">① 確認款式資訊</div>
+    <div class="path-list" id="cpStep1List"></div>
+    <button class="add-path-btn" onclick="cpAddStep1()">＋ 新增項目</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">② 製作</div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="cpStep2List"></div>
+    <button class="add-path-btn" onclick="cpAddStep2()">＋ 新增項目</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">③ 需要發 mail 嗎？</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:6px">✉️ 需要發 mail 的情況</div>
+        <div class="path-list" id="cpMailList"></div>
+        <button class="add-path-btn" onclick="cpAddMail()">＋ 新增</button>
+        <div class="field" style="margin-top:10px"><label>發給</label><input id="cpMailSendTo" placeholder="例如：發給：業務 ＋ YY 確認外觀"></div>
+        <div class="field"><label>主管／備註（可用 **粗體**）</label><input id="cpMailManager" placeholder="例如：**YY 主管：周育君（不 CC 小芬姊）**"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px">✅ 不用發 mail 的情況</div>
+        <div class="path-list" id="cpNoMailList"></div>
+        <button class="add-path-btn" onclick="cpAddNoMail()">＋ 新增</button>
+        <div class="field" style="margin-top:10px"><label>備註</label><input id="cpNoMailNote" placeholder="例如：直接結單"></div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">④ 出圖規範</div>
+    <div class="path-list" id="cpStep4NotesList"></div>
+    <button class="add-path-btn" onclick="cpAddStep4Note()">＋ 新增注意事項</button>
+    <div class="field" style="margin-top:12px">
+      <label>AI 拍照腳本路徑</label>
+      <input id="cpScriptPath" placeholder="\\192.168.1.220\3ddb\... 或（路徑待補）" style="font-family:'DM Mono',monospace">
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin:10px 0 6px">拍照角度表（款式情況／出圖方式／張數）</div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="cpPhotoTableList"></div>
+    <button class="add-path-btn" onclick="cpAddPhotoRow()">＋ 新增一列</button>
+
+    <div style="font-size:13px;font-weight:700;margin:20px 0 8px">⑤ 系統結單標籤</div>
+    <input id="cpStep5Label" placeholder="例如：系統結單（不上 CLO-SET）">
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCpCfg()">關閉</button>
+      <button class="btn btn-primary" onclick="saveCpCfg()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用二次確認 Modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-modal">
+    <div class="cm-icon" id="cmIcon">⚠️</div>
+    <h3 id="cmTitle">確定要刪除嗎？</h3>
+    <p id="cmBody"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="cmConfirmBtn">刪除</button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+let emEditingId = null;
+function isProtectedSection(s) {
+  if (!s) return false;
+  return s.slug === 'tracker-data' || s.slug === 'stage-config' || String(s.slug||'').startsWith('_') || String(s.group_name||'').startsWith('_');
+}
+
+function stripLeadingEmoji(name) {
+  return String(name||'').replace(/^[\u{1F1E6}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}]+\s*/u, '');
+}
+function entryBrandList(e) {
+  return String(e.brands||'').trim().toUpperCase().split(',').map(s=>s.trim()).filter(Boolean);
+}
+function getCheckedBrands() {
+  return [...document.querySelectorAll('#fBrandGroup .brand-cb:checked')].map(cb => cb.value);
+}
+const BRAND_META = {
+  GAP: { icon: '🔵', label: 'GAP',       color: 'var(--gap-navy)' },
+  ATH: { icon: '🟣', label: 'ATHLETA',   color: '#6C5B87' },
+  ON:  { icon: '🔷', label: 'OLD NAVY',  color: '#0057B8' },
+  BR:  { icon: '🟤', label: 'BANANA REPUBLIC', color: '#8A7452' },
+};
+function updateBrandWarning() {
+  const brands = getCheckedBrands();
+  const w = document.getElementById('brandWarning');
+  w.className = 'brand-warning show';
+  const strip = document.getElementById('modalBrandStrip');
+  if (!brands.length) {
+    w.classList.add('bw-shared');
+    w.innerHTML = '🌐 <strong>全品牌共用</strong>：四個品牌會同時變更';
+    strip.style.background = 'rgba(148,163,184,0.5)';
+    return;
+  }
+  if (brands.length === 1) {
+    const m = BRAND_META[brands[0]];
+    w.classList.add('bw-' + brands[0].toLowerCase());
+    w.innerHTML = `${m.icon} <strong>${m.label} 專屬</strong>：只在 ${m.label} 顯示`;
+    strip.style.background = m.color;
+    return;
+  }
+  // 複選品牌：組合訊息
+  const metas = brands.map(b => BRAND_META[b]);
+  const allBrands = Object.keys(BRAND_META);
+  const excluded = allBrands.filter(b => !brands.includes(b)).map(b => BRAND_META[b].label);
+  w.innerHTML = `${metas.map(m => m.icon).join('')} <strong>${metas.map(m => m.label).join(' + ')}</strong> 適用${excluded.length ? `（${excluded.join('、')} 不顯示）` : ''}`;
+  strip.style.background = `linear-gradient(90deg, ${metas.map(m => m.color).join(', ')})`;
+}
+
+function openNewEntry() {
+  emFillSectionSelect();
+  emEditingId = null;
+  document.getElementById('modalTitle').textContent = '新增卡片';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fContent').value = '';
+  document.getElementById('fSource').value = 'internal';
+  document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
+  document.getElementById('fOrder').value = 0;
+  document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = false);
+  document.getElementById('fSection').value = emCurSectionId() || allSections[0]?.id;
+  document.getElementById('pathList').innerHTML = '';
+  entryImages = [];
+  renderImgThumbs();
+  toggleStageField(emCurSectionId());
+  renderModalProtectedWarning(emCurSectionId());
+  // 在 Stage 相關頁新增時，自動勾目前所在的 Stage
+  if (document.getElementById('stageField').style.display !== 'none' && typeof currentStageKey !== 'undefined') {
+    document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = (cb.value === currentStageKey));
+  }
+  updateBrandWarning();
+  renderEntryPreview();
+  applyPreviewPanePref();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEditEntry(id) {
+  emFillSectionSelect();
+  const e = allEntries.find(x=>String(x.id)===String(id));
+  if (e) id = e.id;
+  emEditingId = id;
+  if (!e) return;
+  document.getElementById('modalTitle').textContent = '編輯卡片';
+  document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('fTitle').value = e.title||'';
+  document.getElementById('fContent').value = e.content||'';
+  document.getElementById('fSource').value = e.source||'internal';
+  { const bArr = entryBrandList(e).filter(b => b !== 'ALL');
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = bArr.includes(cb.value)); }
+  document.getElementById('fOrder').value = e.sort_order||0;
+  document.getElementById('fSection').value = e.section_id;
+  { const arr = e.stage == null || e.stage === '' ? [] : (Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s=>s.trim()).filter(Boolean));
+    document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = arr.includes(cb.value)); }
+  document.getElementById('pathList').innerHTML = '';
+  (e.paths||[]).forEach(p => addPathField(p));
+  entryImages = [...(e.images||[])];
+  renderImgThumbs();
+  toggleStageField(e.section_id);
+  renderModalProtectedWarning(e.section_id);
+  updateBrandWarning();
+  renderEntryPreview();
+  applyPreviewPanePref();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function duplicateEntry(id) {
+  openEditEntry(id);          // 先沿用編輯的帶入邏輯填滿表單
+  emEditingId = null;      // 但清除編輯目標 → 儲存時會 insert 成新卡片
+  document.getElementById('modalTitle').textContent = '📄 複製卡片';
+  document.getElementById('deleteBtn').style.display = 'none';  // 複製模式不能刪（沒有目標可刪）
+  // 品牌自動輪替：GAP→ATH→ON→GAP；共用／多品牌維持原樣（自行調整）
+  const rot = { GAP: 'ATH', ATH: 'ON', ON: 'BR', BR: 'GAP' };
+  const checked = getCheckedBrands();
+  if (checked.length === 1 && rot[checked[0]]) {
+    document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = (cb.value === rot[checked[0]]));
+  }
+  updateBrandWarning();
+  renderEntryPreview();
+  showToast('已複製，調整後按儲存', '');
+}
+
+function renderModalProtectedWarning(sectionId) {
+  const sec = allSections.find(s => String(s.id) === String(sectionId));
+  document.getElementById('modalProtectedWarning').innerHTML = isProtectedSection(sec)
+    ? `<div class="protected-banner">🔒 <strong>系統用分類</strong>，請小心修改</div>`
+    : '';
+}
+
+function toggleStageField(sectionId) {
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist','closet'].includes(s.slug)
+  );
+  const show = stageSections.some(s => String(s.id) === String(sectionId));
+  document.getElementById('stageField').style.display = show ? 'block' : 'none';
+}
+
+document.getElementById('fSection').addEventListener('change', function() {
+  toggleStageField(this.value);
+  renderModalProtectedWarning(this.value);
+});
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function togglePreviewPane() {
+  const grid = document.querySelector('.entry-edit-grid');
+  grid.classList.toggle('preview-hidden');
+  try{localStorage.setItem('gap3d_admin_preview_hidden', grid.classList.contains('preview-hidden') ? '1' : '0');}catch(e){}
+}
+function applyPreviewPanePref() {
+  let h = false; try { h = localStorage.getItem('gap3d_admin_preview_hidden') === '1'; } catch (e) {}
+  document.querySelector('.entry-edit-grid').classList.toggle('preview-hidden', h);
+}
+
+function addPathField(val='') {
+  const div = document.createElement('div');
+  div.className = 'path-item';
+  div.innerHTML = `<input type="text" placeholder="\\\\192.168.1.220\\3ddb\\..." value="${esc(val)}"><button class="btn btn-danger" onclick="this.parentElement.remove();renderEntryPreview()" style="padding:5px 10px">✕</button>`;
+  document.getElementById('pathList').appendChild(div);
+  renderEntryPreview();
+}
+
+// ── 格式工具列：把選取文字包上標記符號 ──
+function wrapSel(pre, post) {
+  const ta = document.getElementById('fContent');
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  const val = ta.value;
+  const sel = val.slice(s, e) || '重點文字';
+  ta.value = val.slice(0, s) + pre + sel + post + val.slice(e);
+  ta.focus();
+  ta.selectionStart = s + pre.length;
+  ta.selectionEnd = s + pre.length + sel.length;
+  renderEntryPreview();
+}
+
+
+// ── 前台即時預覽(模仿 index 的 renderCard 亮色卡片) ──
+function renderEntryPreview() {
+  const box = document.getElementById('entryPreview');
+  if (!box) return;
+  const title   = document.getElementById('fTitle').value.trim();
+  const content = document.getElementById('fContent').value;
+  const source  = document.getElementById('fSource').value;
+  const brands  = getCheckedBrands();
+  const paths   = [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean);
+
+  const badgeCls = { official:'pv-official', internal:'pv-internal', warning:'pv-warning' };
+  const badgeTxt = { official:'官方規範', internal:'內部SOP', warning:'重要注意' };
+  const allBrandKeys = Object.keys(BRAND_META);
+  const brandTag = (brands.length && allBrandKeys.every(b => brands.includes(b)))
+    ? '<span class="pv-brand pv-brand-SHARED">🌐 全品牌共用</span>'
+    : brands.map(b => `<span class="pv-brand pv-brand-${b}">${BRAND_ABBR[b] || BRAND_META[b]?.label || b}</span>`).join(' ');
+
+  const pathsHtml = paths.length ? `<div class="pv-paths">${paths.map(raw => {
+    const idx = raw.indexOf('｜');
+    const label = idx > -1 ? raw.slice(0, idx) : '';
+    const val   = idx > -1 ? raw.slice(idx + 1) : raw;
+    const isUrl = /^https?:\/\//i.test(val);
+    return `<div class="pv-path"><span class="pv-pill">${isUrl ? '🔗 開啟' : '📋 copy'}</span>${label ? `<strong>${esc(label)}</strong>` : ''}<code>${esc(val)}</code></div>`;
+  }).join('')}</div>` : '';
+
+  box.innerHTML = `
+    <div class="pv-card">
+      <div class="pv-header">
+        <div class="pv-title">${title ? esc(title) : '<span style="color:#cbd5e1">（標題）</span>'} ${brandTag}</div>
+        <span class="pv-badge ${badgeCls[source] || 'pv-internal'}">${badgeTxt[source] || '內部SOP'}</span>
+      </div>
+      ${content ? `<div class="pv-content">${fmtMarks(esc(content))}</div>` : '<div class="pv-content" style="color:#cbd5e1">（內容）</div>'}
+      ${(typeof entryImages !== 'undefined' && entryImages.length) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${entryImages.map(u => `<img src="${esc(u)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #dde1e9">`).join('')}</div>` : ''}
+      ${pathsHtml}
+    </div>`;
+}
+
+// 即時更新掛線
+['fTitle','fContent'].forEach(id => document.getElementById(id).addEventListener('input', renderEntryPreview));
+document.getElementById('fSource').addEventListener('change', renderEntryPreview);
+document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.addEventListener('change', renderEntryPreview));
+document.getElementById('pathList').addEventListener('input', renderEntryPreview);
+
+async function saveEntry() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { showToast('請填寫標題','error'); return; }
+  const section_id = document.getElementById('fSection').value;
+  const stageSections = allSections.filter(s =>
+    ['stages','prefit','details','checklist','closet'].includes(s.slug)
+  );
+  const isStageSection = stageSections.some(s => String(s.id) === String(section_id));
+
+  const payload = {
+    section_id,
+    title,
+    content:      document.getElementById('fContent').value.trim(),
+    source:       document.getElementById('fSource').value,
+    sort_order:   parseInt(document.getElementById('fOrder').value)||0,
+    paths:        [...document.querySelectorAll('#pathList .path-item input')].map(i=>i.value.trim()).filter(Boolean),
+    images:       entryImages,
+    stage:        isStageSection ? ([...document.querySelectorAll('#fStageGroup .stage-cb:checked')].map(cb=>cb.value).join(',') || null) : null,
+    brands:       getCheckedBrands().join(',') || null,
+  };
+
+  const { error } = emEditingId
+    ? await sb.from('entries').update(payload).eq('id', emEditingId)
+    : await sb.from('entries').insert(payload);
+
+  if (error) {
+    if (String(error.message).includes('images')) {
+      showToast('儲存失敗：圖片功能尚未開通，請聯絡 Adia','error');
+    } else if (String(error.message).includes('brands')) {
+      showToast('儲存失敗：品牌功能尚未開通，請聯絡 Adia','error');
+    } else {
+      showToast('儲存失敗：'+error.message,'error');
+    }
+  }
+  else { showToast('儲存成功 ✓','success'); closeModal(); await loadData(); emAfterChange(); }
+}
+
+function confirmDeleteEntry() {
+  if (!emEditingId) return;
+  const e = allEntries.find(x=>String(x.id)===String(emEditingId));
+  openConfirm({
+    title: '確定要刪除這張卡片？',
+    body: `「${e?.title||''}」刪除後無法復原。`,
+    onConfirm: deleteEntry,
+  });
+}
+async function deleteEntry() {
+  const { error } = await sb.from('entries').delete().eq('id', emEditingId);
+  if (error) { showToast('刪除失敗','error'); }
+  else { showToast('已刪除','success'); closeModal(); await loadData(); emAfterChange(); }
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 通用二次確認 ──────────────────────────────
+let confirmCb = null;
+function openConfirm({title, body, onConfirm, icon='⚠️', confirmLabel='刪除'}) {
+  document.getElementById('cmIcon').textContent = icon;
+  document.getElementById('cmTitle').textContent = title;
+  document.getElementById('cmBody').textContent = body;
+  const btn = document.getElementById('cmConfirmBtn');
+  btn.textContent = confirmLabel;
+  confirmCb = onConfirm;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); confirmCb = null; }
+document.getElementById('cmConfirmBtn').addEventListener('click', () => {
+  const cb = confirmCb;
+  closeConfirm();
+  if (cb) cb();
+});
+
+// ── 帳號管理 ──────────────────────────────────
+let allAccounts = [];
+let editingAccountId = null;
+
+async function openAccountsManager() {
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
+  document.getElementById('accountsModalOverlay').classList.add('open');
+}
+function closeAccountsModal() {
+  document.getElementById('accountsModalOverlay').classList.remove('open');
+}
+
+function renderAccountsList() {
+  const el = document.getElementById('accountsList');
+  if (!allAccounts.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:12px">尚無帳號</div>';
+    return;
+  }
+  el.innerHTML = allAccounts.map(a => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(a.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;font-family:'DM Mono',monospace">
+          ${esc(a.username||'')} ／ ${a.password ? '••••••' : '—'}
+        </div>
+        ${a.note ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px">${esc(a.note)}</div>` : ''}
+      </div>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="openEditAccount('${a.id}')">✏️ 編輯</button>
+    </div>
+  `).join('');
+}
+
+function openNewAccount() {
+  editingAccountId = null;
+  document.getElementById('accountEditTitle').textContent = '新增帳號';
+  document.getElementById('acDeleteBtn').style.display = 'none';
+  ['acName','acUsername','acPassword','acNote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('acOrder').value = allAccounts.length;
+  document.getElementById('accountEditOverlay').classList.add('open');
+}
+
+function openEditAccount(id) {
+  editingAccountId = id;
+  const a = allAccounts.find(x => String(x.id) === String(id));
+  if (a) editingAccountId = a.id;
+  if (!a) return;
+  document.getElementById('accountEditTitle').textContent = '編輯帳號';
+  document.getElementById('acDeleteBtn').style.display = 'block';
+  document.getElementById('acName').value     = a.name     || '';
+  document.getElementById('acUsername').value = a.username || '';
+  document.getElementById('acPassword').value = a.password || '';
+  document.getElementById('acNote').value     = a.note     || '';
+  document.getElementById('acOrder').value    = a.sort_order || 0;
+  document.getElementById('accountEditOverlay').classList.add('open');
+}
+
+function closeAccountEdit() {
+  document.getElementById('accountEditOverlay').classList.remove('open');
+}
+
+async function saveAccount() {
+  const name = document.getElementById('acName').value.trim();
+  if (!name) { showToast('請填寫系統名稱', 'error'); return; }
+  const payload = {
+    name,
+    username:   document.getElementById('acUsername').value.trim(),
+    password:   document.getElementById('acPassword').value.trim(),
+    note:       document.getElementById('acNote').value.trim() || null,
+    sort_order: parseInt(document.getElementById('acOrder').value) || 0,
+  };
+  const { error } = editingAccountId
+    ? await sb.from('accounts').update(payload).eq('id', editingAccountId)
+    : await sb.from('accounts').insert(payload);
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  showToast('儲存成功 ✓', 'success');
+  closeAccountEdit();
+  emAfterChange();
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
+}
+
+function confirmDeleteAccount() {
+  if (!editingAccountId) return;
+  const a = allAccounts.find(x=>String(x.id)===String(editingAccountId));
+  openConfirm({
+    title: '確定要刪除這個帳號？',
+    body: `「${a?.name||''}」刪除後無法復原。`,
+    onConfirm: deleteAccount,
+  });
+}
+async function deleteAccount() {
+  const { error } = await sb.from('accounts').delete().eq('id', editingAccountId);
+  if (error) { showToast('刪除失敗', 'error'); return; }
+  showToast('已刪除', 'success');
+  closeAccountEdit();
+  emAfterChange();
+  const { data } = await sb.from('accounts').select('*').order('sort_order');
+  allAccounts = data || [];
+  renderAccountsList();
+}
+
+// ── 分類管理 ──────────────────────────────────
+let editingSectionId = null;
+
+function openSectionManager() {
+  renderSectionList();
+  document.getElementById('sectionModalOverlay').classList.add('open');
+}
+function closeSectionModal() {
+  document.getElementById('sectionModalOverlay').classList.remove('open');
+}
+
+function renderSectionList() {
+  const el = document.getElementById('sectionList');
+  if (!allSections.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:12px">尚無分類</div>';
+    return;
+  }
+  el.innerHTML = allSections.map(s => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:18px;width:28px;text-align:center">${s.icon||'📁'}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(s.name)}${isProtectedSection(s)?' <span style="font-size:11px;color:#b45309">🔒 系統用</span>':''}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+          slug: <span style="font-family:'DM Mono',monospace">${esc(s.slug)}</span>
+          &nbsp;·&nbsp; 群組: ${esc(s.group_name)}
+          &nbsp;·&nbsp; 排序: ${s.sort_order}
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="openEditSection('${s.id}')">✏️ 編輯</button>
+    </div>
+  `).join('');
+}
+
+function openNewSection() {
+  editingSectionId = null;
+  document.getElementById('sectionEditTitle').textContent = '新增分類';
+  document.getElementById('seDeleteBtn').style.display = 'none';
+  document.getElementById('sectionProtectedWarning').innerHTML = '';
+  document.getElementById('seName').value = '';
+  document.getElementById('seSlug').value = '';
+  document.getElementById('seGroup').value = '';
+  document.getElementById('seIcon').value = '';
+  document.getElementById('seOrder').value = allSections.length;
+  document.getElementById('sectionEditOverlay').classList.add('open');
+}
+
+function openEditSection(id) {
+  editingSectionId = id;
+  const s = allSections.find(x => String(x.id) === String(id));
+  if (!s) return;
+  editingSectionId = s.id;
+  document.getElementById('sectionEditTitle').textContent = '編輯分類';
+  document.getElementById('seDeleteBtn').style.display = 'block';
+  document.getElementById('seName').value  = s.name || '';
+  document.getElementById('seSlug').value  = s.slug || '';
+  document.getElementById('seGroup').value = s.group_name || '';
+  document.getElementById('seIcon').value  = s.icon || '';
+  document.getElementById('seOrder').value = s.sort_order || 0;
+  document.getElementById('sectionProtectedWarning').innerHTML = isProtectedSection(s)
+    ? `<div class="protected-banner">🔒 <strong>系統用分類</strong>，請勿改網址代稱</div>`
+    : '';
+  document.getElementById('sectionEditOverlay').classList.add('open');
+}
+
+function closeSectionEdit() {
+  document.getElementById('sectionEditOverlay').classList.remove('open');
+}
+
+async function saveSection() {
+  const name  = document.getElementById('seName').value.trim();
+  const slug  = document.getElementById('seSlug').value.trim();
+  const group = document.getElementById('seGroup').value.trim();
+  if (!name || !slug || !group) { showToast('請填寫名稱、網址代稱和群組', 'error'); return; }
+
+  const payload = {
+    name,
+    slug,
+    group_name:  group,
+    icon:        document.getElementById('seIcon').value.trim() || null,
+    sort_order:  parseInt(document.getElementById('seOrder').value) || 0,
+  };
+
+  const { error } = editingSectionId
+    ? await sb.from('sections').update(payload).eq('id', editingSectionId)
+    : await sb.from('sections').insert(payload);
+
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  showToast('儲存成功 ✓', 'success');
+  closeSectionEdit();
+  await loadData();
+  emAfterChange();
+  renderSectionList();
+}
+
+function confirmDeleteSection() {
+  if (!editingSectionId) return;
+  const s = allSections.find(x => String(x.id) === String(editingSectionId));
+  const hasEntries = allEntries.some(e => String(e.section_id) === String(editingSectionId));
+  if (hasEntries) {
+    showToast('此分類還有卡片，請先刪除', 'error'); return;
+  }
+  openConfirm({
+    title: `確定要刪除「${s?.name||''}」？`,
+    body: isProtectedSection(s)
+      ? '這是系統用分類，刪除可能讓部分頁面出錯。'
+      : '刪除後會從左側選單消失。',
+    onConfirm: deleteSection,
+  });
+}
+async function deleteSection() {
+  const { error } = await sb.from('sections').delete().eq('id', editingSectionId);
+  if (error) { showToast('刪除失敗：' + error.message, 'error'); return; }
+  showToast('已刪除', 'success');
+  closeSectionEdit();
+  await loadData();
+  emAfterChange();
+  renderSectionList();
+}
+
+// ── 卡片圖片上傳（entry-images bucket）───────
+let entryImages = [];
+
+function renderImgThumbs() {
+  const el = document.getElementById('imgThumbList');
+  if (!el) return;
+  el.innerHTML = entryImages.map((u, i) => `
+    <div style="position:relative">
+      <img src="${esc(u)}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+      <button onclick="removeEntryImage(${i})" title="移除此圖片"
+        style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1">✕</button>
+    </div>
+  `).join('');
+  renderEntryPreview();
+}
+
+function removeEntryImage(i) {
+  entryImages.splice(i, 1);
+  renderImgThumbs();
+}
+
+async function handleEntryImages(ev) {
+  const files = [...ev.target.files];
+  ev.target.value = '';
+  if (!files.length) return;
+  const status = document.getElementById('imgUploadStatus');
+  for (let i = 0; i < files.length; i++) {
+    status.textContent = `上傳中 ${i+1}/${files.length}…`;
+    const f = files[i];
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safe}`;
+    const { error } = await sb.storage.from('entry-images').upload(path, f);
+    if (error) {
+      showToast('圖片上傳失敗，請聯絡 Adia（' + error.message + '）', 'error');
+      break;
+    }
+    const { data } = sb.storage.from('entry-images').getPublicUrl(path);
+    entryImages.push(data.publicUrl);
+    renderImgThumbs();
+  }
+  status.textContent = '';
+}
+
+// ── Stage 設定（樣品種類流程，各品牌各自一份）──
+// avatar 欄位：'show'＝顯示人台、'hide'＝隱藏人台
+const SC_POSE_TOPS = '・Tops / Dresses / Bras / OW：Regular + Starting Pose\n・Bottoms：Regular Pose';
+const SC_DEFAULTS = [
+  { key:'block',     num:1, name:'3D Block',    subtitle:'Foundational Asset',              tagColor:'#222222', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'proto',     num:2, name:'3D Proto',    subtitle:'Initial Design & Fit Review',     tagColor:'#888888', active:true,  mc:true,  avatar:'show', pose:SC_POSE_TOPS, colorways:'灰色\n聯名款：灰+各色',
+    collab:{ enabled:false, label:'聯名款（GAP X & Collab）', mc:true, avatar:'show', pose:SC_POSE_TOPS, colorways:'灰色 + 各色' } },
+  { key:'la',        num:3, name:'3D LA',       subtitle:'Line Adoption / Adoption Validation', tagColor:'#f0e000', active:true, mc:false, avatar:'hide', pose:'Regular Pose', colorways:'灰色 + 各色' },
+  { key:'fit',       num:4, name:'3D Fit',      subtitle:'Fit Validation',                  tagColor:'#22c55e', active:true,  mc:true,  avatar:'show', pose:'Regular Pose', colorways:'灰色' },
+  { key:'sizeset',   num:5, name:'3D Size Set', subtitle:'Size Validation',                 tagColor:'#a855f7', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+  { key:'reference', num:6, name:'3D RS',       subtitle:'Future Development',              tagColor:'#16a34a', active:true,  mc:false, avatar:'show', pose:'Regular Pose', colorways:'灰色 + 各色' },
+  { key:'graphics',  num:7, name:'3D Graphics', subtitle:'Artwork Size Validation',         tagColor:'#22d3ee', active:false, mc:false, avatar:'',     pose:'', colorways:'' },
+];
+let scBrand = 'GAP';
+
+function scNormColor(c) {
+  c = String(c || '#888888').trim();
+  if (/^#[0-9a-fA-F]{3}$/.test(c)) c = '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#888888';
+}
+
+// 各品牌 Stage 差異（要與前台 index 的 BRAND_STAGE_OVERRIDES 保持一致）
+const SC_BRAND_OVERRIDES = {
+  ATH: {
+    proto: { collab: { enabled: false } },
+  },
+  ON: {
+    block:     { active: true, avatar: 'show', pose: '（同 Proto）', colorways: '灰階，需 base layer' },
+    proto:     { active: true, mc: true, avatar: 'show',
+                 pose: 'Regular Pose\n（ON 只交一個 Regular pose，不需 Starting Pose；毛衣類亦不需多姿勢）',
+                 colorways: '灰色', collab: { enabled: false } },
+    la:        { active: true },
+    fit:       { active: true, mc: true },
+    sizeset:   { active: true, name: 'JSS', subtitle: 'Size Set／分級提交' },
+    reference: { active: true, avatar: 'hide', pose: 'Regular Pose', colorways: '全色（需做 AW）' },
+    graphics:  { active: true, name: '3D Graphic', subtitle: 'Artwork 位置與大小檢視' },
+  },
+  // BR：受訪者確認 5 個階段目的／步驟／規則全部同 GAP，僅 Block 需要開啟
+  BR: {
+    block: { active: true, mc: true,
+             pose: '⚠️ 待補（訪談確認「同 GAP 規則」，但未逐字取得 Block 姿勢寫法，請補上後存檔）',
+             colorways: '灰色' },
+  },
+};
+
+function scDefaults(brand) {
+  const d = JSON.parse(JSON.stringify(SC_DEFAULTS));
+  const ov = SC_BRAND_OVERRIDES[brand];
+  if (!ov) return d;
+  return d.map(x => {
+    const o = ov[x.key];
+    if (!o) return x;
+    const m = Object.assign({}, x, o);
+    if (x.collab || o.collab) m.collab = Object.assign({}, x.collab || {}, o.collab || {});
+    return m;
+  });
+}
+
+function scLoad(brand) {
+  const sec = allSections.find(s => s.slug === 'stage-config');
+  let saved = null;
+  if (sec) {
+    const e = allEntries.find(x => x.section_id === sec.id && x.title === 'STAGE_CONFIG_' + brand);
+    if (e && e.content) { try { saved = JSON.parse(e.content).stages; } catch (err) {} }
+  }
+  const defs = scDefaults(brand);
+  if (!Array.isArray(saved)) return defs;
+  return defs.map(d => {
+    const s = saved.find(x => x.key === d.key) || {};
+    const m = Object.assign({}, d, s);
+    if (d.collab || s.collab) m.collab = Object.assign({}, d.collab || {}, s.collab || {});
+    return m;
+  });
+}
+
+function openStageCfg() { switchStageCfgBrand('GAP'); document.getElementById('stageCfgOverlay').classList.add('open'); }
+function closeStageCfg() { document.getElementById('stageCfgOverlay').classList.remove('open'); }
+
+const SC_BRANDS = { GAP: 'GAP', ATH: 'ATHLETA', ON: 'OLD NAVY', BR: 'BANANA REPUBLIC' };
+function scBrandName(b) { return SC_BRANDS[b] || b; }
+
+function switchStageCfgBrand(b) {
+  scBrand = b;
+  Object.keys(SC_BRANDS).forEach(k => {
+    const el = document.getElementById('scBrand' + k);
+    if (el) el.className = 'btn ' + (b === k ? 'btn-primary' : 'btn-ghost');
+  });
+  const sel = document.getElementById('scCopyTarget');
+  if (sel) {
+    sel.innerHTML = Object.keys(SC_BRANDS).filter(k => k !== b)
+      .map(k => `<option value="${k}">複製到 ${SC_BRANDS[k]}</option>`).join('');
+  }
+  renderStageCfg(scLoad(b));
+}
+
+function renderStageCfg(cfg) {
+  const fld = (label, inner) => `<div style="margin-bottom:8px"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">${label}</div>${inner}</div>`;
+  const txt = (id, val) => `<input id="${id}" value="${esc(val || '')}" style="width:100%">`;
+  const ta  = (id, val) => `<textarea id="${id}" rows="2" style="width:100%">${esc(val || '')}</textarea>`;
+  const mcBox = (id, on, label) => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="accent-color:var(--official)"> ${label}</label>`;
+  document.getElementById('stageCfgList').innerHTML = cfg.map(s => `
+    <details style="background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;padding:10px 14px" ${s.active ? '' : ''}>
+      <summary style="cursor:pointer;font-size:13px;font-weight:600">${esc(s.name)}
+        <span style="color:${s.active ? '#15803d' : '#b45309'};font-size:11px;margin-left:6px">${s.active ? '✔ 啟用' : '灰色（尚未收過需求）'}</span>
+      </summary>
+      <div style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:12px;cursor:pointer">
+          <input type="checkbox" id="sc-${s.key}-active" ${s.active ? 'checked' : ''} style="accent-color:var(--official)">
+          啟用此 Stage（不勾＝灰色、不可點）
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:10px">
+          ${fld('Stage 名稱', txt('sc-' + s.key + '-name', s.name))}
+          ${fld('英文副標', txt('sc-' + s.key + '-subtitle', s.subtitle))}
+          ${fld('流程圖顏色', `<input type="color" id="sc-${s.key}-tagColor" value="${scNormColor(s.tagColor)}" style="width:100%;height:32px;padding:2px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">`)}
+        </div>
+        <div style="display:grid;grid-template-columns:110px 110px 1fr;gap:10px">
+          ${fld('尺寸表', mcBox('sc-' + s.key + '-mc', s.mc, '✅ 需要'))}
+          ${fld('人台', mcBox('sc-' + s.key + '-avatar', s.avatar !== 'hide', '👁️ 顯示人台'))}
+          ${fld('AVATAR POSE', ta('sc-' + s.key + '-pose', s.pose))}
+        </div>
+        ${fld('各色', ta('sc-' + s.key + '-colorways', s.colorways))}
+      </div>
+    </details>
+  `).join('');
+}
+
+function collectStageCfg() {
+  const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const c = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  return scDefaults(scBrand).map(d => {
+    const k = d.key;
+    const o = {
+      key: k, num: d.num,
+      active:    c('sc-' + k + '-active'),
+      name:      v('sc-' + k + '-name').trim() || d.name,
+      subtitle:  v('sc-' + k + '-subtitle').trim(),
+      tagColor:  v('sc-' + k + '-tagColor') || d.tagColor,
+      mc:        c('sc-' + k + '-mc'),
+      avatar:    c('sc-' + k + '-avatar') ? 'show' : 'hide',
+      pose:      v('sc-' + k + '-pose'),
+      colorways: v('sc-' + k + '-colorways').trim(),
+    };
+    return o;
+  });
+}
+
+async function scSaveBrand(brand, stages) {
+  let sec = allSections.find(s => s.slug === 'stage-config');
+  if (!sec) {
+    const { data, error } = await sb.from('sections')
+      .insert({ slug: 'stage-config', name: 'Stage 設定資料', group_name: '_hidden', sort_order: 998 })
+      .select().single();
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return false; }
+    sec = data;
+    allSections.push(sec);
+  }
+  const title = 'STAGE_CONFIG_' + brand;
+  const content = JSON.stringify({ stages });
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return false; }
+  await loadData();
+  emAfterChange();
+  return true;
+}
+
+async function saveStageCfg() {
+  const ok = await scSaveBrand(scBrand, collectStageCfg());
+  if (!ok) return;
+  showToast('已儲存 ' + scBrandName(scBrand) + ' 的 Stage 設定 ✓', 'success');
+  renderStageCfg(scLoad(scBrand));
+}
+
+// ── 複製目前畫面設定到另一品牌（整份覆蓋）──
+function confirmCopyStageCfg() {
+  const from = scBrandName(scBrand);
+  const to   = scBrandName(document.getElementById('scCopyTarget').value);
+  openConfirm({
+    icon: '📋',
+    title: `把 ${from} 的設定複製到 ${to}？`,
+    body: `${to} 原本的設定會被整份覆蓋。`,
+    confirmLabel: '複製並覆蓋',
+    onConfirm: copyStageCfg,
+  });
+}
+
+async function copyStageCfg() {
+  const target = document.getElementById('scCopyTarget').value;
+  const ok = await scSaveBrand(target, collectStageCfg());
+  if (!ok) return;
+  showToast('已複製到 ' + scBrandName(target) + ' ✓', 'success');
+}
+
+function cpSimpleRow(containerId, val) {
+  const div = document.createElement('div');
+  div.className = 'path-item';
+  div.innerHTML = `<input type="text" value="${esc(val||'')}"><button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px">✕</button>`;
+  document.getElementById(containerId).appendChild(div);
+}
+function cpAddStep1(v='')     { cpSimpleRow('cpStep1List', v); }
+function cpAddMail(v='')      { cpSimpleRow('cpMailList', v); }
+function cpAddNoMail(v='')    { cpSimpleRow('cpNoMailList', v); }
+function cpAddStep4Note(v='') { cpSimpleRow('cpStep4NotesList', v); }
+function cpGetSimpleList(containerId) {
+  return [...document.querySelectorAll('#'+containerId+' input')].map(i=>i.value.trim()).filter(Boolean);
+}
+
+function cpAddStep2(row) {
+  row = row || {item:'',needed:false,note:''};
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.innerHTML = `
+    <input type="text" placeholder="項目" value="${esc(row.item||'')}" style="flex:1.2">
+    <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);white-space:nowrap;flex-shrink:0"><input type="checkbox" class="cp-s2-needed" ${row.needed?'checked':''} style="accent-color:var(--official)">需要做</label>
+    <input type="text" placeholder="備註" value="${esc(row.note||'')}" style="flex:1.6">
+    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px;flex-shrink:0">✕</button>
+  `;
+  document.getElementById('cpStep2List').appendChild(div);
+}
+function cpGetStep2() {
+  return [...document.querySelectorAll('#cpStep2List > div')].map(row => {
+    const inputs = row.querySelectorAll('input[type=text]');
+    const needed = row.querySelector('.cp-s2-needed').checked;
+    return { item: inputs[0].value.trim(), needed, note: inputs[1].value.trim() };
+  }).filter(r => r.item);
+}
+
+function cpAddPhotoRow(row) {
+  row = row || {situation:'',method:'',count:''};
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.innerHTML = `
+    <input type="text" placeholder="款式情況" value="${esc(row.situation||'')}" style="flex:1.4">
+    <input type="text" placeholder="出圖方式" value="${esc(row.method||'')}" style="flex:1.2">
+    <input type="text" placeholder="張數" value="${esc(row.count||'')}" style="width:90px;flex-shrink:0">
+    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:5px 10px;flex-shrink:0">✕</button>
+  `;
+  document.getElementById('cpPhotoTableList').appendChild(div);
+}
+function cpGetPhotoTable() {
+  return [...document.querySelectorAll('#cpPhotoTableList > div')].map(row => {
+    const inputs = row.querySelectorAll('input[type=text]');
+    return { situation: inputs[0].value.trim(), method: inputs[1].value.trim(), count: inputs[2].value.trim() };
+  }).filter(r => r.situation);
+}
+
+function openCpCfg() {
+  const cfg = cpLoad();
+  document.getElementById('cpStep1List').innerHTML = '';
+  cfg.step1.forEach(v => cpAddStep1(v));
+  document.getElementById('cpStep2List').innerHTML = '';
+  cfg.step2.forEach(r => cpAddStep2(r));
+  document.getElementById('cpMailList').innerHTML = '';
+  cfg.mailItems.forEach(v => cpAddMail(v));
+  document.getElementById('cpMailSendTo').value = cfg.mailSendTo || '';
+  document.getElementById('cpMailManager').value = cfg.mailManager || '';
+  document.getElementById('cpNoMailList').innerHTML = '';
+  cfg.noMailItems.forEach(v => cpAddNoMail(v));
+  document.getElementById('cpNoMailNote').value = cfg.noMailNote || '';
+  document.getElementById('cpStep4NotesList').innerHTML = '';
+  cfg.step4Notes.forEach(v => cpAddStep4Note(v));
+  document.getElementById('cpScriptPath').value = cfg.scriptPath || '';
+  document.getElementById('cpPhotoTableList').innerHTML = '';
+  cfg.photoTable.forEach(r => cpAddPhotoRow(r));
+  document.getElementById('cpStep5Label').value = cfg.step5Label || '';
+  document.getElementById('cpCfgOverlay').classList.add('open');
+}
+function closeCpCfg() { document.getElementById('cpCfgOverlay').classList.remove('open'); }
+
+async function ensureHiddenSection(slug, name, sortOrder) {
+  let sec = allSections.find(s => s.slug === slug);
+  if (!sec) {
+    const { data, error } = await sb.from('sections')
+      .insert({ slug, name, group_name: '_hidden', sort_order: sortOrder })
+      .select().single();
+    if (error) { showToast('建立設定分類失敗：' + error.message, 'error'); return null; }
+    sec = data;
+    allSections.push(sec);
+  }
+  return sec;
+}
+
+async function saveCpCfg() {
+  const cfg = {
+    step1:       cpGetSimpleList('cpStep1List'),
+    step2:       cpGetStep2(),
+    mailItems:   cpGetSimpleList('cpMailList'),
+    mailSendTo:  document.getElementById('cpMailSendTo').value.trim(),
+    mailManager: document.getElementById('cpMailManager').value.trim(),
+    noMailItems: cpGetSimpleList('cpNoMailList'),
+    noMailNote:  document.getElementById('cpNoMailNote').value.trim(),
+    step4Notes:  cpGetSimpleList('cpStep4NotesList'),
+    scriptPath:  document.getElementById('cpScriptPath').value.trim(),
+    photoTable:  cpGetPhotoTable(),
+    step5Label:  document.getElementById('cpStep5Label').value.trim() || CP_DEFAULTS.step5Label,
+  };
+
+  const sec = await ensureHiddenSection('informal-color-config', '非正單設定資料', 996);
+  if (!sec) return;
+  // 順便建立「非正單 Fit 內容」分類，之後可在「新增卡片」選這個分類新增 Fit（非正單）子頁內容
+  await ensureHiddenSection('informal-fit', '非正單 Fit 內容', 997);
+
+  const title = 'COLORPLACEMENT_CONFIG';
+  const content = JSON.stringify(cfg);
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+
+  showToast('已儲存非正單流程設定 ✓', 'success');
+  await loadData();
+  emAfterChange();
+}
+
+
+// ══════════ 主頁編輯模式（原 admin.html 的功能，直接在主頁上用）══════════
+function showToast(msg, type='') {
+  const t = document.getElementById('emToast');
+  t.textContent = msg; t.className = type + ' show';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), type === 'error' ? 5000 : 2500);
+}
+
+function isEditMode() { return document.body.classList.contains('edit-mode'); }
+function setEditMode(on) {
+  document.body.classList.toggle('edit-mode', on);
+  const b = document.getElementById('editBtn');
+  b.textContent = on ? '✅ 完成編輯' : '✏️ 編輯模式';
+  b.classList.toggle('em-on', on);
+  document.getElementById('emDock').style.display = on ? 'flex' : 'none';
+  try { localStorage.setItem('gap3d_edit_mode', on ? '1' : '0'); } catch (e) {}
+}
+function toggleEditMode() { setEditMode(!isEditMode()); }
+
+function emCurSection() { return allSections.find(s => s.slug === currentSlug) || null; }
+function emCurSectionId() { return emCurSection()?.id || null; }
+
+function emFillSectionSelect() {
+  document.getElementById('fSection').innerHTML = allSections.map(s =>
+    `<option value="${s.id}">${esc(s.name)}${isProtectedSection(s)?' 🔒':''}</option>`
+  ).join('');
+}
+
+// 卡片右上角的 ✏️ 📄 🗑（只在編輯模式顯示）
+function emActionsHtml(id) {
+  return `<span class="em-actions em-only" onclick="event.stopPropagation()">
+    <button type="button" title="編輯" onclick="openEditEntry('${id}')">✏️</button>
+    <button type="button" title="複製成新卡片" onclick="duplicateEntry('${id}')">📄</button>
+    <button type="button" class="em-del" title="刪除" onclick="emDeleteEntry('${id}')">🗑</button>
+  </span>`;
+}
+function emDeleteEntry(id) {
+  const e = allEntries.find(x => String(x.id) === String(id));
+  if (!e) return;
+  emEditingId = e.id;
+  openConfirm({
+    title: '確定要刪除這張卡片？',
+    body: `「${e.title || ''}」刪除後無法復原。`,
+    onConfirm: deleteEntry,
+  });
+}
+
+// 每個分類頁最上方的編輯列
+function emStageMeta(e) {
+  if (e.stage == null || e.stage === '') return '';
+  const arr = Array.isArray(e.stage) ? e.stage : String(e.stage).split(',').map(s => s.trim()).filter(Boolean);
+  return arr.length ? 'Stage: ' + arr.join(', ') : '';
+}
+function emBarHtml(section) {
+  if (!section) return '';
+  const entries = allEntries.filter(e => e.section_id === section.id);
+  const stageSlugs = ['stages','prefit','details','checklist','closet','avatar'];
+  const ctx = [];
+  if (stageSlugs.includes(section.slug)) ctx.push(`<button class="em-btn" onclick="openStageCfg()">🎬 Stage 設定</button>`);
+  if (section.slug === 'informal') ctx.push(`<button class="em-btn" onclick="openCpCfg()">🎨 非正單設定</button>`);
+  if (section.slug === 'accounts') ctx.push(`<button class="em-btn" onclick="openAccountsManager()">🔑 管理帳號密碼</button>`);
+  const rows = entries.map(e => `
+    <div class="em-row ${brandOk(e) ? '' : 'em-hidden-brand'}">
+      <div class="em-row-title" title="${esc(e.title)}">${esc(e.title)}</div>
+      <span class="em-row-meta">${esc(emStageMeta(e))}</span>
+      <span class="em-row-meta">${esc(entryBrandList(e).filter(b => b !== 'ALL').join('+') || '全品牌')}${brandOk(e) ? '' : '（目前品牌不顯示）'}</span>
+      ${emActionsHtml(e.id).replace('em-actions em-only', 'em-actions')}
+    </div>`).join('');
+  return `
+    <div class="em-bar em-only">
+      <span class="em-bar-label">✏️ 編輯「${esc(stripLeadingEmoji(section.name))}」</span>
+      <button class="em-btn primary" onclick="openNewEntry()">＋ 新增卡片</button>
+      ${ctx.join('')}
+      <button class="em-btn" onclick="this.parentElement.querySelector('.em-list').classList.toggle('open')">📋 本頁所有卡片（${entries.length}）</button>
+      <button class="em-btn" onclick="openEditSection('${section.id}')">⚙️ 此分類設定</button>
+      <div class="em-list">${rows || '<div class="em-row-meta" style="padding:6px">此分類尚無卡片</div>'}</div>
+    </div>`;
+}
+
+// 包住原本的 renderSection：渲染完在頁面最上方插入編輯列
+const __emOrigRenderSection = renderSection;
+renderSection = function (section, entries) {
+  __emOrigRenderSection(section, entries);
+  if (!section) return;
+  const main = document.getElementById('page-content');
+  main.insertAdjacentHTML('afterbegin', emBarHtml(section));
+};
+
+// 存檔後：更新快取、側欄與目前頁面，並盡量維持捲動位置
+function emAfterChange() {
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
+  const scrollers = [document.scrollingElement, document.querySelector('main'), document.getElementById('page-content')].filter(Boolean);
+  const pos = scrollers.map(el => el.scrollTop);
+  const restore = () => scrollers.forEach((el, i) => { el.scrollTop = pos[i]; });
+  const activePage = document.querySelector('.page.active')?.id;
+  renderNav();
+  if (activePage === 'page-content' && currentSlug && allSections.some(s => s.slug === currentSlug)) {
+    showSection(currentSlug);
+  } else if (activePage === 'page-content') {
+    routeFromHash();
+  }
+  restore(); setTimeout(restore, 120);
+}
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('#emRoot .overlay.open')];
+  if (!open.length) return;
+  const top = open.sort((a, b) => (+getComputedStyle(b).zIndex) - (+getComputedStyle(a).zIndex))[0];
+  top.classList.remove('open');
+});
+
+let __emInit = false;
+try { __emInit = localStorage.getItem('gap3d_edit_mode') === '1'; } catch (e) {}
+setEditMode(__emInit);
+// 首次載入時頁面可能已用快取先畫好 → 重畫一次讓編輯按鈕出現
+if (document.getElementById('page-content')?.classList.contains('active') && currentSlug && allSections.length) showSection(currentSlug, false);
+
 </script>
 </body>
 </html>
