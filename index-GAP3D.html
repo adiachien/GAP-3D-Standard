@@ -788,10 +788,17 @@ body.edit-mode .em-hide { display:none !important; }
 .pt-pre { color:#9ca3af; }
 .pt-empty { color:#cbd5e1; font-size:13px; }
 .pt-shared { font-size:11px; color:#6b7280; margin-right:6px; }
-.pt-ed-row { display:grid; grid-template-columns:110px repeat(5, minmax(0,1fr)) 28px; gap:6px; margin-bottom:6px; align-items:center; }
-.pt-ed-row input { min-width:0; border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:12px; font-family:'DM Mono',monospace; background:#fff; color:var(--text); }
-.pt-ed-row input.pt-ed-type { font-family:inherit; font-weight:700; }
-.pt-ed-head { font-size:12px; color:#6b7280; font-weight:700; }
+.pt-edit .pt-table td { padding:6px 6px; }
+.pt-edit .pt-type { width:140px; }
+.pt-in { width:100%; min-width:0; border:1px solid transparent; border-radius:6px; padding:6px 8px; font-size:12px; font-family:'DM Mono',monospace; background:#f9fafb; color:var(--text); }
+.pt-in:hover { border-color:var(--border); background:#fff; }
+.pt-in:focus { outline:none; border-color:#3b82f6; background:#fff; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+.pt-in::placeholder { color:#cbd5e1; }
+.pt-in.pt-in-type { font-family:inherit; font-weight:700; font-size:14px; }
+.pt-act { white-space:nowrap; }
+.pt-mini { background:#fff; border:1px solid var(--border); border-radius:5px; padding:3px 7px; font-size:12px; cursor:pointer; font-family:inherit; color:#4b5563; }
+.pt-mini:hover { border-color:#1d4ed8; color:#1d4ed8; }
+.pt-mini.pt-del { color:#c0392b; }
 .av-ed-hint { font-size:11px; color:var(--text-muted); margin:4px 0 2px; }
 .av-ed-row { display:flex; align-items:center; gap:6px; margin-top:5px; padding:4px; border-radius:6px; }
 .av-ed-row.av-base { background:#e8f0fe; }
@@ -2397,61 +2404,107 @@ function ptValueHtml(v) {
     : escHtml(v);
   return `<button class="pt-cell copy-value" data-path="${escHtml(v)}" title="點選複製：${escHtml(v)}">📋 ${short}</button>`;
 }
-function renderPathsPage(section, entries) {
-  const rows = ptLoad();
+let __ptRows = [];
+function ptViewTableHtml() {
+  const rows = __ptRows;
+  if (!rows.length) return '<div class="card" style="color:var(--text-muted)">尚未設定路徑，請進入編輯模式新增。</div>';
   const head = PT_BRANDS.map(b => `<th class="${b === currentBrand ? 'pt-cur' : ''}">${escHtml(BRAND_INFO[b]?.label || b)}</th>`).join('');
   const body = rows.map(r => r.shared
     ? `<tr><td class="pt-type">${escHtml(r.type || '')}</td><td colspan="4"><span class="pt-shared">四品牌共用</span>${ptValueHtml(r.shared)}</td></tr>`
     : `<tr><td class="pt-type">${escHtml(r.type || '')}</td>${PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptValueHtml(r[b])}</td>`).join('')}</tr>`
   ).join('');
+  return `<div class="pt-wrap"><table class="pt-table"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function ptShort(v) { return (v && v.startsWith(PT_PREFIX)) ? v.slice(PT_PREFIX.length) : (v || ''); }
+function ptFull(v) {
+  v = (v || '').trim();
+  if (!v || v.startsWith('\\\\') || /^[a-z]+:/i.test(v)) return v;   // 已是完整網路路徑／網址／磁碟代號
+  return PT_PREFIX + v.replace(/^\\+/, '');
+}
+function ptInput(i, k, v, ph) {
+  const shown = k === 'type' ? (v || '') : ptShort(v);
+  return `<input class="pt-in${k === 'type' ? ' pt-in-type' : ''}" data-i="${i}" data-k="${k}" value="${escHtml(shown)}" placeholder="${escHtml(ph || '')}" onchange="ptCellChange(this)" title="${escHtml(v || '')}">`;
+}
+function ptEditTableHtml() {
+  const head = PT_BRANDS.map(b => `<th class="${b === currentBrand ? 'pt-cur' : ''}">${escHtml(BRAND_INFO[b]?.label || b)}</th>`).join('');
+  const body = __ptRows.map((r, i) => `<tr>
+      <td class="pt-type">${ptInput(i, 'type', r.type, '類型名稱')}</td>
+      ${r.shared
+        ? `<td colspan="4">${ptInput(i, 'shared', r.shared, '四品牌共用路徑')}</td>`
+        : PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptInput(i, b, r[b], '—')}</td>`).join('')}
+      <td class="pt-act">
+        <button type="button" class="pt-mini" onclick="ptToggleShared(${i})" title="${r.shared ? '拆成四個品牌各自填' : '四個品牌共用同一個路徑'}">${r.shared ? '拆開' : '共用'}</button>
+        <button type="button" class="pt-mini pt-del" onclick="ptDeleteRow(${i})" title="刪除此列">✕</button>
+      </td>
+    </tr>`).join('');
+  return `<div class="pt-wrap pt-edit"><table class="pt-table"><thead><tr><th>類型</th>${head}<th style="width:92px"></th></tr></thead><tbody>${body}</tbody></table></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <button type="button" class="em-btn" onclick="ptAddRow()">＋ 新增一列</button>
+      <span style="font-size:12.5px;color:var(--text-muted)">直接點格子修改，離開格子就自動儲存。開頭的 ${escHtml(PT_PREFIX)} 不用打，會自動補上</span>
+    </div>`;
+}
+function ptRedraw() {
+  const v = document.getElementById('pt-view'); if (v) v.innerHTML = ptViewTableHtml();
+  const e = document.getElementById('pt-edit'); if (e) e.innerHTML = ptEditTableHtml();
+}
+function renderPathsPage(section, entries) {
+  __ptRows = ptLoad();
   return `
     <div class="page-header">
       <div class="page-title">${section.icon || '📁'} ${escHtml(section.name)}</div>
       <div class="page-desc">四個品牌的常用資料夾路徑。點一下即可複製完整路徑（…\\ = ${escHtml(PT_PREFIX)}）</div>
     </div>
-    ${rows.length ? `<div class="pt-wrap"><table class="pt-table"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`
-                  : '<div class="card" style="color:var(--text-muted)">尚未設定路徑，請進入編輯模式新增。</div>'}
-    ${ptEditorHtml(rows)}
+    <div id="pt-view" class="em-hide">${ptViewTableHtml()}</div>
+    <div id="pt-edit" class="em-only">${ptEditTableHtml()}</div>
     ${entries.map(e => renderCard(e)).join('')}
   `;
 }
-function ptEdRowHtml(r) {
-  r = r || {};
-  return `<div class="pt-ed-row">
-    <input class="pt-ed-type" value="${escHtml(r.type || '')}" placeholder="類型">
-    <input data-k="shared" value="${escHtml(r.shared || '')}" placeholder="四品牌共用（填了就合併成一格）">
-    ${PT_BRANDS.map(b => `<input data-k="${b}" value="${escHtml(r[b] || '')}" placeholder="${b}">`).join('')}
-    <button type="button" class="av-x" onclick="this.closest('.pt-ed-row').remove()" title="刪除此列">✕</button>
-  </div>`;
+async function ptCellChange(inp) {
+  const r = __ptRows[+inp.dataset.i]; if (!r) return;
+  const v = inp.dataset.k === 'type' ? inp.value.trim() : ptFull(inp.value);
+  if (v) r[inp.dataset.k] = v; else delete r[inp.dataset.k];
+  inp.title = v;
+  if (inp.dataset.k !== 'type') inp.value = ptShort(v);
+  await ptSave(false);
 }
-function ptEditorHtml(rows) {
-  return `<div class="av-editor em-only" id="pted" style="margin-top:16px">
-    <div class="av-ed-top">
-      <span>✏️ 編輯路徑總表</span>
-      <button type="button" class="em-btn primary" onclick="ptSave()">💾 儲存</button>
-    </div>
-    <div class="pt-ed-row pt-ed-head"><span>類型</span><span>共用</span>${PT_BRANDS.map(b => `<span>${b}</span>`).join('')}<span></span></div>
-    <div id="pted-rows">${(rows.length ? rows : [{}]).map(ptEdRowHtml).join('')}</div>
-    <button type="button" class="av-add" onclick="document.getElementById('pted-rows').insertAdjacentHTML('beforeend', ptEdRowHtml({}))">＋ 新增一列</button>
-  </div>`;
+async function ptToggleShared(i) {
+  const r = __ptRows[i]; if (!r) return;
+  if (r.shared) { PT_BRANDS.forEach(b => { if (!r[b]) r[b] = r.shared; }); delete r.shared; }
+  else {
+    const vals = PT_BRANDS.map(b => r[b]).filter(Boolean);
+    if (new Set(vals).size > 1 && !confirm('四個品牌的路徑不一樣，合併後只保留「' + (r[currentBrand] || vals[0]) + '」，確定嗎？')) return;
+    r.shared = r[currentBrand] || vals[0] || '';
+    PT_BRANDS.forEach(b => delete r[b]);
+  }
+  ptRedraw(); await ptSave(false);
 }
-async function ptSave() {
-  const rows = [...document.querySelectorAll('#pted-rows .pt-ed-row')].map(el => {
-    const r = { type: el.querySelector('.pt-ed-type').value.trim() };
-    el.querySelectorAll('input[data-k]').forEach(i => { const v = i.value.trim(); if (v) r[i.dataset.k] = v; });
-    return r;
-  }).filter(r => Object.keys(r).length > 1 || r.type);
-  const sec = await ensureHiddenSection('path-config', '路徑總表資料', 994);
-  if (!sec) return;
+async function ptDeleteRow(i) {
+  if (!confirm('確定刪除「' + (__ptRows[i]?.type || '這一列') + '」？')) return;
+  __ptRows.splice(i, 1); ptRedraw(); await ptSave(false);
+}
+function ptAddRow() {
+  __ptRows.push({ type: '' }); ptRedraw();
+  const ins = document.querySelectorAll('#pt-edit .pt-in-type'); ins[ins.length - 1]?.focus();
+}
+async function ptSave(rerender = true) {
+  const rows = __ptRows.filter(r => Object.keys(r).some(k => r[k]));
   const content = JSON.stringify({ rows });
   const existing = ptCfgEntry();
-  const { error } = existing
-    ? await sb.from('entries').update({ content }).eq('id', existing.id)
-    : await sb.from('entries').insert({ section_id: sec.id, title: 'PATHS_CONFIG', content, source: 'internal', sort_order: 0 });
+  let error;
+  if (existing) {
+    ({ error } = await sb.from('entries').update({ content }).eq('id', existing.id));
+    if (!error) existing.content = content;
+  } else {
+    const sec = await ensureHiddenSection('path-config', '路徑總表資料', 994);
+    if (!sec) return;
+    ({ error } = await sb.from('entries').insert({ section_id: sec.id, title: 'PATHS_CONFIG', content, source: 'internal', sort_order: 0 }));
+    if (!error) await loadData();
+  }
   if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
-  await loadData();
-  emAfterChange();
-  showToast('路徑總表已儲存 ✓', 'success');
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
+  const v = document.getElementById('pt-view'); if (v) v.innerHTML = ptViewTableHtml();
+  if (rerender) ptRedraw();
+  showToast('已儲存 ✓', 'success');
 }
 
 function renderAvatarPage(section, entries) {
