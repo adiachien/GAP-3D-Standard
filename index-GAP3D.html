@@ -806,6 +806,168 @@ body.edit-mode .em-hide { display:none !important; }
 .av-x { flex-shrink:0; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 8px; font-size:12px; cursor:pointer; color:#c0392b; font-family:inherit; white-space:nowrap; }
 .av-add { margin-top:6px; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 10px; font-size:12px; cursor:pointer; color:#555; font-family:inherit; }
 </style>
+<style>
+/* ══════════ UI 優化層（覆蓋上方舊樣式）══════════ */
+:root { --radius: 10px; --ok: #15803d; --ring: 0 0 0 3px rgba(29,78,216,.18); }
+body { -webkit-font-smoothing: antialiased; font-size: 14.5px; }
+:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 2px; border-radius: 6px; }
+button { -webkit-tap-highlight-color: transparent; }
+
+/* Header */
+header { height: 56px; gap: 12px; box-shadow: none; }
+header h1 { font-size: 16px; font-weight: 600; letter-spacing: .01em; color: #111827; }
+.btn-admin { padding: 6px 12px; border-radius: 8px; font-size: 12.5px; }
+.btn-admin:hover { color: var(--text); border-color: #94a3b8; }
+.stage-indicator { border-radius: 8px; padding: 6px 12px; }
+.menu-btn { display: none; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 17px; color: var(--text); align-items: center; justify-content: center; }
+
+/* Sidebar */
+aside { padding: 8px 0 24px; }
+.group-label { font-size: 11px; letter-spacing: .08em; color: var(--text-muted); padding: 16px 20px 6px; }
+.nav-item { margin: 1px 10px; padding: 8px 10px; border-left: none; border-radius: 8px; font-size: 14.5px; color: #334155; gap: 10px; }
+.nav-item:hover { background: rgba(15,23,42,.05); color: var(--text); }
+.nav-item.active { background: #fff; color: var(--brand-accent); box-shadow: 0 1px 2px rgba(15,23,42,.08), inset 0 0 0 1px var(--brand-border-soft); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.search-sidebar { padding: 6px 12px 4px; }
+.search-sidebar input { padding: 8px 10px 8px 32px; font-size: 13px; border-radius: 8px; }
+.search-sidebar input:focus { border-color: var(--brand-accent); box-shadow: var(--ring); }
+.search-wrap-inner::before { content: ''; left: 10px; width: 14px; height: 14px;
+  background: no-repeat center/14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E"); }
+
+/* Main */
+main { padding: 28px 36px 60px; }
+#page-content, #page-search, #page-feedback { max-width: 1240px; }
+.page-header { margin-bottom: 18px; padding-bottom: 14px; }
+.page-title { font-size: 24px; letter-spacing: .01em; }
+.page-desc { font-size: 14.5px; color: var(--text-dim); }
+.card { border-radius: 12px; }
+.grid-card { border-radius: 12px; }
+
+/* 留言板：輸入框字級統一 */
+#fbAuthor, #fbCategory { font-size: 14px !important; padding: 8px 10px !important; border-radius: 8px !important; }
+#fbContent { font-size: 14.5px !important; border-radius: 10px !important; }
+#fbAuthor:focus, #fbCategory:focus, #fbContent:focus { border-color: var(--brand-accent) !important; box-shadow: var(--ring); }
+
+/* 複製回饋 */
+.copy-value.copied { opacity: 1 !important; }
+.copy-toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 8px); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13.5px; z-index: 4000; opacity: 0; transition: opacity .18s, transform .18s; box-shadow: 0 10px 30px rgba(0,0,0,.25); max-width: min(560px, 92vw); display: flex; gap: 10px; align-items: center; pointer-events: none; }
+.copy-toast.show { opacity: 1; transform: translate(-50%, 0); }
+body.edit-mode .copy-toast { bottom: 88px; }
+.copy-toast b { color: #86efac; font-weight: 600; white-space: nowrap; }
+.copy-toast code { font-family: 'DM Mono', monospace; font-size: 12px; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ══════════ 路徑・連結・帳密 ══════════ */
+.hub-tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; width: fit-content; margin: 0 0 22px; }
+.hub-tab { border: none; background: none; padding: 8px 16px; border-radius: 9px; font: inherit; font-size: 14px; font-weight: 600; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
+.hub-tab:hover { color: var(--text); }
+.hub-tab.active { background: #fff; color: var(--brand-accent); box-shadow: 0 1px 3px rgba(15,23,42,.1); }
+.hub-tab .n { font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+
+.pt-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: #fff; }
+.seg button { border: none; background: none; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.active { background: var(--brand-accent); color: #fff; }
+.pt-filter { position: relative; flex: 1; min-width: 180px; max-width: 320px; margin-left: auto; }
+.pt-filter input { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px 8px 32px; font: inherit; font-size: 13px; background: #fff; color: var(--text); outline: none; }
+.pt-filter input:focus { border-color: var(--brand-accent); box-shadow: var(--ring); }
+.pt-filter::before { content: ''; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
+  background: no-repeat center/14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E"); }
+.pt-hint { font-size: 12.5px; color: var(--text-muted); margin: 0 0 14px; }
+.pt-hint code { font-family: 'DM Mono', monospace; font-size: 11.5px; background: var(--bg-sidebar); padding: 1px 6px; border-radius: 4px; color: var(--text-dim); }
+
+/* 單一品牌清單 */
+.pt-list { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.pt-item { display: grid; grid-template-columns: 130px 1fr auto; align-items: center; gap: 16px; width: 100%; padding: 12px 16px; border: none; border-bottom: 1px solid #eef0f3; background: #fff; text-align: left; cursor: pointer; font: inherit; color: var(--text); transition: background .12s; }
+.pt-item:last-child { border-bottom: none; }
+.pt-item:hover { background: var(--brand-accent-soft); }
+.pt-item-type { font-weight: 700; font-size: 14.5px; color: #111827; }
+.pt-item-act { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.pt-item:hover .pt-item-act .pt-copy-lbl { color: var(--brand-accent); }
+.pt-item.copied { background: rgba(21,128,61,.07); }
+.pt-item.copied .pt-copy-lbl { color: var(--ok) !important; }
+.pt-path { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.pt-leaf { font-weight: 600; font-size: 14px; color: var(--text); word-break: break-word; display: flex; align-items: center; gap: 7px; }
+.pt-leaf::before { content: ''; flex-shrink: 0; width: 15px; height: 12px; border-radius: 2px 3px 3px 3px; background: #f5b942; box-shadow: inset 0 3px 0 #e9a325; }
+.pt-parent { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text-muted); overflow-wrap: anywhere; padding-left: 22px; }
+.pt-parent i { font-style: normal; color: #cbd5e1; padding: 0 3px; }
+.pt-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(100,116,139,.1); color: #475569; white-space: nowrap; }
+.pt-tag.cross { background: rgba(217,119,6,.1); color: #92400e; }
+.pt-missing { margin-top: 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+.pt-missing b { color: var(--text-dim); font-weight: 600; }
+.pt-none { padding: 28px; text-align: center; color: var(--text-muted); font-size: 14px; background: #fff; border: 1px dashed var(--border); border-radius: 12px; }
+
+/* 四品牌對照 */
+.pt-cmp-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+.pt-cmp { width: 100%; border-collapse: collapse; min-width: 860px; table-layout: fixed; }
+.pt-cmp th, .pt-cmp td { padding: 10px 12px; border-bottom: 1px solid #eef0f3; text-align: left; vertical-align: top; }
+.pt-cmp tbody tr:last-child td { border-bottom: none; }
+.pt-cmp thead th { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--text-dim); background: #f9fafb; }
+.pt-cmp th:first-child, .pt-cmp td:first-child { width: 120px; }
+.pt-cmp td.pt-type { font-weight: 700; font-size: 14px; color: #111827; padding-top: 13px; }
+.pt-cmp th.pt-cur { color: var(--brand-accent); box-shadow: inset 0 -2px 0 var(--brand-accent); }
+.pt-cmp td.pt-cur { background: var(--brand-accent-soft); }
+.pt-cmp tbody tr:hover td { background: #fafbfc; }
+.pt-cmp tbody tr:hover td.pt-cur { background: var(--brand-col-tint); }
+.pt-cbtn { display: block; width: 100%; border: 1px solid transparent; background: none; border-radius: 8px; padding: 4px 6px; margin: -4px -6px; text-align: left; cursor: pointer; font: inherit; }
+.pt-cbtn:hover { border-color: var(--brand-border-soft); background: #fff; }
+.pt-cbtn.copied { border-color: rgba(21,128,61,.4); background: rgba(21,128,61,.06); }
+.pt-cbtn .pt-leaf { font-size: 13px; }
+.pt-cbtn .pt-parent { font-size: 11px; }
+.pt-dash { color: #d1d5db; }
+.pt-shared-row { display: flex; align-items: flex-start; gap: 10px; }
+
+.hub-jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 24px; }
+.hub-jump button { border: 1px solid var(--border); background: #fff; border-radius: 20px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; }
+.hub-jump button:hover { border-color: var(--brand-accent); color: var(--brand-accent); }
+#hub-links, #hub-paths, #hub-accounts { scroll-margin-top: 16px; }
+#hub-paths { margin-top: 4px; }
+/* 連結 */
+.hub-sec { margin-bottom: 28px; }
+.hub-sec-title { display: flex; align-items: baseline; gap: 10px; font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 12px; }
+.hub-sec-title small { font-size: 12.5px; font-weight: 400; color: var(--text-muted); }
+.link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.link-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 12px; text-decoration: none; color: var(--text); transition: border-color .12s, box-shadow .12s; min-width: 0; }
+.link-card:hover { border-color: var(--brand-border-soft); box-shadow: 0 2px 8px rgba(15,23,42,.06); }
+.link-ico { width: 34px; height: 34px; border-radius: 9px; background: var(--brand-accent-soft); color: var(--brand-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; font-size: 14px; }
+.link-body { flex: 1; min-width: 0; }
+.link-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-host { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-arrow { color: var(--text-muted); font-size: 14px; flex-shrink: 0; }
+.link-card:hover .link-arrow { color: var(--brand-accent); }
+
+/* 帳密鎖 */
+.ac-lock { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: #fff; border: 1px solid var(--border); border-radius: 12px; max-width: 560px; }
+.ac-lock-ico { width: 42px; height: 42px; border-radius: 11px; background: rgba(234,179,8,.12); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.ac-lock-q { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.ac-lock-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.ac-lock-opts button { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; letter-spacing: .04em; }
+.ac-lock-opts button:hover { border-color: var(--brand-accent); color: var(--brand-accent); }
+.ac-lock-err { display: none; font-size: 12.5px; color: #b91c1c; margin-top: 8px; }
+
+/* ══════════ 手機／窄螢幕 ══════════ */
+.side-backdrop { display: none; }
+@media (max-width: 860px) {
+  .menu-btn { display: inline-flex; }
+  header { padding: 0 12px; }
+  header h1 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage-indicator { font-size: 11.5px; padding: 5px 8px; }
+  aside { position: fixed; top: 56px; bottom: 0; left: 0; z-index: 40; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 8px 0 30px rgba(0,0,0,.12); width: 270px; min-width: 270px; }
+  body.sidebar-open aside { transform: none; }
+  body.sidebar-open .side-backdrop { display: block; position: fixed; inset: 56px 0 0 0; background: rgba(15,23,42,.35); z-index: 39; }
+  main { padding: 18px 16px 60px; }
+  .page-title { font-size: 21px; }
+  .pt-item { grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .pt-item-type { grid-column: 1 / -1; font-size: 13px; color: var(--text-dim); }
+  .pt-filter { max-width: none; margin-left: 0; flex-basis: 100%; }
+  .hub-tabs { width: 100%; }
+  .hub-tab { flex: 1; padding: 8px 10px; }
+  #emDock { left: 12px; right: 12px; bottom: 12px; }
+}
+@media (max-width: 520px) {
+  .stage-indicator { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -837,6 +999,7 @@ body.edit-mode .em-hide { display:none !important; }
 </div>
 
 <header>
+  <button class="menu-btn" type="button" onclick="toggleSidebar()" aria-label="開啟選單">☰</button>
   <div class="logo" id="appLogo" onclick="openBrandGate()" style="cursor:pointer" title="切換品牌">GAP</div>
   <h1 id="appTitle">GAP 3D Standard</h1>
   <div class="header-right">
@@ -847,6 +1010,7 @@ body.edit-mode .em-hide { display:none !important; }
 
 <div class="layout">
 
+  <div class="side-backdrop" onclick="toggleSidebar(false)"></div>
   <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="brand-switcher" id="brandSwitcher">
@@ -1209,7 +1373,7 @@ function renderNav() {
       <div class="group-label">${label}</div>
       ${visible.map(s => `
         <div class="nav-item" id="nav-${s.slug}" onclick="showSection('${s.slug}')">
-          <span class="nav-icon">${s.icon || ''}</span>${s.name}
+          <span class="nav-icon">${s.icon || ''}</span>${s.slug === 'paths' ? HUB_TITLE : s.name}
         </div>
       `).join('')}
     </div>
@@ -1219,9 +1383,9 @@ function renderNav() {
       <div class="nav-item" id="nav-feedback" onclick="showFeedback()">
         <span class="nav-icon">💬</span>留言板（即時回饋）
       </div>
-      <div class="nav-item" id="nav-accounts" onclick="showSection('accounts')">
+      ${allSections.some(s => s.slug === 'paths') ? '' : `<div class="nav-item" id="nav-accounts" onclick="showSection('accounts')">
         <span class="nav-icon">🔑</span>常用連結與帳密
-      </div>
+      </div>`}
     </div>
   `;
 }
@@ -1241,6 +1405,8 @@ function showSection(slug, applyStageMemory = true) {
   if (!hasInformal() && slug === 'informal') {
     if (allSections.some(sec => sec.slug === HOME_SLUG)) slug = HOME_SLUG; else return;
   }
+  let __scrollTo = null;
+  if (slug === 'accounts' && allSections.some(sec => sec.slug === 'paths')) { slug = 'paths'; __scrollTo = 'hub-accounts'; }
   currentSlug = slug;
 
   // 儲存 hash（品牌選擇畫面開著時不改網址，否則 hashchange 會把選擇畫面關掉）
@@ -1256,13 +1422,15 @@ function showSection(slug, applyStageMemory = true) {
 
   // nav highlight
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const navEl = document.getElementById('nav-' + slug);
+  const navEl = document.getElementById('nav-' + slug) || (slug === 'accounts' ? document.getElementById('nav-paths') : null);
   if (navEl) navEl.classList.add('active');
+  toggleSidebar(false);
 
   const section = allSections.find(s => s.slug === slug);
   const entries = allEntries.filter(e => e.section_id === section?.id && brandOk(e));
 
   renderSection(section, entries);
+  if (__scrollTo) setTimeout(() => document.getElementById(__scrollTo)?.scrollIntoView({ block: 'start' }), 60);
 
   // 自動選目前 Stage（樣品種類 / Prefit / 細節 / Checklist 共享同一個 Stage）
   // applyStageMemory=false：重整／直接開網址落地時，維持該頁原始（中性）畫面，不強制跳去上次的 Stage
@@ -2400,24 +2568,127 @@ function ptLoad() {
   if (c && c.content) { try { const o = JSON.parse(c.content); if (o && Array.isArray(o.rows)) return o.rows; } catch (err) {} }
   return [];
 }
+const HUB_TITLE = '路徑・連結・帳密';
+function toggleSidebar(force) {
+  const on = typeof force === 'boolean' ? force : !document.body.classList.contains('sidebar-open');
+  document.body.classList.toggle('sidebar-open', on);
+}
+// 舊版仍可能呼叫（卡片內連結等）
 function ptValueHtml(v) {
-  if (!v) return '<span class="pt-empty">—</span>';
-  if (/^https?:\/\//i.test(v)) return `<a href="${escHtml(v)}" target="_blank" class="pt-cell">🔗 ${escHtml(v)}</a>`;
-  const short = v.startsWith(PT_PREFIX)
-    ? `<span class="pt-pre">…\\</span>${escHtml(v.slice(PT_PREFIX.length))}`
-    : escHtml(v);
-  return `<button class="pt-cell copy-value" data-path="${escHtml(v)}" title="點選複製：${escHtml(v)}">📋 ${short}</button>`;
+  if (ptIsEmpty(v)) return '<span class="pt-dash">—</span>';
+  if (ptIsLink(v)) return `<a href="${escHtml(v)}" target="_blank" rel="noopener" class="pt-cell">🔗 ${escHtml(v)}</a>`;
+  return `<button class="pt-cbtn copy-value" data-path="${escHtml(v)}" title="點一下複製：${escHtml(v)}">${ptPathHtml(v)}</button>`;
 }
 let __ptRows = [];
-function ptViewTableHtml() {
-  const rows = __ptRows;
-  if (!rows.length) return '<div class="card" style="color:var(--text-muted)">尚未設定路徑，請進入編輯模式新增。</div>';
+let __ptFilter = '';
+let __ptMode = 'brand';
+try { __ptMode = localStorage.getItem('gap3d_pt_mode') || 'brand'; } catch (e) {}
+
+function ptIsEmpty(v) { const s = ptShort(String(v || '')).trim(); return !s || s === '-' || s === '—'; }
+function ptIsLink(v) { return /^https?:\/\//i.test(String(v || '').trim()); }
+function ptRowIsLink(r) {
+  if (r.shared) return ptIsLink(r.shared);
+  const vals = PT_BRANDS.map(b => r[b]).filter(v => !ptIsEmpty(v));
+  return vals.length > 0 && vals.every(ptIsLink);
+}
+function ptFolderRows() { return __ptRows.filter(r => (r.type || '').trim() && !ptRowIsLink(r)); }
+function ptLinkRows() { return ptRowsCached().filter(r => (r.type || '').trim() && ptRowIsLink(r)); }
+
+// 路徑顯示：最後一層資料夾名稱放大，上層路徑淡色顯示在下方
+function ptPathHtml(v) {
+  const short = ptShort(v).replace(/\\+$/, '');
+  const segs = short.split('\\').filter(Boolean);
+  const leaf = segs.pop() || short;
+  const parent = segs.map(s => escHtml(s)).join('<i>\\</i>');
+  return `<span class="pt-path"><span class="pt-leaf">${escHtml(leaf)}</span>${parent ? `<span class="pt-parent">${parent}</span>` : ''}</span>`;
+}
+// 路徑指向別的品牌資料夾時提示（例：GAP 的車縫線放在 OLD NAVY 底下）
+function ptCrossBrand(v, brand) {
+  const top = (ptShort(v).split('\\')[0] || '').toUpperCase();
+  const own = { GAP: ['GAP','GAP INC'], ATH: ['ATHLETA'], ON: ['OLD NAVY'], BR: ['BANANA REPUBLIC'] }[brand] || [];
+  const known = { 'GAP':'GAP', 'ATHLETA':'ATHLETA', 'OLD NAVY':'OLD NAVY', 'BANANA REPUBLIC':'BANANA REPUBLIC' };
+  return known[top] && !own.includes(top) ? known[top] : '';
+}
+function ptMatch(r) {
+  const q = __ptFilter.trim().toLowerCase();
+  if (!q) return true;
+  return [r.type, r.shared, ...PT_BRANDS.map(b => r[b])].some(x => String(x || '').toLowerCase().includes(q));
+}
+
+function ptBrandListHtml() {
+  const rows = ptFolderRows().filter(ptMatch);
+  const label = BRAND_INFO[currentBrand]?.label || currentBrand;
+  const shown = [], missing = [];
+  rows.forEach(r => {
+    const v = r.shared || r[currentBrand];
+    if (ptIsEmpty(v)) missing.push(r.type); else shown.push({ r, v });
+  });
+  if (!shown.length && !missing.length) return `<div class="pt-none">找不到符合「${escHtml(__ptFilter)}」的路徑</div>`;
+  const items = shown.map(({ r, v }) => {
+    const cross = r.shared ? '' : ptCrossBrand(v, currentBrand);
+    return `<button class="pt-item copy-value" data-path="${escHtml(v)}" title="點一下複製：${escHtml(v)}">
+      <span class="pt-item-type">${escHtml(r.type)}</span>
+      ${ptPathHtml(v)}
+      <span class="pt-item-act">
+        ${r.shared ? '<span class="pt-tag">四品牌共用</span>' : ''}
+        ${cross ? `<span class="pt-tag cross" title="此路徑放在 ${escHtml(cross)} 資料夾">在 ${escHtml(cross)} 底下</span>` : ''}
+        <span class="pt-copy-lbl">複製</span>
+      </span>
+    </button>`;
+  }).join('');
+  return (shown.length ? `<div class="pt-list">${items}</div>` : `<div class="pt-none">${escHtml(label)} 沒有符合的路徑</div>`)
+    + (missing.length ? `<div class="pt-missing"><b>${escHtml(label)} 沒有設定：</b>${missing.map(escHtml).join('、')}　<a href="javascript:void(0)" onclick="ptSetMode('all')" style="color:var(--brand-accent)">看四品牌對照 →</a></div>` : '');
+}
+
+function ptCompareHtml() {
+  const rows = ptFolderRows().filter(ptMatch);
+  if (!rows.length) return `<div class="pt-none">找不到符合「${escHtml(__ptFilter)}」的路徑</div>`;
   const head = PT_BRANDS.map(b => `<th class="${b === currentBrand ? 'pt-cur' : ''}">${escHtml(BRAND_INFO[b]?.label || b)}</th>`).join('');
-  const body = rows.map(r => r.shared
-    ? `<tr><td class="pt-type">${escHtml(r.type || '')}</td><td colspan="4"><span class="pt-shared">四品牌共用</span>${ptValueHtml(r.shared)}</td></tr>`
-    : `<tr><td class="pt-type">${escHtml(r.type || '')}</td>${PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptValueHtml(r[b])}</td>`).join('')}</tr>`
-  ).join('');
-  return `<div class="pt-wrap"><table class="pt-table"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  const body = rows.map(r => {
+    if (r.shared) return `<tr><td class="pt-type">${escHtml(r.type)}</td><td colspan="4"><div class="pt-shared-row"><span class="pt-tag" style="margin-top:3px">四品牌共用</span><div style="flex:1;min-width:0">${ptValueHtml(r.shared)}</div></div></td></tr>`;
+    return `<tr><td class="pt-type">${escHtml(r.type)}</td>${PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptValueHtml(r[b])}</td>`).join('')}</tr>`;
+  }).join('');
+  return `<div class="pt-cmp-wrap"><table class="pt-cmp"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function ptBodyHtml() { return __ptMode === 'all' ? ptCompareHtml() : ptBrandListHtml(); }
+
+function ptViewTableHtml() {
+  if (!__ptRows.length) return '<div class="pt-none">尚未設定路徑，請進入編輯模式新增。</div>';
+  const label = BRAND_INFO[currentBrand]?.label || currentBrand;
+  return `
+    <div class="pt-toolbar">
+      <div class="seg" role="tablist">
+        <button class="${__ptMode !== 'all' ? 'active' : ''}" onclick="ptSetMode('brand')">只看 ${escHtml(label)}</button>
+        <button class="${__ptMode === 'all' ? 'active' : ''}" onclick="ptSetMode('all')">四品牌對照</button>
+      </div>
+      <div class="pt-filter"><input type="search" placeholder="篩選類型或資料夾…" value="${escHtml(__ptFilter)}" oninput="ptSetFilter(this.value)"></div>
+    </div>
+    <div class="pt-hint">點一下即複製完整路徑　·　已省略開頭 <code>${escHtml(PT_PREFIX)}</code></div>
+    <div id="pt-body">${ptBodyHtml()}</div>`;
+}
+function ptSetMode(m) {
+  __ptMode = m;
+  try { localStorage.setItem('gap3d_pt_mode', m); } catch (e) {}
+  const v = document.getElementById('pt-view'); if (v) v.innerHTML = ptViewTableHtml();
+}
+function ptSetFilter(q) {
+  __ptFilter = q;
+  const b = document.getElementById('pt-body'); if (b) b.innerHTML = ptBodyHtml();
+}
+
+// 頁首 + 分頁（路徑 / 連結與帳密 兩個分類共用）
+function hubHeaderHtml() {
+  const jump = id => `document.getElementById('${id}')?.scrollIntoView({behavior:'smooth',block:'start'})`;
+  return `
+    <div class="page-header">
+      <div class="page-title">${HUB_TITLE}</div>
+      <div class="page-desc">常用網站、資料夾路徑與共用帳號都在這一頁。</div>
+    </div>
+    <div class="hub-jump">
+      <button onclick="${jump('hub-links')}">🔗 常用連結</button>
+      ${allSections.some(x => x.slug === 'accounts') ? `<button onclick="${jump('hub-accounts')}">🔑 帳號密碼</button>` : ''}
+      <button onclick="${jump('hub-paths')}">📁 資料夾路徑</button>
+    </div>`;
 }
 // 卡片路徑可寫「標籤｜@類型」或「標籤｜@類型:品牌」→ 顯示時自動換成路徑總表的值
 let __ptCache = { src: null, rows: [] };
@@ -2486,11 +2757,13 @@ function ptRedraw() {
 }
 function renderPathsPage(section, entries) {
   __ptRows = ptLoad();
+  const acSec = allSections.find(x => x.slug === 'accounts');
+  const acEntries = acSec ? allEntries.filter(x => x.section_id === acSec.id && brandOk(x)) : [];
   return `
-    <div class="page-header">
-      <div class="page-title">${section.icon || '📁'} ${escHtml(section.name)}</div>
-      <div class="page-desc">四個品牌的常用資料夾路徑。點一下即可複製完整路徑（…\\ = ${escHtml(PT_PREFIX)}）</div>
-    </div>
+    ${hubHeaderHtml()}
+    <div id="hub-links">${renderQuickLinks()}</div>
+    ${acSec ? `<div id="hub-accounts">${typeof emBarHtml === "function" ? emBarHtml(acSec) : ""}${renderAccountsBlock(acEntries)}</div>` : ''}
+    <div class="hub-sec-title" id="hub-paths">📁 資料夾路徑</div>
     <div id="pt-view" class="em-hide">${ptViewTableHtml()}</div>
     <div id="pt-edit" class="em-only">${ptEditTableHtml()}</div>
     ${entries.map(e => renderCard(e)).join('')}
@@ -2796,12 +3069,13 @@ function copyPath(path) {
   });
 }
 
-function showCopyToast() {
-  const toast = document.createElement('div');
-  toast.textContent = '✓ 已複製路徑';
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid rgba(22,101,52,0.3);color:#166534;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
+function showCopyToast(text) {
+  let t = document.getElementById('copyToast');
+  if (!t) { t = document.createElement('div'); t.id = 'copyToast'; t.className = 'copy-toast'; document.body.appendChild(t); }
+  t.innerHTML = '<b>✓ 已複製</b>' + (text ? '<code>' + escHtml(String(text).split('\n')[0]) + '</code>' : '');
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(showCopyToast._t);
+  showCopyToast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
 // ── 共用 Stage 流程介面 ────────────────────────
@@ -3153,54 +3427,42 @@ function renderColorPlacementContent() {
   `;
 }
 
-function renderAccountsPage(section, entries) {
-  // grid card 展開式
+let __acUnlocked = false;
+try { __acUnlocked = sessionStorage.getItem('gap3d_ac_ok') === '1'; } catch (e) {}
+function renderAccountsBlock(entries) {
   const acGridId = 'ac-grid';
   const gridItems = entries.map(e => {
     const preview = [e.username, e.note].filter(Boolean).join(' · ') || '點開查看';
     return `
       <div class="grid-card" id="ac-gc-${e.id}" onclick="toggleAcCard('${e.id}','${acGridId}')">
-        <div class="grid-card-icon" style="background:rgba(234,179,8,0.1);color:#a16207">🔑</div>
+        <div class="grid-card-icon" style="background:rgba(234,179,8,0.12);color:#a16207">🔑</div>
         <div class="grid-card-title">${escHtml(e.title)}</div>
         <div class="grid-card-preview">${escHtml(preview)}</div>
       </div>`;
   }).join('');
-
-  const expandRow = `
-    <div class="grid-expand-row" id="${acGridId}-expand">
-      <div class="grid-expand-inner" id="${acGridId}-inner"></div>
-    </div>`;
-
   const gridHtml = entries.length
-    ? `<div class="card-grid" id="${acGridId}">${gridItems}${expandRow}</div>`
-    : '<div class="card" style="color:var(--text-dim);text-align:center;padding:30px">尚無帳號資料</div>';
-
+    ? `<div class="card-grid" id="${acGridId}">${gridItems}<div class="grid-expand-row" id="${acGridId}-expand"><div class="grid-expand-inner" id="${acGridId}-inner"></div></div></div>`
+    : '<div class="pt-none">尚無帳號資料</div>';
   return `
-    <div class="page-header">
-      <div class="page-title">🔑 常用連結與帳密</div>
-    </div>
-    <div id="aclock" style="max-width:520px;margin:0 0 20px">
-      <div class="card" style="display:flex;align-items:center;gap:18px;padding:16px 20px">
-        <div style="font-size:26px;flex-shrink:0">🔒</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">DPC 地址是？</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${acQuizOptions().map(o => `
-              <button onclick="checkAcQuiz('${o}')"
-                style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.05em">
-                ${o}
-              </button>
-            `).join('')}
+    <div class="hub-sec">
+      <div class="hub-sec-title">🔑 帳號密碼 <small>${__acUnlocked ? '點卡片查看，帳密點一下即複製' : '回答問題後顯示'}</small></div>
+      <div id="aclock" style="${__acUnlocked ? 'display:none' : ''}">
+        <div class="ac-lock">
+          <div class="ac-lock-ico">🔒</div>
+          <div style="flex:1;min-width:0">
+            <div class="ac-lock-q">DPC 地址是？</div>
+            <div class="ac-lock-opts">
+              ${acQuizOptions().map(o => `<button type="button" onclick="checkAcQuiz('${o}')">${o}</button>`).join('')}
+            </div>
+            <div class="ac-lock-err" id="acPwError">答錯了，再想想 🤔</div>
           </div>
-          <div id="acPwError" style="display:none;font-size:12px;color:#b91c1c;margin-top:8px">答錯了，再想想 🤔</div>
         </div>
       </div>
-    </div>
-    <div id="ac-content" style="display:none">
-      ${gridHtml}
-    </div>
-    ${renderQuickLinks()}
-  `;
+      <div id="ac-content" style="${__acUnlocked ? '' : 'display:none'}">${gridHtml}</div>
+    </div>`;
+}
+function renderAccountsPage(section, entries) {
+  return `<div class="page-header"><div class="page-title">🔑 常用連結與帳密</div></div>${renderQuickLinks()}${renderAccountsBlock(entries)}`;
 }
 
 // ── 常用連結（資料存在隱藏分類 links，可於後台新增/修改/排序）──
@@ -3222,30 +3484,30 @@ function linkUrlOf(e) {
 
 function renderQuickLinks() {
   const sec = allSections.find(s => s.slug === LINKS_SECTION_SLUG);
-  const items = sec
-    ? allEntries.filter(e => e.section_id === sec.id && brandOk(e) && linkUrlOf(e))
-    : [];
+  const items = (sec ? allEntries.filter(e => e.section_id === sec.id && brandOk(e) && linkUrlOf(e)) : [])
+    .map(e => ({ title: e.title, url: linkUrlOf(e) }));
+  // 路徑總表裡的網址列（例：MC Link、布料資訊）也一起放這裡
+  ptLinkRows().forEach(r => {
+    const url = r.shared || r[currentBrand];
+    if (url && ptIsLink(url) && !items.some(i => i.url === url)) items.push({ title: r.type, url });
+  });
   if (!items.length) return '';
-
   return `
-    <div class="page-header" style="margin-top:8px">
-      <div class="page-title" style="font-size:19px">🔗 GAP INC 常用連結</div>
-      <div class="page-desc" style="font-size:14px">點選開新分頁</div>
-    </div>
-    <div class="card-grid">
-      ${items.map(e => {
-        const url = linkUrlOf(e);
-        let host = '';
-        try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (_) {}
-        return `
-        <div class="grid-card" data-url="${escAttr(url)}" title="${escAttr(url)}" onclick="window.open(this.dataset.url,'_blank')">
-          <div class="grid-card-icon" style="background:rgba(29,78,216,0.1);color:#1d4ed8">🔗</div>
-          <div class="grid-card-title">${escHtml(e.title)}</div>
-          <div class="grid-card-preview">${escHtml(host)}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  `;
+    <div class="hub-sec">
+      <div class="hub-sec-title">🔗 常用連結 <small>點選開新分頁</small></div>
+      <div class="link-grid">
+        ${items.map(({ title, url }) => {
+          let host = url;
+          try { const u = new URL(url); host = u.host.replace(/^www\./, '') + (u.pathname.length > 1 ? u.pathname.replace(/\/$/, '') : ''); } catch (_) {}
+          const ini = String(title || '?').trim().charAt(0).toUpperCase();
+          return `<a class="link-card" href="${escAttr(url)}" target="_blank" rel="noopener" title="${escAttr(url)}">
+            <span class="link-ico">${escHtml(ini)}</span>
+            <span class="link-body"><span class="link-title" style="display:block">${escHtml(title)}</span><span class="link-host" style="display:block">${escHtml(host)}</span></span>
+            <span class="link-arrow">↗</span>
+          </a>`;
+        }).join('')}
+      </div>
+    </div>`;
 }
 
 let expandedAcCardId = null;
@@ -3300,6 +3562,8 @@ function acQuizOptions() {
 
 function checkAcQuiz(ans) {
   if (ans === AC_QUIZ_ANSWER) {
+    __acUnlocked = true;
+    try { sessionStorage.setItem('gap3d_ac_ok', '1'); } catch (e) {}
     document.getElementById('aclock').style.display = 'none';
     document.getElementById('ac-content').style.display = 'block';
   } else {
@@ -4017,16 +4281,20 @@ document.addEventListener('click', e => {
   if (!btn) return;
   const path = btn.getAttribute('data-path');
   if (!path) return;
-  navigator.clipboard.writeText(path).then(() => {
-    showCopyToast();
-  }).catch(() => {
+  const done = () => {
+    showCopyToast(path);
+    btn.classList.add('copied');
+    const lbl = btn.querySelector('.pt-copy-lbl'); if (lbl) lbl.textContent = '已複製 ✓';
+    setTimeout(() => { btn.classList.remove('copied'); if (lbl) lbl.textContent = '複製'; }, 1400);
+  };
+  navigator.clipboard.writeText(path).then(done).catch(() => {
     const el = document.createElement('textarea');
     el.value = path;
     document.body.appendChild(el);
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-    showCopyToast();
+    done();
   });
 });
 
@@ -4373,7 +4641,7 @@ function updateBrandWarning() {
   strip.style.background = `linear-gradient(90deg, ${metas.map(m => m.color).join(', ')})`;
 }
 
-function openNewEntry() {
+function openNewEntry(secId) {
   emFillSectionSelect();
   emEditingId = null;
   document.getElementById('modalTitle').textContent = '新增卡片';
@@ -4384,7 +4652,7 @@ function openNewEntry() {
   document.querySelectorAll('#fBrandGroup .brand-cb').forEach(cb => cb.checked = false);
   document.getElementById('fOrder').value = 0;
   document.querySelectorAll('#fStageGroup .stage-cb').forEach(cb => cb.checked = false);
-  document.getElementById('fSection').value = emCurSectionId() || allSections[0]?.id;
+  document.getElementById('fSection').value = secId || emCurSectionId() || allSections[0]?.id;
   document.getElementById('pathList').innerHTML = '';
   entryImages = [];
   renderImgThumbs();
@@ -5271,7 +5539,7 @@ function emBarHtml(section) {
   return `
     <div class="em-bar em-only">
       <span class="em-bar-label">✏️ 編輯「${esc(stripLeadingEmoji(section.name))}」</span>
-      <button class="em-btn primary" onclick="openNewEntry()">＋ 新增卡片</button>
+      <button class="em-btn primary" onclick="openNewEntry('${section.id}')">＋ 新增卡片</button>
       ${ctx.join('')}
       <button class="em-btn" onclick="this.parentElement.querySelector('.em-list').classList.toggle('open')">📋 本頁所有卡片（${entries.length}）</button>
       <button class="em-btn" onclick="openEditSection('${section.id}')">⚙️ 此分類設定</button>
@@ -5306,6 +5574,7 @@ function emAfterChange() {
 
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
+  toggleSidebar(false);
   const open = [...document.querySelectorAll('#emRoot .overlay.open')];
   if (!open.length) return;
   const top = open.sort((a, b) => (+getComputedStyle(b).zIndex) - (+getComputedStyle(a).zIndex))[0];
