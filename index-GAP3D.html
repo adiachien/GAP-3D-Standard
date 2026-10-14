@@ -958,6 +958,7 @@ body.edit-mode .em-hide { display:none !important; }
     <div style="display:flex;flex-direction:column;gap:12px">
       <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">標籤（選填）</label><input id="pathEditLabelInput" placeholder="例如：Women" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
       <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結</label><textarea id="pathEditValueInput" rows="3" placeholder="\\192.168.1.220\... 或 https://..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical"></textarea></div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.6">💡 想跟「📁 路徑總表」連動：填 <code>@類型名稱</code>（例 <code>@色盤</code>），會自動顯示目前品牌那格；要固定某品牌填 <code>@色盤:ATH</code>。</div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
       <button onclick="closePathEdit()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
@@ -1332,7 +1333,9 @@ function renderCard(e) {
   const paths = (e.paths || []).map((p, idx) => {
     const hasSep = p.includes('｜');
     const label  = hasSep ? p.split('｜')[0].trim() : '';
-    const value  = hasSep ? p.split('｜')[1].trim() : p.trim();
+    const rawV   = hasSep ? p.split('｜')[1].trim() : p.trim();
+    const ref    = ptRef(rawV);
+    const value  = ref ? ref.value : rawV;
     const isUrl  = value.startsWith('http');
 
     return `
@@ -1344,10 +1347,11 @@ function renderCard(e) {
           </a>
         ` : ''}
         ${label ? `<span style="font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;flex-shrink:0">${escHtml(label)}</span>` : ''}
-        ${isUrl
+        ${ref && !value ? ptRefNote(ref) : isUrl
           ? `<span style="font-size:12px;color:var(--text-dim);word-break:break-all;font-family:'DM Mono',monospace">${escHtml(value)}</span>`
           : `<button class="copy-value" data-path="${escHtml(value)}" title="點選複製" style="font-size:12px;color:#1d4ed8;font-family:'DM Mono',monospace;word-break:break-all;flex:1">📋 ${escHtml(value)}</button>`
         }
+        ${ptRefTag(ref)}
         <button onclick="openPathEdit('${e.id}',${idx})" class="em-only" title="編輯路徑／連結"
           style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px"
           onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='var(--text-dim)'">✏️</button>
@@ -1549,7 +1553,7 @@ function renderCardGrid(entries, groupLabel) {
     const em = EMOJI_MAP[e.source] || '📋';
     const preview = (e.images?.length ? '🖼️ ' : '') + (e.content
       ? (e.content.startsWith('TWO_COL') ? '（點開查看兩欄對照）' : stripMarks(e.content).replace(/\n/g,' ').slice(0,60))
-      : (e.paths?.length ? e.paths[0].split('｜').pop().slice(0,50) : ''));
+      : (e.paths?.length ? (() => { const v = e.paths[0].split('｜').pop().trim(); const r = ptRef(v); return (r ? r.value : v).slice(0,50); })() : ''));
     return `
       <div class="grid-card" id="gc-${e.id}" onclick="toggleCardExpand('${e.id}','${gridId}')">
         ${typeof emActionsHtml === 'function' ? emActionsHtml(e.id) : ''}
@@ -2415,6 +2419,39 @@ function ptViewTableHtml() {
   ).join('');
   return `<div class="pt-wrap"><table class="pt-table"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
+// 卡片路徑可寫「標籤｜@類型」或「標籤｜@類型:品牌」→ 顯示時自動換成路徑總表的值
+let __ptCache = { src: null, rows: [] };
+function ptRowsCached() {
+  const c = ptCfgEntry(); const src = c ? c.content : '';
+  if (__ptCache.src !== src) __ptCache = { src, rows: ptLoad() };
+  return __ptCache.rows;
+}
+function ptRef(v) {
+  const m = /^@(.+?)(?::(GAP|ATH|ON|BR))?$/.exec(String(v || '').trim());
+  if (!m) return null;
+  const type = m[1].trim(), brand = m[2] || currentBrand;
+  const r = ptRowsCached().find(x => (x.type || '').trim() === type);
+  return { type, pinned: m[2] || '', found: !!r, value: r ? (r.shared || r[brand] || '') : '' };
+}
+function ptRefNote(ref) {
+  if (!ref) return '';
+  if (!ref.found) return `<span style="font-size:12px;color:#c0392b">⚠️ 路徑總表找不到「${escHtml(ref.type)}」</span>`;
+  if (!ref.value) return `<span style="font-size:12px;color:var(--text-muted)">—（路徑總表「${escHtml(ref.type)}」這格還沒填）</span>`;
+  return '';
+}
+function ptRefTag(ref) {
+  return ref ? `<span class="em-only" title="連動路徑總表「${escHtml(ref.type)}」" style="flex-shrink:0;font-size:11px;color:#1d4ed8;background:rgba(29,78,216,.08);border-radius:4px;padding:1px 6px">🔗 總表</span>` : '';
+}
+async function ptRenameRefs(oldType, newType) {
+  if (!oldType || !newType || oldType === newType) return;
+  const re = new RegExp('｜@' + oldType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(:(GAP|ATH|ON|BR))?$');
+  for (const e of allEntries) {
+    if (!Array.isArray(e.paths) || !e.paths.some(p => re.test(p))) continue;
+    const paths = e.paths.map(p => p.replace(re, (m0, pin) => '｜@' + newType + (pin || '')));
+    const { error } = await sb.from('entries').update({ paths }).eq('id', e.id);
+    if (!error) e.paths = paths;
+  }
+}
 function ptShort(v) { return (v && v.startsWith(PT_PREFIX)) ? v.slice(PT_PREFIX.length) : (v || ''); }
 function ptFull(v) {
   v = (v || '').trim();
@@ -2461,11 +2498,13 @@ function renderPathsPage(section, entries) {
 }
 async function ptCellChange(inp) {
   const r = __ptRows[+inp.dataset.i]; if (!r) return;
+  const oldType = r.type;
   const v = inp.dataset.k === 'type' ? inp.value.trim() : ptFull(inp.value);
   if (v) r[inp.dataset.k] = v; else delete r[inp.dataset.k];
   inp.title = v;
   if (inp.dataset.k !== 'type') inp.value = ptShort(v);
   await ptSave(false);
+  if (inp.dataset.k === 'type') await ptRenameRefs(oldType, v);
 }
 async function ptToggleShared(i) {
   const r = __ptRows[i]; if (!r) return;
@@ -2876,7 +2915,9 @@ function selectStageTab(pageKey, stageKey) {
           const hasSep = (p) => p.includes('｜');
           const pathsHtml = (e.paths||[]).map((p, idx) => {
             const label = hasSep(p) ? p.split('｜')[0].trim() : '';
-            const value = hasSep(p) ? p.split('｜')[1].trim() : p.trim();
+            const rawV = hasSep(p) ? p.split('｜')[1].trim() : p.trim();
+            const ref = ptRef(rawV);
+            const value = ref ? ref.value : rawV;
             const isUrl = value.startsWith('http');
             return `
               <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 24px">
@@ -2884,10 +2925,11 @@ function selectStageTab(pageKey, stageKey) {
                   <a href="${escHtml(value)}" target="_blank" style="flex-shrink:0;background:rgba(29,78,216,0.08);border:1px solid rgba(59,130,246,0.2);color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:13px;font-family:inherit;text-decoration:none">🔗 開啟</a>
                 ` : ''}
                 ${label ? `<span style="font-size:14px;color:var(--text-dim);white-space:nowrap;min-width:80px">${escHtml(label)}</span>` : ''}
-                ${isUrl
+                ${ref && !value ? ptRefNote(ref) : isUrl
                   ? `<span style="font-size:13px;color:var(--text-dim)">${escHtml(value)}</span>`
                   : `<button class="path-block copy-value" data-path="${escHtml(value)}" title="點選複製" style="margin:0;flex:1">📋 ${escHtml(value)}</button>`
                 }
+                ${ptRefTag(ref)}
                 <button onclick="event.stopPropagation();openPathEdit('${e.id}',${idx})" class="em-only" title="編輯路徑／連結" style="flex-shrink:0;margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px">✏️</button>
               </div>`;
           }).join('');
