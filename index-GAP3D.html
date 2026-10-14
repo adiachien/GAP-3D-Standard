@@ -774,6 +774,24 @@ body.edit-mode .em-hide { display:none !important; }
 .av-editor input:not([type=radio]) { flex:1; min-width:0; border:1px solid var(--border); border-radius:6px; padding:6px 9px; font-size:13px; font-family:inherit; background:#fff; color:var(--text); }
 .av-editor input:focus { outline:none; border-color:#3b82f6; }
 .av-ed-path, .av-ed-code { font-family:'DM Mono',monospace !important; font-size:12px !important; }
+/* ── 路徑總表 ── */
+.pt-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:#fff; }
+.pt-table { width:100%; border-collapse:collapse; min-width:760px; }
+.pt-table th, .pt-table td { padding:10px 12px; border-bottom:1px solid #eef0f3; text-align:left; vertical-align:top; }
+.pt-table thead th { font-size:13px; font-weight:700; color:#4b5563; background:#f9fafb; position:sticky; top:0; }
+.pt-table tbody tr:last-child td { border-bottom:none; }
+.pt-type { font-size:14px; font-weight:700; color:#111827; white-space:nowrap; width:110px; }
+.pt-cur { background:var(--brand-accent-soft); }
+.pt-table thead th.pt-cur { color:var(--brand-accent); }
+.pt-cell { display:block; width:100%; text-align:left; font-family:'DM Mono',monospace; font-size:12px; color:#1a3fa6; background:none; border:none; padding:2px 0; cursor:pointer; word-break:break-all; line-height:1.5; }
+.pt-cell:hover { text-decoration:underline; }
+.pt-pre { color:#9ca3af; }
+.pt-empty { color:#cbd5e1; font-size:13px; }
+.pt-shared { font-size:11px; color:#6b7280; margin-right:6px; }
+.pt-ed-row { display:grid; grid-template-columns:110px repeat(5, minmax(0,1fr)) 28px; gap:6px; margin-bottom:6px; align-items:center; }
+.pt-ed-row input { min-width:0; border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:12px; font-family:'DM Mono',monospace; background:#fff; color:var(--text); }
+.pt-ed-row input.pt-ed-type { font-family:inherit; font-weight:700; }
+.pt-ed-head { font-size:12px; color:#6b7280; font-weight:700; }
 .av-ed-hint { font-size:11px; color:var(--text-muted); margin:4px 0 2px; }
 .av-ed-row { display:flex; align-items:center; gap:6px; margin-top:5px; padding:4px; border-radius:6px; }
 .av-ed-row.av-base { background:#e8f0fe; }
@@ -1264,6 +1282,7 @@ function renderSection(section, entries) {
   const specialPages = {
     stages:       renderStagesPage,
     avatar:       renderAvatarPage,
+    paths:        renderPathsPage,
     prefit:       renderPrefitPage,
     details:      renderDetailsPage,
     checklist:    renderChecklistPage,
@@ -2355,6 +2374,84 @@ function switchStageTab(btn, panelId) {
   btn.classList.add('stab-active');
   document.querySelectorAll('[id^="stab-"]').forEach(p => p.classList.remove('active'));
   document.getElementById(panelId)?.classList.add('active');
+}
+
+// ── 路徑總表：資料存在隱藏分類 path-config，卡片 PATHS_CONFIG，內容 JSON {rows:[{type,shared,GAP,ATH,ON,BR}]} ──
+const PT_BRANDS = ['GAP','ATH','ON','BR'];
+const PT_PREFIX = '\\\\192.168.1.220\\3ddb\\';
+function ptCfgEntry() {
+  const sec = allSections.find(x => x.slug === 'path-config');
+  if (!sec) return null;
+  return allEntries.find(x => x.section_id === sec.id && x.title === 'PATHS_CONFIG') || null;
+}
+function ptLoad() {
+  const c = ptCfgEntry();
+  if (c && c.content) { try { const o = JSON.parse(c.content); if (o && Array.isArray(o.rows)) return o.rows; } catch (err) {} }
+  return [];
+}
+function ptValueHtml(v) {
+  if (!v) return '<span class="pt-empty">—</span>';
+  if (/^https?:\/\//i.test(v)) return `<a href="${escHtml(v)}" target="_blank" class="pt-cell">🔗 ${escHtml(v)}</a>`;
+  const short = v.startsWith(PT_PREFIX)
+    ? `<span class="pt-pre">…\\</span>${escHtml(v.slice(PT_PREFIX.length))}`
+    : escHtml(v);
+  return `<button class="pt-cell copy-value" data-path="${escHtml(v)}" title="點選複製：${escHtml(v)}">📋 ${short}</button>`;
+}
+function renderPathsPage(section, entries) {
+  const rows = ptLoad();
+  const head = PT_BRANDS.map(b => `<th class="${b === currentBrand ? 'pt-cur' : ''}">${escHtml(BRAND_INFO[b]?.label || b)}</th>`).join('');
+  const body = rows.map(r => r.shared
+    ? `<tr><td class="pt-type">${escHtml(r.type || '')}</td><td colspan="4"><span class="pt-shared">四品牌共用</span>${ptValueHtml(r.shared)}</td></tr>`
+    : `<tr><td class="pt-type">${escHtml(r.type || '')}</td>${PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptValueHtml(r[b])}</td>`).join('')}</tr>`
+  ).join('');
+  return `
+    <div class="page-header">
+      <div class="page-title">${section.icon || '📁'} ${escHtml(section.name)}</div>
+      <div class="page-desc">四個品牌的常用資料夾路徑。點一下即可複製完整路徑（…\\ = ${escHtml(PT_PREFIX)}）</div>
+    </div>
+    ${rows.length ? `<div class="pt-wrap"><table class="pt-table"><thead><tr><th>類型</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+                  : '<div class="card" style="color:var(--text-muted)">尚未設定路徑，請進入編輯模式新增。</div>'}
+    ${ptEditorHtml(rows)}
+    ${entries.map(e => renderCard(e)).join('')}
+  `;
+}
+function ptEdRowHtml(r) {
+  r = r || {};
+  return `<div class="pt-ed-row">
+    <input class="pt-ed-type" value="${escHtml(r.type || '')}" placeholder="類型">
+    <input data-k="shared" value="${escHtml(r.shared || '')}" placeholder="四品牌共用（填了就合併成一格）">
+    ${PT_BRANDS.map(b => `<input data-k="${b}" value="${escHtml(r[b] || '')}" placeholder="${b}">`).join('')}
+    <button type="button" class="av-x" onclick="this.closest('.pt-ed-row').remove()" title="刪除此列">✕</button>
+  </div>`;
+}
+function ptEditorHtml(rows) {
+  return `<div class="av-editor em-only" id="pted" style="margin-top:16px">
+    <div class="av-ed-top">
+      <span>✏️ 編輯路徑總表</span>
+      <button type="button" class="em-btn primary" onclick="ptSave()">💾 儲存</button>
+    </div>
+    <div class="pt-ed-row pt-ed-head"><span>類型</span><span>共用</span>${PT_BRANDS.map(b => `<span>${b}</span>`).join('')}<span></span></div>
+    <div id="pted-rows">${(rows.length ? rows : [{}]).map(ptEdRowHtml).join('')}</div>
+    <button type="button" class="av-add" onclick="document.getElementById('pted-rows').insertAdjacentHTML('beforeend', ptEdRowHtml({}))">＋ 新增一列</button>
+  </div>`;
+}
+async function ptSave() {
+  const rows = [...document.querySelectorAll('#pted-rows .pt-ed-row')].map(el => {
+    const r = { type: el.querySelector('.pt-ed-type').value.trim() };
+    el.querySelectorAll('input[data-k]').forEach(i => { const v = i.value.trim(); if (v) r[i.dataset.k] = v; });
+    return r;
+  }).filter(r => Object.keys(r).length > 1 || r.type);
+  const sec = await ensureHiddenSection('path-config', '路徑總表資料', 994);
+  if (!sec) return;
+  const content = JSON.stringify({ rows });
+  const existing = ptCfgEntry();
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title: 'PATHS_CONFIG', content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
+  await loadData();
+  emAfterChange();
+  showToast('路徑總表已儲存 ✓', 'success');
 }
 
 function renderAvatarPage(section, entries) {
