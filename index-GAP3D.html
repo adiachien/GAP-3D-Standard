@@ -577,6 +577,36 @@ mark { background:rgba(217,119,6,0.15); color:#b45309; border-radius:2px; paddin
 }
 .grid-expand-close:hover { border-color: #b91c1c; color: #b91c1c; }
 
+/* ── 卡片就地編輯 ── */
+.card.card-editing { border-color: var(--gap-blue); box-shadow: 0 0 0 3px rgba(29,78,216,0.12); scroll-margin-top: 90px; }
+.ed-label { display: block; font-size: 14px; font-weight: 600; color: var(--text-dim); margin: 18px 0 6px; }
+.ed-title { width: 100%; box-sizing: border-box; font-size: 20px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-family: inherit; background: var(--bg-input); outline: none; }
+.ed-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.ed-tool { min-width: 42px; height: 34px; padding: 0 12px; border-radius: 7px; border: 1px solid var(--border); background: #fff; color: var(--text); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; }
+.ed-tool:hover { border-color: var(--gap-blue); }
+.ed-tools-hint { font-size: 13px; color: var(--text-muted); }
+.ed-text { display: block; width: 100%; box-sizing: border-box; min-height: 200px; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 16px; line-height: 1.75; color: var(--text); font-family: inherit; background: var(--bg-input); resize: vertical; outline: none; overflow-y: auto; }
+.ed-text.ed-paths { min-height: 76px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 1.7; color: #1d4ed8; }
+.ed-select { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 15px; color: var(--text); font-family: inherit; }
+.ed-title:focus, .ed-text:focus, .ed-select:focus { border-color: var(--gap-blue); background: #fff; box-shadow: 0 0 0 3px rgba(29,78,216,0.12); }
+.ed-ref-note { margin-top: 8px; font-size: 13px; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ed-ref-note button { background: none; border: none; padding: 0; color: #1d4ed8; font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; font-family: inherit; }
+.ed-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.ed-more { background: none; border: none; padding: 0; color: var(--gap-blue); font-size: 14px; cursor: pointer; font-family: inherit; text-decoration: underline; }
+.ed-keys { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+.ed-btn { height: 44px; padding: 0 20px; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: inherit; border: 1px solid var(--border); background: #fff; color: var(--text); }
+.ed-btn.primary { padding: 0 28px; background: var(--gap-blue); border-color: var(--gap-blue); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(29,78,216,0.3); }
+/* 格狀卡片的展開區：不要框中框、不要重複的標題（只留右上角的 ×） */
+.grid-expand-inner { position: relative; }
+.grid-expand-header { position: absolute; top: 12px; right: 14px; z-index: 3; margin: 0; padding: 0; border: none; }
+.grid-expand-header .grid-expand-title { display: none; }
+.grid-expand-inner > .card { border: none; box-shadow: none; outline: none !important; padding: 0; margin: 0; }
+.grid-expand-inner > .card > .card-header { padding-right: 40px; }
+.grid-expand-inner:has(.card-editing) .grid-expand-header { display: none; }
+.grid-expand-inner > .card.card-editing { padding-top: 4px; }
+/* 編輯中先收起右下角的編輯工具列，避免蓋住「儲存」 */
+body.ed-active #emDock { display: none !important; }
+
 /* ── 品牌切換器（下拉式，可容納 4+ 品牌不擁擠） ── */
 .brand-switcher { position: relative; margin: 10px 12px 6px; }
 .brand-switcher-trigger {
@@ -1119,14 +1149,25 @@ body.edit-mode .copy-toast { bottom: 88px; }
   <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:480px;max-width:95vw">
     <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">編輯路徑／連結</h3>
     <div id="pathEditEntryTitle" style="font-size:13px;color:var(--text-dim);margin-bottom:18px"></div>
+    <!-- 路徑是 @總表 連動時：直接提示去總表改 -->
+    <div id="pathEditRefPart" style="display:none;flex-direction:column;gap:14px">
+      <div id="pathEditRefInfo"></div>
+      <button type="button" onclick="ptGoEdit(pathEditCtx && pathEditCtx.refType)" style="width:100%;background:var(--gap-blue);color:#fff;border:none;padding:12px 16px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📁 去路徑總表修改</button>
+      <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <button type="button" onclick="pathEditUnlink()" style="background:none;border:none;padding:4px 0;color:var(--text-dim);font-size:13px;text-decoration:underline;cursor:pointer;font-family:inherit">只改這張卡片（不再跟總表連動）</button>
+        <button type="button" onclick="closePathEdit()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
+      </div>
+    </div>
+    <div id="pathEditFormPart">
     <div style="display:flex;flex-direction:column;gap:12px">
       <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">標籤（選填）</label><input id="pathEditLabelInput" placeholder="例如：Women" style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none"></div>
       <div><label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結</label><textarea id="pathEditValueInput" rows="3" placeholder="\\192.168.1.220\... 或 https://..." style="width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:vertical"></textarea></div>
-      <div style="font-size:12px;color:var(--text-muted);line-height:1.6">💡 想跟「📁 路徑總表」連動：填 <code>@類型名稱</code>（例 <code>@色盤</code>），會自動顯示目前品牌那格；要固定某品牌填 <code>@色盤:ATH</code>。</div>
+      <details style="font-size:12px;color:var(--text-muted);line-height:1.6"><summary style="cursor:pointer">進階：讓這個路徑跟「路徑總表」連動</summary>填 <code>@類型名稱</code>（例 <code>@色盤</code>），會自動顯示目前品牌那格；要固定某品牌填 <code>@色盤:ATH</code>。</details>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
       <button onclick="closePathEdit()" style="background:var(--card);color:var(--text-dim);border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
       <button onclick="savePathEdit()" style="background:var(--gap-blue);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">儲存</button>
+    </div>
     </div>
   </div>
 </div>
@@ -1490,7 +1531,7 @@ function renderSection(section, entries) {
 
 // ── Card Renderer ──────────────────────────────
 function renderCard(e) {
-  if (editingEntryId === e.id) return renderCardEditForm(e);
+  if (editingEntryId != null && String(editingEntryId) === String(e.id)) return renderCardEditForm(e);
   const badgeMap = {
     official: '官方規範',
     internal: '內部SOP',
@@ -1610,47 +1651,59 @@ function editBtnHtml(id) {
 
 function renderCardEditForm(e) {
   const pathsText = (e.paths || []).join('\n');
+  const hasRef = /(^|｜)\s*@/m.test(pathsText);
   return `
-    <div class="card" id="entry-${e.id}" style="border-color:var(--gap-blue);box-shadow:0 0 0 2px rgba(29,78,216,0.12)">
-      <div class="card-header" style="align-items:flex-start">
-        <input id="ed-title-${e.id}" value="${escHtml(e.title || '')}"
-          style="flex:1;font-size:18px;font-weight:700;color:#111827;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:inherit;background:var(--bg-input);outline:none">
-        <button onclick="cancelEditCard('${e.id}')" title="取消"
-          style="flex-shrink:0;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:27px;height:27px;font-size:13px;cursor:pointer;font-family:inherit">✕</button>
+    <div class="card card-editing" id="entry-${e.id}"
+      oninput="edDirty=true" onchange="edDirty=true" onkeydown="edKey(event,'${e.id}')">
+      <label class="ed-label" for="ed-title-${e.id}" style="margin-top:0">標題</label>
+      <input id="ed-title-${e.id}" class="ed-title" value="${escHtml(e.title || '')}">
+
+      <label class="ed-label" for="ed-content-${e.id}">內容</label>
+      <div class="ed-tools">
+        <button type="button" class="ed-tool" onclick="wrapEditSel('${e.id}','**','**')" title="粗體">B</button>
+        <button type="button" class="ed-tool" onclick="wrapEditSel('${e.id}','==','==')" title="螢光筆" style="background:#fde047;color:#1a1a1a">螢光</button>
+        <button type="button" class="ed-tool" onclick="wrapEditSel('${e.id}','!!','!!')" title="紅字" style="color:#dc2626">紅字</button>
+        <span class="ed-tools-hint">先選取文字再按按鈕</span>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-wrap:wrap">
-        <button type="button" onclick="wrapEditSel('${e.id}','**','**')" title="粗體" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">B</button>
-        <button type="button" onclick="wrapEditSel('${e.id}','==','==')" title="螢光筆" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:#fde047;color:#1a1a1a;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">螢光</button>
-        <button type="button" onclick="wrapEditSel('${e.id}','!!','!!')" title="紅字" style="min-width:28px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:#dc2626;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">紅字</button>
-        <span style="font-size:11px;color:var(--text-dim)">選取文字後點按鈕，或手打 **粗體**、==螢光==、!!紅字!!</span>
-      </div>
-      <textarea id="ed-content-${e.id}" rows="4" placeholder="內容…"
-        style="width:100%;border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:15px;color:var(--text);font-family:inherit;background:var(--bg-input);resize:vertical;line-height:1.6;outline:none">${escHtml(e.content || '')}</textarea>
-      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:12px;color:var(--text-dim)">來源標籤</span>
-        <select id="ed-source-${e.id}" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit">
-          <option value="internal" ${e.source === 'internal' ? 'selected' : ''}>🟡 內部SOP</option>
-          <option value="official" ${e.source === 'official' ? 'selected' : ''}>🔵 官方規範</option>
-          <option value="warning" ${e.source === 'warning' ? 'selected' : ''}>🔴 重要注意</option>
-        </select>
-      </div>
-      <div style="margin-top:10px">
-        <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px">路徑／連結（每行一個，格式：標籤｜路徑或網址）</label>
-        <textarea id="ed-paths-${e.id}" rows="2" placeholder="標籤｜\\\\192.168.1.220\\3ddb\\..."
-          style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;font-family:'DM Mono',monospace;color:#1d4ed8;background:var(--bg-input);resize:vertical;outline:none">${escHtml(pathsText)}</textarea>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-        <button onclick="cancelEditCard('${e.id}')" style="background:var(--bg-input);color:var(--text-dim);border:1px solid var(--border);padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>
-        <button id="ed-save-${e.id}" onclick="saveEditCard('${e.id}')" style="background:var(--gap-blue);color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">儲存</button>
+      <textarea id="ed-content-${e.id}" class="ed-text" placeholder="內容…" oninput="edGrow(this)">${escHtml(e.content || '')}</textarea>
+
+      <label class="ed-label" for="ed-paths-${e.id}">路徑／連結 <span style="font-weight:400;color:var(--text-muted)">（每行一個，格式：標籤｜路徑或網址）</span></label>
+      <textarea id="ed-paths-${e.id}" class="ed-text ed-paths" placeholder="標籤｜\\\\192.168.1.220\\3ddb\\..." oninput="edGrow(this)">${escHtml(pathsText)}</textarea>
+      ${hasRef ? `<div class="ed-ref-note">🔗 有 <code>@</code> 的行是連動「路徑總表」，那些路徑要到總表改。
+        <button type="button" onclick="ptGoEdit('')">前往路徑總表 →</button></div>` : ''}
+
+      <label class="ed-label" for="ed-source-${e.id}">來源標籤</label>
+      <select id="ed-source-${e.id}" class="ed-select">
+        <option value="internal" ${e.source === 'internal' ? 'selected' : ''}>🟡 內部SOP</option>
+        <option value="official" ${e.source === 'official' ? 'selected' : ''}>🔵 官方規範</option>
+        <option value="warning" ${e.source === 'warning' ? 'selected' : ''}>🔴 重要注意</option>
+      </select>
+
+      <div class="ed-foot">
+        <button type="button" class="ed-more" onclick="edMore('${e.id}')">更多設定（分類・品牌・Stage・圖片）</button>
+        <span class="ed-keys">Ctrl+Enter 儲存 · Esc 取消</span>
+        <button type="button" class="ed-btn" onclick="cancelEditCard('${e.id}')">取消</button>
+        <button type="button" class="ed-btn primary" id="ed-save-${e.id}" onclick="saveEditCard('${e.id}')">✓ 儲存</button>
       </div>
     </div>
   `;
+}
+
+// 文字框跟著內容長高（最高到畫面的 60%，再多就出捲軸）
+function edGrow(t) {
+  if (!t) return;
+  t.style.height = 'auto';
+  t.style.height = Math.min(t.scrollHeight + 2, Math.round(window.innerHeight * 0.6)) + 'px';
 }
 
 function reRenderEntry(id) {
   const e = allEntries.find(x => String(x.id) === String(id));
   const el = document.getElementById('entry-' + id);
   if (e && el) el.outerHTML = renderCard(e);
+  document.body.classList.toggle('ed-active', editingEntryId != null);
+  // 卡片在格狀「展開區」裡時，展開區高度要跟著新內容走，不然會被裁掉
+  const row = document.getElementById('entry-' + id)?.closest('.grid-expand-row');
+  if (row && row.classList.contains('open')) row.style.maxHeight = 'none';
 }
 
 function wrapEditSel(id, pre, post) {
@@ -1665,8 +1718,53 @@ function wrapEditSel(id, pre, post) {
   ta.selectionEnd = s + pre.length + sel.length;
 }
 
-function startEditCard(id) { editingEntryId = id; reRenderEntry(id); }
-function cancelEditCard(id) { editingEntryId = null; reRenderEntry(id); }
+// 卡片就地編輯：同一時間只編一張；按「儲存」才寫入；存完 10 秒內可復原
+let edDirty = false;
+function edConfirmDiscard() { return !edDirty || confirm('這張卡片有還沒儲存的修改，確定要放棄嗎？'); }
+
+function startEditCard(id) {
+  if (editingEntryId != null && String(editingEntryId) !== String(id)) {
+    if (!edConfirmDiscard()) return;
+    const prev = editingEntryId;
+    editingEntryId = null; reRenderEntry(prev);
+  }
+  editingEntryId = id; edDirty = false;
+  reRenderEntry(id);
+  const ta = document.getElementById(`ed-content-${id}`);
+  edGrow(ta);
+  edGrow(document.getElementById(`ed-paths-${id}`));
+  if (ta) {
+    ta.focus({ preventScroll: true });
+    ta.setSelectionRange(0, 0);
+    ta.scrollTop = 0;
+    ta.closest('.card')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+}
+function cancelEditCard(id, force) {
+  if (!force && !edConfirmDiscard()) return;
+  editingEntryId = null; edDirty = false;
+  reRenderEntry(id);
+}
+function edKey(ev, id) {
+  if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); saveEditCard(id); }
+  else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cancelEditCard(id); }
+}
+// 「更多設定」：收起就地編輯，改開完整表單
+function edMore(id) {
+  if (!edConfirmDiscard()) return;
+  editingEntryId = null; edDirty = false;
+  reRenderEntry(id);
+  openEditEntry(id);
+}
+// 卡片上的 ✏️：能就地編輯就就地編輯（收合的格狀卡片先展開），否則開完整表單
+function emInlineEdit(id) {
+  if (!document.getElementById('entry-' + id)) {
+    const gc = document.getElementById('gc-' + id);
+    if (gc && !gc.classList.contains('expanded')) gc.click();
+  }
+  if (document.getElementById('entry-' + id)) startEditCard(id);
+  else openEditEntry(id);
+}
 
 async function saveEditCard(id) {
   const title = document.getElementById(`ed-title-${id}`).value.trim();
@@ -1674,28 +1772,73 @@ async function saveEditCard(id) {
   const content = document.getElementById(`ed-content-${id}`).value;
   const source  = document.getElementById(`ed-source-${id}`).value;
   const paths   = document.getElementById(`ed-paths-${id}`).value.split('\n').map(s => s.trim()).filter(Boolean);
+  const e = allEntries.find(x => String(x.id) === String(id));
+  const before = e ? { title: e.title, content: e.content, source: e.source, paths: e.paths } : null;
   const btn = document.getElementById(`ed-save-${id}`);
   if (btn) { btn.disabled = true; btn.textContent = '儲存中…'; }
   const { error } = await sb.from('entries').update({ title, content, source, paths }).eq('id', id);
   if (error) {
     alert('儲存失敗：' + error.message);
-    if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
+    if (btn) { btn.disabled = false; btn.textContent = '✓ 儲存'; }
     return;
   }
-  const e = allEntries.find(x => String(x.id) === String(id));
-  if (e) { e.title = title; e.content = content; e.source = source; e.paths = paths; }
-  editingEntryId = null;
+  if (e) Object.assign(e, { title, content, source, paths });
+  editingEntryId = null; edDirty = false;
   reRenderEntry(id);
-  showEditedToast();
+  edSaveCache();
+  showEditedToast(`已儲存「${title}」`, before && (() => edRestore(id, before)));
 }
 
-function showEditedToast() {
-  const toast = document.createElement('div');
-  toast.textContent = '✓ 已儲存';
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid rgba(29,78,216,0.3);color:#1d4ed8;padding:8px 16px;border-radius:8px;font-size:16px;z-index:999;transition:opacity 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 1500);
+async function edRestore(id, before) {
+  const { error } = await sb.from('entries').update(before).eq('id', id);
+  if (error) { alert('復原失敗：' + error.message); return; }
+  const e = allEntries.find(x => String(x.id) === String(id));
+  if (e) Object.assign(e, before);
+  if (editingEntryId != null && String(editingEntryId) === String(id)) { editingEntryId = null; edDirty = false; }
+  reRenderEntry(id);
+  edSaveCache();
+  showEditedToast('已復原');
 }
+
+function edSaveCache() {
+  try { localStorage.setItem(GAP3D_CACHE, JSON.stringify({ sections: allSections, entries: allEntries })); } catch (e) {}
+}
+
+function showEditedToast(msg = '已儲存', undo = null) {
+  document.getElementById('edUndoToast')?.remove();
+  const toast = document.createElement('div');
+  toast.id = 'edUndoToast';
+  toast.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#0f172a;color:#fff;padding:10px 14px 10px 16px;border-radius:10px;font-size:14px;z-index:4000;transition:opacity 0.3s;box-shadow:0 10px 30px rgba(0,0,0,0.25);max-width:calc(100vw - 40px)';
+  const label = document.createElement('span');
+  label.textContent = '✓ ' + msg;
+  toast.appendChild(label);
+  if (undo) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = '↶ 復原';
+    b.style.cssText = 'background:none;border:1px solid rgba(255,255,255,0.35);color:#fff;border-radius:7px;padding:5px 12px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap';
+    b.onclick = () => { toast.remove(); undo(); };
+    toast.appendChild(b);
+  }
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, undo ? 10000 : 2000);
+}
+
+// 編輯模式下，對卡片點兩下也能直接編輯
+document.addEventListener('dblclick', (ev) => {
+  if (!document.body.classList.contains('edit-mode')) return;
+  if (ev.target.closest('input, textarea, select, button, a')) return;
+  const card = ev.target.closest('.card[id^="entry-"]');
+  if (!card) return;
+  const id = card.id.slice('entry-'.length);
+  if (editingEntryId != null && String(editingEntryId) === id) return;
+  window.getSelection()?.removeAllRanges();
+  startEditCard(id);
+});
+// 有還沒儲存的修改就關頁／重新整理 → 先提醒
+window.addEventListener('beforeunload', (ev) => {
+  if (editingEntryId != null && edDirty) { ev.preventDefault(); ev.returnValue = ''; }
+});
 
 
 // ── Card Grid + Modal ─────────────────────────
@@ -1743,10 +1886,22 @@ function renderCardGrid(entries, groupLabel) {
 function openExpandRow(expandRow) {
   expandRow.classList.add('open');
   requestAnimationFrame(() => {
+    if (expandRow.style.maxHeight === 'none') return;   // 已經解除上限（例如馬上進入編輯）
     expandRow.style.maxHeight = expandRow.scrollHeight + 'px';
   });
+  // 動畫跑完就解除高度上限：之後圖片載入、切到編輯框，內容變高都不會被裁掉
+  clearTimeout(expandRow._unclamp);
+  expandRow._unclamp = setTimeout(() => {
+    if (expandRow.classList.contains('open')) expandRow.style.maxHeight = 'none';
+  }, 350);
 }
 function closeExpandRow(expandRow) {
+  clearTimeout(expandRow._unclamp);
+  // 從 none 收合沒有動畫 → 先設回實際高度，再收到 0
+  if (expandRow.style.maxHeight === 'none') {
+    expandRow.style.maxHeight = expandRow.scrollHeight + 'px';
+    void expandRow.offsetHeight;
+  }
   expandRow.classList.remove('open');
   expandRow.style.maxHeight = '';
 }
@@ -2711,7 +2866,7 @@ function ptRefNote(ref) {
   return '';
 }
 function ptRefTag(ref) {
-  return ref ? `<span class="em-only" title="連動路徑總表「${escHtml(ref.type)}」" style="flex-shrink:0;font-size:11px;color:#1d4ed8;background:rgba(29,78,216,.08);border-radius:4px;padding:1px 6px">🔗 總表</span>` : '';
+  return ref ? `<button type="button" class="em-only" data-pt="${escHtml(ref.type)}" onclick="event.stopPropagation();ptGoEdit(this.dataset.pt)" title="這個路徑來自路徑總表「${escHtml(ref.type)}」，點一下前往修改" style="flex-shrink:0;font-size:11px;color:#1d4ed8;background:rgba(29,78,216,.08);border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-family:inherit">🔗 總表</button>` : '';
 }
 async function ptRenameRefs(oldType, newType) {
   if (!oldType || !newType || oldType === newType) return;
@@ -3018,7 +3173,56 @@ function openPathEdit(entryId, index) {
   document.getElementById('pathEditEntryTitle').textContent = e.title || '';
   document.getElementById('pathEditLabelInput').value = label;
   document.getElementById('pathEditValueInput').value = value;
+
+  // 路徑是 @總表 連動 → 不給改字，直接提示去總表改
+  const ref = ptRef(value);
+  pathEditCtx.refType = ref ? ref.type : '';
+  document.getElementById('pathEditRefPart').style.display = ref ? 'flex' : 'none';
+  document.getElementById('pathEditFormPart').style.display = ref ? 'none' : '';
+  if (ref) {
+    const row = ptRowsCached().find(x => (x.type || '').trim() === ref.type);
+    const brand = ref.pinned || currentBrand;
+    const cur = row ? ptShort(row.shared || row[brand]) : '';
+    document.getElementById('pathEditRefInfo').innerHTML = !ref.found
+      ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;color:#991b1b;font-size:14px;line-height:1.6">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">⚠️ 路徑總表裡找不到「${escHtml(ref.type)}」</div>
+          請到路徑總表新增這一列，或確認名稱有沒有打錯。</div>`
+      : `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;color:#1e3a8a;font-size:14px;line-height:1.6">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">這個路徑要到「路徑總表」改</div>
+          它跟總表的「${escHtml(ref.type)}」連動，在總表改一次，所有卡片都會一起更新。
+          <div style="margin-top:10px;background:#fff;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155">
+            <span style="color:#64748b">${row && row.shared ? '四品牌共用' : escHtml(BRAND_INFO[brand]?.label || brand)} 目前是：</span><br>
+            <span style="font-family:'DM Mono',monospace;word-break:break-all">${escHtml(cur || '（還沒填）')}</span>
+          </div></div>`;
+  }
   document.getElementById('pathEditModal').style.display = 'flex';
+}
+
+// 「只改這張卡片」：把連動換成目前的實際路徑，讓使用者自己改
+function pathEditUnlink() {
+  const input = document.getElementById('pathEditValueInput');
+  const ref = ptRef(input.value);
+  input.value = ref && ref.value ? ref.value : '';
+  document.getElementById('pathEditRefPart').style.display = 'none';
+  document.getElementById('pathEditFormPart').style.display = '';
+  input.focus();
+}
+
+// 跳到「路徑總表」，並把那一列標亮
+function ptGoEdit(type) {
+  closePathEdit();
+  if (typeof isEditMode === 'function' && !isEditMode()) setEditMode(true);
+  showSection('paths');
+  setTimeout(() => {
+    const inp = type ? [...document.querySelectorAll('#pt-edit input[data-k="type"]')].find(i => i.value.trim() === type) : null;
+    const tr = inp?.closest('tr');
+    (tr || document.getElementById('hub-paths'))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!tr) return;
+    tr.style.transition = 'background 0.4s';
+    tr.style.background = '#fef9c3';
+    setTimeout(() => { tr.style.background = ''; }, 3000);
+    (tr.querySelector(`input[data-k="${currentBrand}"]`) || tr.querySelector('input[data-k="shared"]'))?.focus({ preventScroll: true });
+  }, 300);
 }
 
 function closePathEdit() {
@@ -5478,12 +5682,18 @@ function showToast(msg, type='') {
 
 function isEditMode() { return document.body.classList.contains('edit-mode'); }
 function setEditMode(on) {
+  // 關閉編輯模式時，順便收起正在就地編輯的卡片（有未存修改先問）
+  if (!on && editingEntryId != null) {
+    if (!edConfirmDiscard()) return;
+    cancelEditCard(editingEntryId, true);
+  }
   document.body.classList.toggle('edit-mode', on);
   const b = document.getElementById('editBtn');
   b.textContent = on ? '✅ 完成編輯' : '✏️ 編輯模式';
   b.classList.toggle('em-on', on);
   document.getElementById('emDock').style.display = on ? 'flex' : 'none';
-  try { localStorage.setItem('gap3d_edit_mode', on ? '1' : '0'); } catch (e) {}
+  // 只記在這個分頁：重新整理還在編輯模式，關掉網頁就自動退出
+  try { sessionStorage.setItem('gap3d_edit_mode', on ? '1' : '0'); } catch (e) {}
 }
 function toggleEditMode() { setEditMode(!isEditMode()); }
 
@@ -5499,7 +5709,7 @@ function emFillSectionSelect() {
 // 卡片右上角的 ✏️ 📄 🗑（只在編輯模式顯示）
 function emActionsHtml(id) {
   return `<span class="em-actions em-only" onclick="event.stopPropagation()">
-    <button type="button" title="編輯" onclick="openEditEntry('${id}')">✏️</button>
+    <button type="button" title="直接在卡片上編輯（也可以對卡片點兩下）" onclick="emInlineEdit('${id}')">✏️</button>
     <button type="button" title="複製成新卡片" onclick="duplicateEntry('${id}')">📄</button>
     <button type="button" class="em-del" title="刪除" onclick="emDeleteEntry('${id}')">🗑</button>
   </span>`;
@@ -5582,7 +5792,10 @@ document.addEventListener('keydown', (ev) => {
 });
 
 let __emInit = false;
-try { __emInit = localStorage.getItem('gap3d_edit_mode') === '1'; } catch (e) {}
+try {
+  __emInit = sessionStorage.getItem('gap3d_edit_mode') === '1';
+  localStorage.removeItem('gap3d_edit_mode');   // 清掉舊版「永遠記住編輯模式」留下的設定
+} catch (e) {}
 setEditMode(__emInit);
 // 首次載入時頁面可能已用快取先畫好 → 重畫一次讓編輯按鈕出現
 if (document.getElementById('page-content')?.classList.contains('active') && currentSlug && allSections.length) showSection(currentSlug, false);
