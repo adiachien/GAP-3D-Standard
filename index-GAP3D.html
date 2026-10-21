@@ -672,6 +672,12 @@ body:not(.edit-mode) .em-only { display:none !important; }
 .grid-card { position:relative; }
 .grid-card > .em-actions { position:absolute; top:6px; right:6px; z-index:2; }
 body.edit-mode .card { outline:1px dashed rgba(29,78,216,0.25); outline-offset:2px; }
+/* 點一下就能改：滑過可編輯的卡片 → 變藍、出現「點一下編輯」 */
+body.edit-mode .card[id^="entry-"]:not(.card-editing) { position:relative; cursor:text; transition:outline-color .15s, background .15s; }
+body.edit-mode .card[id^="entry-"]:not(.card-editing):hover { outline:2px solid #1d4ed8; background:#f8fbff; }
+body.edit-mode .card[id^="entry-"]:not(.card-editing)::after { content:'點一下編輯'; position:absolute; right:14px; bottom:10px; font-size:12px; color:#1d4ed8; opacity:0; transition:opacity .15s; pointer-events:none; }
+body.edit-mode .card[id^="entry-"]:not(.card-editing):hover::after { opacity:1; }
+body.edit-mode .card[id^="entry-"] button, body.edit-mode .card[id^="entry-"] a { cursor:pointer; }
 
 .em-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(29,78,216,0.06); border:1px dashed rgba(29,78,216,0.4); border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; }
 .em-bar .em-bar-label { font-weight:700; color:#1d4ed8; margin-right:4px; }
@@ -838,6 +844,14 @@ body.edit-mode .em-hide { display:none !important; }
 .av-ed-row { display:flex; align-items:center; gap:6px; margin-top:5px; padding:4px; border-radius:6px; }
 .av-ed-row.av-base { background:#e8f0fe; }
 .av-ed-row .av-ed-size { flex:0 0 100px !important; }
+.av-drag { flex-shrink:0; width:22px; text-align:center; color:var(--text-muted); cursor:grab; user-select:none; font-weight:700; letter-spacing:-2px; }
+.av-drag:hover { color:#1d4ed8; }
+.av-ed-row.av-dragging { opacity:.5; outline:2px dashed #1d4ed8; }
+.av-ed-row.av-moved { animation: avMoved 1.2s ease; }
+@keyframes avMoved { from { background:#fef9c3; } }
+.av-mv { flex-shrink:0; width:28px; height:28px; background:#fff; border:1px solid #ddd; border-radius:5px; font-size:13px; cursor:pointer; color:var(--text-dim); font-family:inherit; }
+.av-mv:hover { border-color:#1d4ed8; color:#1d4ed8; }
+.av-unsaved { font-size:12.5px; color:#b45309; font-weight:600; margin-left:auto; margin-right:8px; }
 .av-x { flex-shrink:0; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 8px; font-size:12px; cursor:pointer; color:#c0392b; font-family:inherit; white-space:nowrap; }
 .av-add { margin-top:6px; background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:4px 10px; font-size:12px; cursor:pointer; color:#555; font-family:inherit; }
 </style>
@@ -1723,27 +1737,45 @@ function wrapEditSel(id, pre, post) {
   ta.selectionEnd = s + pre.length + sel.length;
 }
 
-// 卡片就地編輯：同一時間只編一張；按「儲存」才寫入；存完 10 秒內可復原
+// 卡片就地編輯：同一時間只編一張；換下一張或按「完成編輯」會自動儲存；存完 10 秒內可復原
 let edDirty = false;
 function edConfirmDiscard() { return !edDirty || confirm('這張卡片有還沒儲存的修改，確定要放棄嗎？'); }
 
-function startEditCard(id) {
+// focus：{ field: 'title' | 'content', before: 點擊位置前面的幾個字 } → 游標放在點的地方
+async function startEditCard(id, focus) {
   if (editingEntryId != null && String(editingEntryId) !== String(id)) {
-    if (!edConfirmDiscard()) return;
     const prev = editingEntryId;
-    editingEntryId = null; reRenderEntry(prev);
+    if (edDirty) { if (!(await saveEditCard(prev))) return; }   // 上一張有改 → 自動儲存
+    else { editingEntryId = null; reRenderEntry(prev); }
   }
   editingEntryId = id; edDirty = false;
   reRenderEntry(id);
   const ta = document.getElementById(`ed-content-${id}`);
   edGrow(ta);
   edGrow(document.getElementById(`ed-paths-${id}`));
-  if (ta) {
-    ta.focus({ preventScroll: true });
-    ta.setSelectionRange(0, 0);
-    ta.scrollTop = 0;
-    ta.closest('.card')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  const field = focus && focus.field === 'title' ? document.getElementById(`ed-title-${id}`) : ta;
+  if (!field) return;
+  const before = (focus && focus.before) || '';
+  const at = before.length >= 2 ? field.value.indexOf(before) : -1;
+  const caret = at >= 0 ? at + before.length : 0;
+  field.closest('.card')?.scrollIntoView({ block: 'nearest' });
+  field.focus();
+  field.setSelectionRange(caret, caret);
+}
+
+// 找出點擊位置：點在標題還是內容、游標前面是哪幾個字
+function edClickSpot(ev, card) {
+  const field = ev.target.closest('.card-title, .grid-expand-title') ? 'title' : 'content';
+  let node = null, off = 0;
+  if (document.caretPositionFromPoint) {
+    const p = document.caretPositionFromPoint(ev.clientX, ev.clientY);
+    if (p) { node = p.offsetNode; off = p.offset; }
+  } else if (document.caretRangeFromPoint) {
+    const r = document.caretRangeFromPoint(ev.clientX, ev.clientY);
+    if (r) { node = r.startContainer; off = r.startOffset; }
   }
+  const before = node && node.nodeType === 3 && card.contains(node) ? node.textContent.slice(Math.max(0, off - 15), off) : '';
+  return { field, before };
 }
 function cancelEditCard(id, force) {
   if (!force && !edConfirmDiscard()) return;
@@ -1755,10 +1787,9 @@ function edKey(ev, id) {
   else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cancelEditCard(id); }
 }
 // 「更多設定」：收起就地編輯，改開完整表單
-function edMore(id) {
-  if (!edConfirmDiscard()) return;
-  editingEntryId = null; edDirty = false;
-  reRenderEntry(id);
+async function edMore(id) {
+  if (edDirty) { if (!(await saveEditCard(id))) return; }   // 先把這裡改的存起來
+  else { editingEntryId = null; reRenderEntry(id); }
   openEditEntry(id);
 }
 // 卡片上的 ✏️：能就地編輯就就地編輯（收合的格狀卡片先展開），否則開完整表單
@@ -1773,7 +1804,7 @@ function emInlineEdit(id) {
 
 async function saveEditCard(id) {
   const title = document.getElementById(`ed-title-${id}`).value.trim();
-  if (!title) { alert('請填寫標題'); return; }
+  if (!title) { alert('請填寫標題'); return false; }
   const content = document.getElementById(`ed-content-${id}`).value;
   const source  = document.getElementById(`ed-source-${id}`).value;
   const paths   = document.getElementById(`ed-paths-${id}`).value.split('\n').map(s => s.trim()).filter(Boolean);
@@ -1785,13 +1816,14 @@ async function saveEditCard(id) {
   if (error) {
     alert('儲存失敗：' + error.message);
     if (btn) { btn.disabled = false; btn.textContent = '✓ 儲存'; }
-    return;
+    return false;
   }
   if (e) Object.assign(e, { title, content, source, paths });
   editingEntryId = null; edDirty = false;
   reRenderEntry(id);
   edSaveCache();
   showEditedToast(`已儲存「${title}」`, before && (() => edRestore(id, before)));
+  return true;
 }
 
 async function edRestore(id, before) {
@@ -1829,16 +1861,15 @@ function showEditedToast(msg = '已儲存', undo = null) {
   setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, undo ? 10000 : 2000);
 }
 
-// 編輯模式下，對卡片點兩下也能直接編輯
-document.addEventListener('dblclick', (ev) => {
+// 編輯模式下，點一下卡片上的文字就直接編輯（按鈕、連結、圖片、複製路徑照常運作）
+document.addEventListener('click', (ev) => {
   if (!document.body.classList.contains('edit-mode')) return;
-  if (ev.target.closest('input, textarea, select, button, a')) return;
   const card = ev.target.closest('.card[id^="entry-"]');
-  if (!card) return;
-  const id = card.id.slice('entry-'.length);
-  if (editingEntryId != null && String(editingEntryId) === id) return;
-  window.getSelection()?.removeAllRanges();
-  startEditCard(id);
+  if (!card || card.classList.contains('card-editing')) return;
+  const blocker = ev.target.closest('input, textarea, select, button, a, label, img, video, [onclick]');
+  if (blocker && blocker !== card && card.contains(blocker)) return;
+  if (String(window.getSelection() || '').length) return;   // 正在選取文字（例如要複製）就不打斷
+  startEditCard(card.id.slice('entry-'.length), edClickSpot(ev, card));
 });
 // 有還沒儲存的修改就關頁／重新整理 → 先提醒
 window.addEventListener('beforeunload', (ev) => {
@@ -3125,12 +3156,59 @@ let __avGid = 0;
 function avRowHtml(gid, r) {
   r = r || {};
   return `<div class="av-ed-row${r.base ? ' av-base' : ''}">
+    <span class="av-drag" title="按住拖曳，調整尺碼順序" onmousedown="this.parentElement.draggable=true" onmouseup="this.parentElement.draggable=false">⋮⋮</span>
     <input type="radio" name="avb-${gid}" class="av-ed-base" ${r.base ? 'checked' : ''} title="設為基碼" onchange="avBaseChanged(this)">
     <input class="av-ed-size" value="${escHtml(r.size || '')}" placeholder="尺碼">
     <input class="av-ed-code" value="${escHtml(r.code || '')}" placeholder="人台代號（如 TCE-WMS0010-2009）">
+    <button type="button" class="av-mv" onclick="avMoveRow(this,-1)" title="往前移" aria-label="往前移">↑</button>
+    <button type="button" class="av-mv" onclick="avMoveRow(this,1)" title="往後移" aria-label="往後移">↓</button>
     <button type="button" class="av-x" onclick="this.closest('.av-ed-row').remove()" title="刪除此尺碼">✕</button>
   </div>`;
 }
+
+// ── 尺碼排序：拖曳 ⋮⋮ 或按 ↑↓（只在同一個群組內移動；改完要按 💾 儲存）──
+function avMoveRow(btn, dir) {
+  const row = btn.closest('.av-ed-row');
+  const to = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!to) return;
+  dir < 0 ? to.before(row) : to.after(row);
+  avMarkMoved(row);
+  btn.focus();
+}
+function avMarkMoved(row) {
+  row.classList.remove('av-moved'); void row.offsetWidth; row.classList.add('av-moved');
+  const top = row.closest('.av-editor')?.querySelector('.av-ed-top');
+  avMarkDirty(row);
+  if (top && !top.querySelector('.av-unsaved')) top.insertAdjacentHTML('beforeend', '<span class="av-unsaved">順序已變更（按「完成編輯」會自動儲存）</span>');
+}
+let __avDragRow = null;
+document.addEventListener('dragstart', (ev) => {
+  const row = ev.target.closest && ev.target.closest('.av-ed-row');
+  if (!row || !row.draggable) return;
+  __avDragRow = row;
+  row.classList.add('av-dragging');
+  ev.dataTransfer.effectAllowed = 'move';
+  try { ev.dataTransfer.setData('text/plain', ''); } catch (e) {}
+});
+document.addEventListener('dragover', (ev) => {
+  if (!__avDragRow) return;
+  const list = __avDragRow.parentElement;
+  if (!(ev.target.closest && ev.target.closest('.av-ed-rows') === list)) return;
+  ev.preventDefault();
+  const over = ev.target.closest('.av-ed-row');
+  if (!over || over === __avDragRow) return;
+  const rc = over.getBoundingClientRect();
+  if (ev.clientY > rc.top + rc.height / 2) over.after(__avDragRow); else over.before(__avDragRow);
+});
+document.addEventListener('drop', (ev) => { if (__avDragRow) ev.preventDefault(); });
+document.addEventListener('dragend', () => {
+  if (!__avDragRow) return;
+  const row = __avDragRow;
+  __avDragRow = null;
+  row.classList.remove('av-dragging');
+  row.draggable = false;
+  avMarkMoved(row);
+});
 function avGroupEdHtml(g) {
   const gid = 'g' + (++__avGid);
   return `<div class="av-ed-group" data-gid="${gid}">
@@ -3142,7 +3220,7 @@ function avGroupEdHtml(g) {
       <span class="av-ed-lbl">路徑</span>
       <input class="av-ed-path" value="${escHtml(g.path || '')}" placeholder="人台位置路徑 \\\\192.168.1.220\\3ddb\\...">
     </div>
-    <div class="av-ed-hint">尺碼（點圓點設基碼）</div>
+    <div class="av-ed-hint">尺碼（點圓點設基碼；按住 ⋮⋮ 拖曳或按 ↑↓ 調整順序）</div>
     <div class="av-ed-rows">${(g.rows || []).map(r => avRowHtml(gid, r)).join('')}</div>
     <button type="button" class="av-add" onclick="avAddRow(this)">＋ 新增尺碼</button>
   </div>`;
@@ -3172,10 +3250,40 @@ function avRemoveGroup(btn) {
 function avBaseChanged(radio) {
   radio.closest('.av-ed-rows').querySelectorAll('.av-ed-row').forEach(r => r.classList.toggle('av-base', r.contains(radio)));
 }
-async function avSave(entryId) {
-  const box = document.getElementById('aved-' + entryId);
-  if (!box) return;
-  const groups = [...box.querySelectorAll('.av-ed-group')].map(g => ({
+// 有改過的人台編輯區標記 dirty，按「完成編輯」時自動儲存
+function avMarkDirty(el) { const box = el && el.closest && el.closest('.av-editor'); if (box) box.dataset.dirty = '1'; }
+document.addEventListener('input', (ev) => avMarkDirty(ev.target));
+document.addEventListener('change', (ev) => avMarkDirty(ev.target));
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest && ev.target.closest('.av-editor button');
+  if (b && !b.classList.contains('primary')) avMarkDirty(b);   // 新增／刪除尺碼、群組、↑↓
+}, true);
+
+// groups 不給就從畫面上讀；quiet = 不重新整理畫面、不跳提示（給「完成編輯」一次存多個用）
+async function avSave(entryId, groups, quiet) {
+  if (!groups) {
+    const box = document.getElementById('aved-' + entryId);
+    if (!box) return false;
+    groups = avCollect(box);
+  }
+  const sec = await ensureHiddenSection('avatar-config', '人台尺碼資料', 995);
+  if (!sec) return false;
+  const title = 'AVATAR_' + entryId;
+  const content = JSON.stringify({ groups });
+  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
+  const { error } = existing
+    ? await sb.from('entries').update({ content }).eq('id', existing.id)
+    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
+  if (error) { showToast('儲存失敗：' + error.message, 'error'); return false; }
+  if (quiet) return true;
+  __avActiveId = entryId;
+  await loadData();
+  emAfterChange();
+  showToast('人台資料已儲存 ✓', 'success');
+  return true;
+}
+function avCollect(box) {
+  return [...box.querySelectorAll('.av-ed-group')].map(g => ({
     name: g.querySelector('.av-ed-name').value.trim(),
     path: g.querySelector('.av-ed-path').value.trim(),
     rows: [...g.querySelectorAll('.av-ed-row')].map(r => ({
@@ -3184,20 +3292,6 @@ async function avSave(entryId) {
       base: r.querySelector('.av-ed-base').checked,
     })).filter(r => r.size || r.code),
   })).filter(g => g.name || g.path || g.rows.length);
-
-  const sec = await ensureHiddenSection('avatar-config', '人台尺碼資料', 995);
-  if (!sec) return;
-  const title = 'AVATAR_' + entryId;
-  const content = JSON.stringify({ groups });
-  const existing = allEntries.find(x => x.section_id === sec.id && x.title === title);
-  const { error } = existing
-    ? await sb.from('entries').update({ content }).eq('id', existing.id)
-    : await sb.from('entries').insert({ section_id: sec.id, title, content, source: 'internal', sort_order: 0 });
-  if (error) { showToast('儲存失敗：' + error.message, 'error'); return; }
-  __avActiveId = entryId;
-  await loadData();
-  emAfterChange();
-  showToast('人台資料已儲存 ✓', 'success');
 }
 
 // ── 路徑／連結 前台編輯（登入即可編輯，全站通用）──
@@ -4555,7 +4649,7 @@ init();
   <button onclick="openStageCfg()">🎬 Stage</button>
   <button onclick="openCpCfg()">🎨 非正單</button>
   <button onclick="openAccountsManager()">🔑 帳號</button>
-  <button class="done" onclick="setEditMode(false)">✅ 完成</button>
+  <button class="done" onclick="finishEditMode()" title="自動儲存所有修改並離開編輯模式">✅ 完成編輯</button>
 </div>
 <div id="emToast"></div>
 <div id="emRoot">
@@ -5736,7 +5830,34 @@ function setEditMode(on) {
   // 只記在這個分頁：重新整理還在編輯模式，關掉網頁就自動退出
   try { sessionStorage.setItem('gap3d_edit_mode', on ? '1' : '0'); } catch (e) {}
 }
-function toggleEditMode() { setEditMode(!isEditMode()); }
+function toggleEditMode() { if (isEditMode()) finishEditMode(); else setEditMode(true); }
+
+// 「完成編輯」＝ 自動儲存所有還沒存的修改，再離開編輯模式（任何一項存失敗就留在編輯模式）
+let __emFinishing = false;
+async function finishEditMode() {
+  if (__emFinishing) return;
+  __emFinishing = true;
+  const b = document.getElementById('editBtn');
+  const label = b.textContent;
+  b.textContent = '儲存中…'; b.disabled = true;
+  try {
+    let saved = 0;
+    if (editingEntryId != null) {
+      if (edDirty) { if (!(await saveEditCard(editingEntryId))) return; saved++; }
+      else cancelEditCard(editingEntryId, true);
+    }
+    const avDirty = [...document.querySelectorAll('.av-editor[data-dirty="1"]')]
+      .map(box => ({ id: box.id.slice('aved-'.length), groups: avCollect(box) }));
+    for (const a of avDirty) { if (!(await avSave(a.id, a.groups, true))) return; saved++; }
+    if (avDirty.length) { await loadData(); emAfterChange(); }
+    setEditMode(false);
+    if (avDirty.length) showToast(`已自動儲存 ${saved} 項修改 ✓`, 'success');
+  } finally {
+    __emFinishing = false;
+    b.disabled = false;
+    if (b.textContent === '儲存中…') b.textContent = label;
+  }
+}
 
 function emCurSection() { return allSections.find(s => s.slug === currentSlug) || null; }
 function emCurSectionId() { return emCurSection()?.id || null; }
@@ -5790,6 +5911,7 @@ function emBarHtml(section) {
   return `
     <div class="em-bar em-only">
       <span class="em-bar-label">✏️ 編輯「${esc(stripLeadingEmoji(section.name))}」</span>
+      <span style="flex-basis:100%;order:-1;font-size:13.5px;color:#1e3a8a;margin-bottom:2px">點任何卡片上的文字就能直接修改；收合的小卡先點開再點文字。改完按右上角「完成編輯」會自動儲存。</span>
       <button class="em-btn primary" onclick="openNewEntry('${section.id}')">＋ 新增卡片</button>
       ${ctx.join('')}
       <button class="em-btn" onclick="this.parentElement.querySelector('.em-list').classList.toggle('open')">📋 本頁所有卡片（${entries.length}）</button>
