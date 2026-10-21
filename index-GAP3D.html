@@ -826,6 +826,11 @@ body.edit-mode .em-hide { display:none !important; }
 .pt-in::placeholder { color:#cbd5e1; }
 .pt-in.pt-in-type { font-family:inherit; font-weight:700; font-size:14px; }
 .pt-act { white-space:nowrap; }
+.pt-mini:disabled { opacity:.35; cursor:default; }
+.pt-handle { cursor:grab; color:#94a3b8; font-size:15px; padding:2px 2px; user-select:none; flex-shrink:0; }
+.pt-handle:active { cursor:grabbing; }
+.pt-drag-row.pt-dragging { opacity:.45; }
+.pt-drag-row.pt-drop td { box-shadow: inset 0 2px 0 #3b82f6; }
 .pt-mini { background:#fff; border:1px solid var(--border); border-radius:5px; padding:3px 7px; font-size:12px; cursor:pointer; font-family:inherit; color:#4b5563; }
 .pt-mini:hover { border-color:#1d4ed8; color:#1d4ed8; }
 .pt-mini.pt-del { color:#c0392b; }
@@ -2890,20 +2895,22 @@ function ptInput(i, k, v, ph) {
 }
 function ptEditTableHtml() {
   const head = PT_BRANDS.map(b => `<th class="${b === currentBrand ? 'pt-cur' : ''}">${escHtml(BRAND_INFO[b]?.label || b)}</th>`).join('');
-  const body = __ptRows.map((r, i) => `<tr>
-      <td class="pt-type">${ptInput(i, 'type', r.type, '類型名稱')}</td>
+  const body = __ptRows.map((r, i) => `<tr class="pt-drag-row" data-i="${i}" ondragover="ptDragOver(event)" ondragleave="this.classList.remove('pt-drop')" ondrop="ptDrop(event, ${i})">
+      <td class="pt-type"><div style="display:flex;align-items:center;gap:4px"><span class="pt-handle" draggable="true" ondragstart="ptDragStart(event, ${i})" title="按住拖曳調整順序">⠿</span>${ptInput(i, 'type', r.type, '類型名稱')}</div></td>
       ${r.shared
         ? `<td colspan="4">${ptInput(i, 'shared', r.shared, '四品牌共用路徑')}</td>`
         : PT_BRANDS.map(b => `<td class="${b === currentBrand ? 'pt-cur' : ''}">${ptInput(i, b, r[b], '—')}</td>`).join('')}
       <td class="pt-act">
         <button type="button" class="pt-mini" onclick="ptToggleShared(${i})" title="${r.shared ? '拆成四個品牌各自填' : '四個品牌共用同一個路徑'}">${r.shared ? '拆開' : '共用'}</button>
+        <button type="button" class="pt-mini" onclick="ptMoveRow(${i}, -1)" title="往上移" ${i === 0 ? 'disabled' : ''}>▲</button>
+        <button type="button" class="pt-mini" onclick="ptMoveRow(${i}, 1)" title="往下移" ${i === __ptRows.length - 1 ? 'disabled' : ''}>▼</button>
         <button type="button" class="pt-mini pt-del" onclick="ptDeleteRow(${i})" title="刪除此列">✕</button>
       </td>
     </tr>`).join('');
-  return `<div class="pt-wrap pt-edit"><table class="pt-table"><thead><tr><th>類型</th>${head}<th style="width:92px"></th></tr></thead><tbody>${body}</tbody></table></div>
+  return `<div class="pt-wrap pt-edit"><table class="pt-table"><thead><tr><th>類型</th>${head}<th style="width:150px"></th></tr></thead><tbody>${body}</tbody></table></div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
       <button type="button" class="em-btn" onclick="ptAddRow()">＋ 新增一列</button>
-      <span style="font-size:12.5px;color:var(--text-muted)">直接點格子修改，離開格子就自動儲存。開頭的 ${escHtml(PT_PREFIX)} 不用打，會自動補上</span>
+      <span style="font-size:12.5px;color:var(--text-muted)">直接點格子修改，離開格子就自動儲存。拖曳 ⠿ 或按 ▲▼ 調整順序。開頭的 ${escHtml(PT_PREFIX)} 不用打，會自動補上</span>
     </div>`;
 }
 function ptRedraw() {
@@ -2945,9 +2952,43 @@ async function ptToggleShared(i) {
   }
   ptRedraw(); await ptSave(false);
 }
+function ptRefCount(type) {
+  if (!type) return 0;
+  const re = new RegExp('｜@' + type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(:(GAP|ATH|ON|BR))?$');
+  return allEntries.filter(e => Array.isArray(e.paths) && e.paths.some(p => re.test(p))).length;
+}
 async function ptDeleteRow(i) {
-  if (!confirm('確定刪除「' + (__ptRows[i]?.type || '這一列') + '」？')) return;
+  const t = __ptRows[i]?.type || '';
+  const n = ptRefCount(t);
+  const msg = '確定刪除「' + (t || '這一列') + '」？' + (n ? '\n\n⚠️ 有 ' + n + ' 張卡片連動這一列，刪除後那些卡片會顯示「找不到」。\n之後只要新增一列、類型名稱打一模一樣的「' + t + '」，就會自動接回去。' : '');
+  if (!confirm(msg)) return;
   __ptRows.splice(i, 1); ptRedraw(); await ptSave(false);
+}
+async function ptMoveRow(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= __ptRows.length) return;
+  [__ptRows[i], __ptRows[j]] = [__ptRows[j], __ptRows[i]];
+  ptRedraw(); await ptSave(false);
+}
+let __ptDragFrom = null;
+function ptDragStart(ev, i) {
+  __ptDragFrom = i;
+  ev.dataTransfer.effectAllowed = 'move';
+  try { ev.dataTransfer.setData('text/plain', String(i)); } catch (e) {}
+  ev.target.closest('tr')?.classList.add('pt-dragging');
+}
+function ptDragOver(ev) {
+  if (__ptDragFrom === null) return;
+  ev.preventDefault();
+  ev.currentTarget.classList.add('pt-drop');
+}
+async function ptDrop(ev, to) {
+  ev.preventDefault();
+  const from = __ptDragFrom; __ptDragFrom = null;
+  if (from === null || from === to) { ptRedraw(); return; }
+  const [row] = __ptRows.splice(from, 1);
+  __ptRows.splice(to, 0, row);
+  ptRedraw(); await ptSave(false);
 }
 function ptAddRow() {
   __ptRows.push({ type: '' }); ptRedraw();
